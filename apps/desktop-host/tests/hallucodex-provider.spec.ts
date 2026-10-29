@@ -3,8 +3,8 @@ import { Context } from '@deepseek-ai/cordis'
 import LocalAttachments from '@deepseek-ai/dsh-attachment-local'
 import LlmRuntime, { ReasoningEffortId, createUserMessage } from '@deepseek-ai/dsh-llm'
 import {
-  HALLUCODEX_IDENTITY, halluCodexDefaultSelection, installHalluCodexIdentity, installHalluCodexProvider,
-  parseHalluCodexHostConfiguration, type HalluCodexCapacitySaver,
+  HALLUCODEX_IDENTITY, halluCodexDefaultSelection, installNovaFlowIdentity, installNovaFlowProvider,
+  parseNovaFlowHostConfiguration, type NovaFlowCapacitySaver,
 } from '../src/hallucodex.ts'
 import { createServer } from 'node:http'
 import { once } from 'node:events'
@@ -16,7 +16,7 @@ import { join } from 'node:path'
 const disposers: (() => Promise<void>)[] = []
 afterEach(async () => { while (disposers.length) await disposers.pop()?.() })
 
-const refuseSave: HalluCodexCapacitySaver = () => Promise.reject(new Error('fixture: saving is not expected'))
+const refuseSave: NovaFlowCapacitySaver = () => Promise.reject(new Error('fixture: saving is not expected'))
 
 function configuration(baseURL = 'http://127.0.0.1:43210') {
   return {
@@ -27,19 +27,19 @@ function configuration(baseURL = 'http://127.0.0.1:43210') {
 
 describe('native Host configuration', () => {
   it.each(['https://api.hallucodex.com', 'http://localhost:43210', 'http://127.0.0.1:43210/v1', 'http://user@127.0.0.1:43210', 'http://127.0.0.1:43210?x=1'])('rejects a non-exact loopback endpoint %s', (baseURL) => {
-    expect(() => parseHalluCodexHostConfiguration(configuration(baseURL))).toThrow()
+    expect(() => parseNovaFlowHostConfiguration(configuration(baseURL))).toThrow()
   })
   it('does not invent model capacities or accept invalid native revisions', () => {
-    const unknown = parseHalluCodexHostConfiguration({ ...configuration(), models: [{ id: 'unknown', endpoints: ['/v1/responses'] }] })
+    const unknown = parseNovaFlowHostConfiguration({ ...configuration(), models: [{ id: 'unknown', endpoints: ['/v1/responses'] }] })
     expect(unknown.models).toEqual([{ id: 'unknown', endpoints: ['/v1/responses'] }])
     const model = { id: 'fixture-model', endpoints: ['/v1/chat/completions'] }
     for (const invalid of [
       { contextWindow: 0 }, { maxOutputTokens: 1.5 }, { contextWindow: 1024, maxOutputTokens: 2048 },
       { userContextWindow: 1024, userMaxOutputTokens: 2048 }, { capacityDefaults: ['contextWindow', 'contextWindow'] },
       { capacityDefaults: ['context_window'] }, { capacityDefaults: 'contextWindow' },
-    ]) expect(() => parseHalluCodexHostConfiguration({ ...configuration(), models: [{ ...model, ...invalid }] })).toThrow('invalid model capacity')
-    expect(() => parseHalluCodexHostConfiguration({ ...configuration(), revision: -1 })).toThrow()
-    expect(() => parseHalluCodexHostConfiguration({ ...configuration(), localCapability: 'dsk.upstream-credential' })).toThrow()
+    ]) expect(() => parseNovaFlowHostConfiguration({ ...configuration(), models: [{ ...model, ...invalid }] })).toThrow('invalid model capacity')
+    expect(() => parseNovaFlowHostConfiguration({ ...configuration(), revision: -1 })).toThrow()
+    expect(() => parseNovaFlowHostConfiguration({ ...configuration(), localCapability: 'dsk.upstream-credential' })).toThrow()
   })
   it('registers real Harness protocol adapters and disposes their routes', async () => {
     const ctx = new Context()
@@ -48,7 +48,7 @@ describe('native Host configuration', () => {
     let publications = 0
     ctx.on('llm/adapters-updated', () => { publications++ })
     let update: ((configuration: unknown) => void) | undefined
-    const owner = await ctx.plugin((scope) => { update = installHalluCodexProvider(scope, configuration(), refuseSave) })
+    const owner = await ctx.plugin((scope) => { update = installNovaFlowProvider(scope, configuration(), refuseSave) })
     expect(await ctx.llm.listModels('hallucodex-chat')).toEqual([
       { provider: 'hallucodex-chat', id: 'fixture-model', name: 'fixture-model', inputModalities: ['text'] },
     ])
@@ -83,7 +83,7 @@ describe('native Host configuration', () => {
     disposers.push(() => ctx.fiber.dispose())
     const initial = configuration(`http://127.0.0.1:${String(port)}`)
     let update: ((configuration: unknown) => void) | undefined
-    await ctx.plugin((scope) => { update = installHalluCodexProvider(scope, initial, refuseSave) })
+    await ctx.plugin((scope) => { update = installNovaFlowProvider(scope, initial, refuseSave) })
     const prepared = await ctx.llm.prepareCall({ provider: 'hallucodex-chat', model: 'fixture-model' })
     update?.({ ...initial, revision: 3 })
     const chunks = []
@@ -103,7 +103,7 @@ describe('vendor reasoning', () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
     await ctx.plugin((scope) => {
-      installHalluCodexProvider(scope, { ...configuration(), models: [
+      installNovaFlowProvider(scope, { ...configuration(), models: [
         { id: 'claude-opus-4-7', endpoints: ['/v1/messages'], ...capacity },
         { id: 'gpt-5.1', endpoints: ['/v1/responses'], ...capacity },
         { id: 'gpt-5.2', endpoints: ['/v1/chat/completions'], ...capacity },
@@ -154,7 +154,7 @@ describe('vendor reasoning', () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
     await ctx.plugin((scope) => {
-      installHalluCodexProvider(scope, { ...configuration(`http://127.0.0.1:${String(port)}`), models: [
+      installNovaFlowProvider(scope, { ...configuration(`http://127.0.0.1:${String(port)}`), models: [
         { id: 'claude-opus-4-7', endpoints: ['/v1/messages'], ...capacity },
         { id: 'deepseek-v4-pro', endpoints: ['/v1/chat/completions'], ...capacity },
         { id: 'qwen3.8-max', endpoints: ['/v1/chat/completions'], ...capacity },
@@ -216,7 +216,7 @@ describe('one route per model', () => {
   it('lists a model under its vendor or name-family protocol, otherwise under the first advertised endpoint', async () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
-    await ctx.plugin((scope) => { installHalluCodexProvider(scope, { ...configuration(), models }, refuseSave) })
+    await ctx.plugin((scope) => { installNovaFlowProvider(scope, { ...configuration(), models }, refuseSave) })
     const listed = async (provider: string) => (await ctx.llm.listModels(provider)).map(model => model.id)
     expect(await listed('hallucodex-chat')).toEqual(['deepseek-v4-pro', 'fixture-model', 'deepseek-flash'])
     expect(await listed('hallucodex-responses')).toEqual(['gpt-5.1', 'fixture-responses', 'gpt-9'])
@@ -225,7 +225,7 @@ describe('one route per model', () => {
   })
 
   it('moves a saved default selection to the route that lists its model', () => {
-    const applied = parseHalluCodexHostConfiguration({ ...configuration(), models })
+    const applied = parseNovaFlowHostConfiguration({ ...configuration(), models })
     expect(halluCodexDefaultSelection(applied, { provider: 'deepseek-official', model: 'deepseek-v4-pro' }))
       .toEqual({ provider: 'hallucodex-responses', model: 'select-a-model' })
     expect(halluCodexDefaultSelection(applied, { provider: 'hallucodex-responses', model: 'deepseek-v4-pro', reasoningEffort: ReasoningEffortId('high') }))
@@ -246,7 +246,7 @@ describe('image input', () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
     await ctx.plugin((scope) => {
-      installHalluCodexProvider(scope, { ...configuration(), models: [
+      installNovaFlowProvider(scope, { ...configuration(), models: [
         // Google's own catalog lists Gemini under Gemini's protocol; any catalog's image input counts.
         { id: 'gemini-3.8-flash', endpoints: chat, ...capacity },
         { id: 'gpt-5.1', endpoints: ['/v1/responses'], ...capacity },
@@ -282,7 +282,7 @@ describe('image input', () => {
     disposers.push(() => ctx.fiber.dispose())
     await ctx.plugin(LocalAttachments, { dshHome: home })
     await ctx.plugin((scope) => {
-      installHalluCodexProvider(scope, { ...configuration(`http://127.0.0.1:${String((server.address() as AddressInfo).port)}`), models: [
+      installNovaFlowProvider(scope, { ...configuration(`http://127.0.0.1:${String((server.address() as AddressInfo).port)}`), models: [
         { id: 'gemini-3.8-flash', endpoints: chat, ...capacity },
       ] }, refuseSave)
     })
@@ -333,7 +333,7 @@ describe('model capacities', () => {
   it('takes each capacity from the user, server metadata, the vendor catalog, then the server default', async () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
-    const owner = await ctx.plugin((scope) => { installHalluCodexProvider(scope, { ...configuration(), models }, refuseSave) })
+    const owner = await ctx.plugin((scope) => { installNovaFlowProvider(scope, { ...configuration(), models }, refuseSave) })
     const capacities = ctx.get('modelCapacity')
     expect(routed.map(([provider, model]) => capacities?.describe(provider, model))).toEqual([
       { contextWindow: 1_000_000, contextSource: 'catalog', maxOutputTokens: 384_000, outputSource: 'catalog',
@@ -361,12 +361,12 @@ describe('model capacities', () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
     let update: ((configuration: unknown) => void) | undefined
-    const save = vi.fn<HalluCodexCapacitySaver>(async (model, contextWindow) => {
+    const save = vi.fn<NovaFlowCapacitySaver>(async (model, contextWindow) => {
       await Promise.resolve()
       update?.({ ...configuration(), revision: 3, models: models.map(entry => entry.id === model && contextWindow !== null
         ? { ...entry, userContextWindow: contextWindow } : entry) })
     })
-    await ctx.plugin((scope) => { update = installHalluCodexProvider(scope, { ...configuration(), models }, save) })
+    await ctx.plugin((scope) => { update = installNovaFlowProvider(scope, { ...configuration(), models }, save) })
     const capacities = ctx.get('modelCapacity')
     await capacities?.set({ provider: 'hallucodex-chat', model: 'fixture-model', contextWindow: 64_000, maxOutputTokens: null })
     expect(save).toHaveBeenCalledExactlyOnceWith('fixture-model', 64_000, null)
@@ -380,7 +380,7 @@ describe('model capacities', () => {
   it('caps requests only with a chosen output limit and lists a model only with both capacities', async () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
-    await ctx.plugin((scope) => { installHalluCodexProvider(scope, { ...configuration(), models }, refuseSave) })
+    await ctx.plugin((scope) => { installNovaFlowProvider(scope, { ...configuration(), models }, refuseSave) })
     const info = async (provider: string, model: string) => {
       const resolved = await ctx.llm.resolveModelInfo(provider, model)
       return { contextWindow: resolved.context?.contextWindow, defaultMaxTokens: resolved.defaultMaxTokens }
@@ -391,7 +391,7 @@ describe('model capacities', () => {
     expect(await info('hallucodex-responses', 'gpt-5.1')).toEqual({ contextWindow: 300_000, defaultMaxTokens: undefined })
     expect(await info('hallucodex-chat', 'user-model')).toEqual({ contextWindow: 64_000, defaultMaxTokens: 4096 })
     expect((await ctx.llm.listModels('hallucodex-chat')).map(model => model.id)).not.toContain('bare-model')
-    const applied = parseHalluCodexHostConfiguration({ ...configuration(), models })
+    const applied = parseNovaFlowHostConfiguration({ ...configuration(), models })
     expect(halluCodexDefaultSelection(applied, { provider: 'hallucodex-responses', model: 'bare-model' })).toBeUndefined()
   })
 
@@ -414,7 +414,7 @@ describe('model capacities', () => {
     const ctx = new Context(); await ctx.plugin(LlmRuntime)
     disposers.push(() => ctx.fiber.dispose())
     await ctx.plugin((scope) => {
-      installHalluCodexProvider(scope, { ...configuration(`http://127.0.0.1:${String((server.address() as AddressInfo).port)}`), models },
+      installNovaFlowProvider(scope, { ...configuration(`http://127.0.0.1:${String((server.address() as AddressInfo).port)}`), models },
         refuseSave)
     })
     for (const model of ['deepseek-v4-pro', 'fixture-model']) {
@@ -430,13 +430,13 @@ describe('model capacities', () => {
   })
 })
 
-describe('HalluCodex identity', () => {
-  it('opens the prompt with HalluCodex in place of the upstream harness line', async () => {
+describe('NovaFlow identity', () => {
+  it('opens the prompt with NovaFlow in place of the upstream harness line', async () => {
     const { default: SystemPrompt, renderPrompt } = await import('@deepseek-ai/dsh-system-prompt')
     const ctx = new Context()
     try {
       await ctx.plugin(SystemPrompt, { includeHarnessIdentity: false, personaPrefix: 'Deployment persona.' })
-      installHalluCodexIdentity(ctx)
+      installNovaFlowIdentity(ctx)
       await vi.waitFor(async () => {
         expect(renderPrompt(await ctx.systemPrompt.assemble())).toBe(`${HALLUCODEX_IDENTITY}\n\nDeployment persona.`)
       })

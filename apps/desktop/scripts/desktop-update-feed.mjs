@@ -12,8 +12,8 @@ import { dump, load } from 'js-yaml'
  */
 export const DESKTOP_UPDATE_PUBLISH = Object.freeze({
   provider: 'github',
-  owner: 'AkumaRealLabs',
-  repo: 'hallucodex-desktop',
+  owner: 'Prokint',
+  repo: 'NavaFlow',
   releaseType: 'release',
 })
 

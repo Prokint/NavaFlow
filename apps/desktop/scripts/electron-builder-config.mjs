@@ -97,7 +97,7 @@ export function createElectronBuilderConfig(
   const packaged = resolveDesktopBuildCommit(env)
   return {
     appId,
-    // HalluCodex registers no URL scheme; dsh:// belongs to DeepSeek Harness.
+    // NovaFlow registers no URL scheme; dsh:// belongs to DeepSeek Harness.
     protocols: [],
     extraMetadata: {
       dshDesktopAppId: appId,
@@ -111,7 +111,7 @@ export function createElectronBuilderConfig(
       // without this field the application shows the release notes and opens the release page.
       ...signsMacOS ? { hallucodexUpdateMode: 'install' } : {},
     },
-    productName: 'HalluCodex',
+    productName: 'NovaFlow',
     // Unsigned builds carry their own suffix so a shared file can never pass for a release artifact.
     artifactName: `hallucodex-\${version}-\${os}-\${arch}${developmentAppImage ? '-dev-unsigned' : unsigned ? '-unsigned' : ''}.\${ext}`,
     directories: { output: unsigned || developmentAppImage ? buildPaths.unsignedArtifacts : buildPaths.artifacts },
@@ -161,7 +161,7 @@ export function createElectronBuilderConfig(
       extendInfo: {
         // macOS matches the application locale against this bundle, not Electron Framework resources.
         CFBundleLocalizations: ['en', 'zh_CN'],
-        NSMicrophoneUsageDescription: 'HalluCodex uses your microphone to transcribe speech into message drafts.',
+        NSMicrophoneUsageDescription: 'NovaFlow uses your microphone to transcribe speech into message drafts.',
       },
       entitlements: fileURLToPath(new URL('./macos-entitlements.plist', import.meta.url)),
       entitlementsInherit: fileURLToPath(new URL('./macos-entitlements.plist', import.meta.url)),
@@ -245,11 +245,11 @@ export function createElectronBuilderConfig(
       // One bitmap per hicolor size; a lone oversized PNG lands in a directory desktop environments never search.
       icon: fileURLToPath(new URL('../resources/linux-icons', import.meta.url)),
       category: 'Development',
-      synopsis: 'HalluCodex desktop coding agent',
+      synopsis: 'NovaFlow desktop coding agent',
       maintainer: linuxSettings?.maintainer,
       target: developmentAppImage ? ['AppImage'] : ['AppImage', 'deb'],
       executableArgs: [],
-      desktop: { entry: { Name: 'HalluCodex', StartupWMClass: 'hallucodex' } },
+      desktop: { entry: { Name: 'NovaFlow', StartupWMClass: 'hallucodex' } },
     },
     // The pinned builder otherwise inserts a sandbox-disabling AppImage argument.
     appImage: { executableArgs: [] },

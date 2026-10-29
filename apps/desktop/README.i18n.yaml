@@ -2,84 +2,84 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/README.md
-/hallucodex-desktop:
-  en: ba6f19df10cf738f
-  zh: f5e9357ab8485f21
-/hallucodex-desktop/terminal-command:
+/novaflow-desktop:
+  en: 15bdcfdbf9f2e8b7
+  zh: 3ff90287b545bff7
+/novaflow-desktop/terminal-command:
   en: bef92953c237363f
   zh: d21d6effd21b8c00
-/hallucodex-desktop/closing-the-window-and-quitting:
-  en: 2ab1fbb7136894ac
-  zh: 583f33ca8c555924
-/hallucodex-desktop/key-technical-decisions:
-  en: 3706e55c0880c287
-  zh: a2533b9244020870
-/hallucodex-desktop/key-technical-decisions/bundled-workspace-dependencies:
+/novaflow-desktop/closing-the-window-and-quitting:
+  en: 94cb978c77635155
+  zh: 0df270af9a03d7db
+/novaflow-desktop/key-technical-decisions:
+  en: 52e8a5e4f5d5a849
+  zh: 9bd10eb697446552
+/novaflow-desktop/key-technical-decisions/bundled-workspace-dependencies:
   en: 4a3a17fd264eda5e
   zh: e042db4616ce8a90
-/hallucodex-desktop/bundled-command-runtime:
+/novaflow-desktop/bundled-command-runtime:
   en: 09f0b75af9f0ed14
   zh: 60bbc2e67d5e87a8
-/hallucodex-desktop/installation-ownership:
-  en: 1c7f39d77e84a3e6
-  zh: 23f9d16352706d2e
-/hallucodex-desktop/installation-ownership/runtime-and-plugin-activation:
-  en: 256b11cd387323ae
-  zh: 033b4a2255730867
-/hallucodex-desktop/installation-ownership/host-environment:
+/novaflow-desktop/installation-ownership:
+  en: a8ba4474cf0a9e0c
+  zh: 53eb9a33a88ca0a3
+/novaflow-desktop/installation-ownership/runtime-and-plugin-activation:
+  en: bb6c9539aaeba469
+  zh: 9c88276e59e52a7d
+/novaflow-desktop/installation-ownership/host-environment:
   en: 84a9cc7ca9455aa8
   zh: 4091b8aa8231b74a
-/hallucodex-desktop/develop:
-  en: 777c6d4ccfebe7b6
-  zh: 1264c130b38f4f5d
-/hallucodex-desktop/package:
+/novaflow-desktop/develop:
+  en: 68e56ca0f8bbdaf2
+  zh: a72ad06eeb9e9683
+/novaflow-desktop/package:
   en: 4cd8a8da6977928d
   zh: 9f624855a2edac37
-/hallucodex-desktop/package/release-versions:
-  en: 6c08f848fc1dd382
-  zh: dea5a0f381bd488b
-/hallucodex-desktop/package/local-official-bundles-from-a-loopback-registry:
+/novaflow-desktop/package/release-versions:
+  en: 217900c0582022bb
+  zh: 3a904eef87ed9a09
+/novaflow-desktop/package/local-official-bundles-from-a-loopback-registry:
   en: 253122e77e5712a1
   zh: d35d043b3f13535f
-/hallucodex-desktop/package/runtime-file-selection:
+/novaflow-desktop/package/runtime-file-selection:
   en: 46998e85afa6a0ae
   zh: 2bf9d6f24e11a943
-/hallucodex-desktop/package/release-workflow:
+/novaflow-desktop/package/release-workflow:
   en: 20cc449039c5673a
   zh: 321414ef6c8d4617
-/hallucodex-desktop/package/unsigned-installers:
-  en: 07010b5b29113547
-  zh: 21e80709f9b5d952
-/hallucodex-desktop/package/enabling-signing:
+/novaflow-desktop/package/unsigned-installers:
+  en: b8251a8be4d6dce3
+  zh: aa8da8f00817d5ae
+/novaflow-desktop/package/enabling-signing:
   en: dc1bd86f7273bd98
   zh: c9848873c64da463
-/hallucodex-desktop/package/macos-signing-and-notarization:
+/novaflow-desktop/package/macos-signing-and-notarization:
   en: aee8197ffe24933d
   zh: 2a7072dc65a1629a
-/hallucodex-desktop/package/windows-installer-interface:
+/novaflow-desktop/package/windows-installer-interface:
   en: 748755113fed1a76
   zh: 0bae8f63c97d6ff8
-/hallucodex-desktop/package/windows-ev-signing:
+/novaflow-desktop/package/windows-ev-signing:
   en: 255df8d556f8f04f
   zh: 41c31176a9d2c2eb
-/hallucodex-desktop/package/desktop-runtime-preparation:
+/novaflow-desktop/package/desktop-runtime-preparation:
   en: baea65ff45cd3dc4
   zh: 9595fc52ce13aed3
-/hallucodex-desktop/updates:
-  en: 9558455b4b7f1698
-  zh: 2d3e081368f16409
-/hallucodex-desktop/updates/local-updater-qualification:
+/novaflow-desktop/updates:
+  en: c8c465c3e8b48b85
+  zh: c9827920a72cf0bc
+/novaflow-desktop/updates/local-updater-qualification:
   en: 175659592f726b94
   zh: eb838c58b855b21d
-/hallucodex-desktop/low-level-development-overrides:
+/novaflow-desktop/low-level-development-overrides:
   en: 0b225f914142ef0b
   zh: 9ffd07768d37824e
-/hallucodex-desktop/known-limitations:
-  en: 317451906b22df29
-  zh: 9f69e97a9858f56b
-/hallucodex-desktop/dev-note:
+/novaflow-desktop/known-limitations:
+  en: d4125c05c571858e
+  zh: 9413ce7fcd41739b
+/novaflow-desktop/dev-note:
   en: bb7feac673841834
   zh: 1be909404d2814ee
-/hallucodex-desktop/linux-packages:
-  en: 15ea789148e98e6f
-  zh: 18056fa7c99b152b
+/novaflow-desktop/linux-packages:
+  en: 6ab7a5014b3a97a6
+  zh: adfbfa2f5cbc78b5

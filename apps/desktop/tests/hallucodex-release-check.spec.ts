@@ -3,13 +3,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import {
-  checkHalluCodexRelease, compareVersions, fetchHalluCodexReleaseNotes, HALLUCODEX_LATEST_RELEASE_API, HALLUCODEX_RELEASES_URL,
+  checkNovaFlowRelease, compareVersions, fetchNovaFlowReleaseNotes, HALLUCODEX_LATEST_RELEASE_API, HALLUCODEX_RELEASES_URL,
   parseRelease, ReleaseNoticeState, releaseNotesText,
 } from '../src/hallucodex/release-check.ts'
 
 const release = (tag: string, body = '') => ({ tag_name: tag, html_url: `${HALLUCODEX_RELEASES_URL}/tag/${tag}`, body })
 
-describe('HalluCodex release check', () => {
+describe('NovaFlow release check', () => {
   it('orders versions by SemVer precedence', () => {
     expect(compareVersions('0.2.0', '0.1.9')).toBe(1)
     expect(compareVersions('0.1.0', '0.1.0-beta.2')).toBe(1)
@@ -33,11 +33,11 @@ describe('HalluCodex release check', () => {
       .mockResolvedValueOnce(new Response('Not Found', { status: 404 }))
       .mockResolvedValueOnce(new Response('rate limited', { status: 403 }))
     const signal = new AbortController().signal
-    await expect(checkHalluCodexRelease('0.1.0', fetcher, signal))
+    await expect(checkNovaFlowRelease('0.1.0', fetcher, signal))
       .resolves.toEqual({ status: 'newer', version: '0.2.0', url: `${HALLUCODEX_RELEASES_URL}/tag/hallucodex-v0.2.0`, notes: '' })
-    await expect(checkHalluCodexRelease('0.1.0', fetcher, signal)).resolves.toEqual({ status: 'current', version: '0.1.0' })
-    await expect(checkHalluCodexRelease('0.1.0', fetcher, signal)).resolves.toEqual({ status: 'current', version: '0.1.0' })
-    await expect(checkHalluCodexRelease('0.1.0', fetcher, signal)).rejects.toThrow('GitHub answered 403')
+    await expect(checkNovaFlowRelease('0.1.0', fetcher, signal)).resolves.toEqual({ status: 'current', version: '0.1.0' })
+    await expect(checkNovaFlowRelease('0.1.0', fetcher, signal)).resolves.toEqual({ status: 'current', version: '0.1.0' })
+    await expect(checkNovaFlowRelease('0.1.0', fetcher, signal)).rejects.toThrow('GitHub answered 403')
     expect(fetcher.mock.calls[0]?.[0]).toBe(HALLUCODEX_LATEST_RELEASE_API)
     expect(fetcher.mock.calls[0]?.[1]).toMatchObject({ redirect: 'error', signal })
   })
@@ -55,10 +55,10 @@ describe('HalluCodex release check', () => {
       .mockResolvedValueOnce(Response.json(release('hallucodex-v0.2.0', '- 修复')))
       .mockResolvedValueOnce(Response.json(release('hallucodex-v0.3.0', '- 其他')))
     const signal = new AbortController().signal
-    await expect(fetchHalluCodexReleaseNotes('0.2.0', fetcher, signal)).resolves.toBe('• 修复')
-    expect(fetcher.mock.calls[0]?.[0]).toBe('https://api.github.com/repos/AkumaRealLabs/hallucodex-desktop/releases/tags/hallucodex-v0.2.0')
-    await expect(fetchHalluCodexReleaseNotes('0.2.0', fetcher, signal)).rejects.toThrow('another release')
-    await expect(fetchHalluCodexReleaseNotes('../x', fetcher, signal)).rejects.toThrow('invalid version')
+    await expect(fetchNovaFlowReleaseNotes('0.2.0', fetcher, signal)).resolves.toBe('• 修复')
+    expect(fetcher.mock.calls[0]?.[0]).toBe('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/hallucodex-v0.2.0')
+    await expect(fetchNovaFlowReleaseNotes('0.2.0', fetcher, signal)).rejects.toThrow('another release')
+    await expect(fetchNovaFlowReleaseNotes('../x', fetcher, signal)).rejects.toThrow('invalid version')
   })
 
   it('remembers only the release postponed from an automatic prompt', async () => {

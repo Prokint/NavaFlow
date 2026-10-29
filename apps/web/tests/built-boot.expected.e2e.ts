@@ -22,10 +22,10 @@ it('boots the built plugin graph and renders a fixture session end to end', asyn
 
   // The sidebar renders from the boot graph: every inject layer activated.
   const tree = await screen.findByRole('tree', { name: 'Sessions' }, { timeout: 10_000 })
-  // Every build profile carries the HalluCodex brand occupants instead of the shell's fish and local-build label.
+  // Every build profile carries the NovaFlow brand occupants instead of the shell's fish and local-build label.
   expect(document.querySelector('svg path[d^="M5.5 2A2.5 2.5"]')).not.toBeNull()
   expect(document.querySelector('svg[viewBox="0 0 23.16 17.04"]')).toBeNull()
-  screen.getByText('HalluCodex')
+  screen.getByText('NovaFlow')
   // The compact layout dropped group session counts; the fixture workspace
   // group row renders immediately with its sessions beneath it.
   const fixtureGroup = (await within(tree).findAllByText('fixture'))

@@ -29,7 +29,7 @@ function barrier() {
 async function fixture(arch: 'arm64' | 'x64' = 'arm64') {
   const root = await mkdtemp(join(tmpdir(), 'desktop-parallel-notarization-'))
   const artifactsRoot = join(root, 'artifacts')
-  const appPath = join(artifactsRoot, arch === 'arm64' ? 'mac-arm64' : 'mac', 'HalluCodex.app')
+  const appPath = join(artifactsRoot, arch === 'arm64' ? 'mac-arm64' : 'mac', 'NovaFlow.app')
   await mkdir(join(appPath, 'Contents', 'Resources'), { recursive: true })
   await writeDesktopAppUpdateConfig(join(appPath, 'Contents', 'Resources'), 'hallucodex-updater')
   await writeFile(join(appPath, 'payload'), 'signed content')
@@ -193,7 +193,7 @@ describe('parallel macOS artifacts', () => {
         }
         if (failure === 'metadata' && artifact.format === 'zip') await rm(join(artifact.output, 'latest-mac.yml'))
         if (failure === 'artifact-name') {
-          // An artifact named after DeepSeek Harness does not satisfy the HalluCodex artifactName.
+          // An artifact named after DeepSeek Harness does not satisfy the NovaFlow artifactName.
           await rename(join(artifact.output, `${f.base}.${artifact.format}`),
             join(artifact.output, `deepseek-harness-${f.request.version}-mac-arm64.${artifact.format}`))
         }
@@ -206,7 +206,7 @@ describe('parallel macOS artifacts', () => {
   it('passes the actual App and isolated output directory to each single-target builder', () => {
     const target = resolveDesktopPackageTarget('mac-arm64', 'darwin', 'arm64')
     for (const format of ['zip', 'dmg'] as const) {
-      const appPath = join('private build', format, 'HalluCodex.app')
+      const appPath = join('private build', format, 'NovaFlow.app')
       const output = join(dirname(appPath), 'artifacts')
       expect(desktopElectronBuilderArguments(target, false, { format, appPath, output })).toEqual([
         'exec', 'electron-builder', '--config', 'electron-builder.config.mjs',

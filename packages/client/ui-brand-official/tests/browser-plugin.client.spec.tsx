@@ -7,7 +7,7 @@ import { apply, inject } from '../src/client/index.ts'
 import { AccountAction, AccountActionView, type AccountActionProps } from '../src/client/AccountAction.tsx'
 import { ACCOUNT_PANEL_ID, AccountPage, AccountPageView, type AccountPageProps } from '../src/client/AccountPage.tsx'
 import { readDesktopAccountBridge, type DesktopAccountState } from '../src/client/bridge.ts'
-import { HalluCodexMark, HalluCodexName } from '../src/client/Brand.tsx'
+import { NovaFlowMark, NovaFlowName } from '../src/client/Brand.tsx'
 import { HALLUCODEX_MARK_IMAGE } from '../src/client/mark-image.ts'
 import { en, NS, zh } from '../src/client/locales.ts'
 import { apply as hostApply } from '../src/index.ts'
@@ -71,7 +71,7 @@ function bridge(initial: DesktopAccountState = { status: 'signed-out' }) {
 
 const t = (key: keyof typeof zh) => zh[key]
 
-describe('HalluCodex browser-brand plugin', () => {
+describe('NovaFlow browser-brand plugin', () => {
   it('keeps the host Loader entry inert', () => {
     expect(hostApply).not.toThrow()
   })
@@ -110,13 +110,13 @@ describe('HalluCodex browser-brand plugin', () => {
     expect(web.slots.entries(ACCOUNT_HOLE)).toHaveLength(0)
     expect(web.slots.entries(PAGE_HOLE)).toHaveLength(0)
 
-    vi.stubGlobal('dshHalluCodex', bridge().value)
+    vi.stubGlobal('dshNovaFlow', bridge().value)
     const desktop = await bench()
     await desktop.ctx.plugin({ inject: [...inject], apply }).await()
     expect(desktop.slots.entries(ACCOUNT_HOLE)).toHaveLength(1)
     expect(desktop.slots.entries(PAGE_HOLE).map(entry => entry.options.key)).toEqual([ACCOUNT_PANEL_ID])
     // Each occupant's injected face carries the bridge; the entry's also selects the page.
-    const value = (globalThis as { dshHalluCodex?: unknown }).dshHalluCodex
+    const value = (globalThis as { dshNovaFlow?: unknown }).dshNovaFlow
     const injected = (hole: typeof PAGE_HOLE | typeof ACCOUNT_HOLE) =>
       (desktop.slots.entries(hole)[0]!.inject as () => Record<string, unknown>)()
     expect(injected(PAGE_HOLE)).toEqual({ bridge: value })
@@ -128,7 +128,7 @@ describe('HalluCodex browser-brand plugin', () => {
 
   it('shows the account page on the shell request once the page is registered and stops listening on teardown', async () => {
     const account = bridge()
-    vi.stubGlobal('dshHalluCodex', account.value)
+    vi.stubGlobal('dshNovaFlow', account.value)
     const desktop = await bench(false)
     const fiber = desktop.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
@@ -145,9 +145,9 @@ describe('HalluCodex browser-brand plugin', () => {
 
   it('accepts only a bridge with every page operation', () => {
     expect(readDesktopAccountBridge({})).toBeUndefined()
-    expect(readDesktopAccountBridge({ dshHalluCodex: { subscribe() {}, open() {} } })).toBeUndefined()
+    expect(readDesktopAccountBridge({ dshNovaFlow: { subscribe() {}, open() {} } })).toBeUndefined()
     const value = bridge().value
-    expect(readDesktopAccountBridge({ dshHalluCodex: value })).toBe(value)
+    expect(readDesktopAccountBridge({ dshNovaFlow: value })).toBe(value)
   })
 
   it('hands its head and content hosts to the shell while mounted and keeps the head draggable', () => {
@@ -176,21 +176,21 @@ describe('HalluCodex browser-brand plugin', () => {
     const button = view.getByRole('button')
     expect(button.getAttribute('aria-current')).toBe('page')
     // A signed-in summary without a name shows the generic label and icon.
-    expect(button.getAttribute('aria-label')).toBe('HalluCodex 账号: HalluCodex 账号')
+    expect(button.getAttribute('aria-label')).toBe('NovaFlow 账号: NovaFlow 账号')
     expect(view.container.querySelector('svg')).not.toBeNull()
   })
 
   it('renders the mark at each requested size and the product name', () => {
-    const name = render(<HalluCodexName t={t} />)
-    expect(name.container.textContent).toBe('HalluCodex')
+    const name = render(<NovaFlowName t={t} />)
+    expect(name.container.textContent).toBe('NovaFlow')
     name.unmount()
 
-    const mark = render(<HalluCodexMark size={34} className="hero" />)
+    const mark = render(<NovaFlowMark size={34} className="hero" />)
     const svg = mark.container.querySelector('svg')
     expect(svg?.getAttribute('width')).toBe('34')
     expect(svg?.getAttribute('class')).toBe('hero')
     expect(svg?.querySelector('image')?.getAttribute('href')).toBe(HALLUCODEX_MARK_IMAGE)
-    mark.rerender(<HalluCodexMark size={24} />)
+    mark.rerender(<NovaFlowMark size={24} />)
     expect(mark.container.querySelector('svg')?.getAttribute('width')).toBe('24')
   })
 
@@ -198,7 +198,7 @@ describe('HalluCodex browser-brand plugin', () => {
     const account = bridge()
     const openPage = vi.fn()
     const view = render(<AccountActionView wide active={false} bridge={account.value} openPage={openPage} t={t} />)
-    const button = view.getByRole('button', { name: '登录 HalluCodex' })
+    const button = view.getByRole('button', { name: '登录 NovaFlow' })
     expect(button.getAttribute('aria-current')).toBeNull()
     fireEvent.click(button)
     expect(openPage).toHaveBeenCalledOnce()
@@ -206,7 +206,7 @@ describe('HalluCodex browser-brand plugin', () => {
     act(() => { account.publish({ status: 'signing-in' }) })
     view.getByRole('button', { name: '正在登录…' })
     act(() => { account.publish({ status: 'signed-in', name: 'akuma' }) })
-    view.getByRole('button', { name: 'HalluCodex 账号: akuma' })
+    view.getByRole('button', { name: 'NovaFlow 账号: akuma' })
     expect(view.container.textContent).toBe('Aakuma')
 
     view.rerender(<AccountActionView wide={false} active bridge={account.value} openPage={openPage} t={t} />)

@@ -23,7 +23,7 @@ function fixture(platform: 'win32' | 'darwin' | 'linux' = process.platform === '
   const resources = join(application, ...platform === 'darwin' ? ['Contents', 'Resources'] : ['resources'])
   const cli = join(resources, 'runtime', 'cli')
   prepareDesktopCli(cli, platform)
-  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'HalluCodex'] : [platform === 'linux' ? 'hallucodex' : 'HalluCodex.exe'])
+  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'NovaFlow'] : [platform === 'linux' ? 'hallucodex' : 'NovaFlow.exe'])
   mkdirSync(dirname(electron), { recursive: true })
   if (platform === 'win32') copyFileSync(process.execPath, electron)
   else symlinkSync(process.execPath, electron)

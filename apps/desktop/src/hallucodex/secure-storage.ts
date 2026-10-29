@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto'
 import { constants, closeSync, fchmodSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync, chmodSync, fstatSync, type Stats } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { HalluCodexAuthError, parseRefreshRecord, type RefreshGrant } from './auth-protocol.ts'
+import { NovaFlowAuthError, parseRefreshRecord, type RefreshGrant } from './auth-protocol.ts'
 
 /** Inject Electron safeStorage only after app readiness; do not enable plaintext encryption. */
 export interface SafeStorageEncryption {
@@ -71,10 +71,10 @@ export class SafeStorageRefreshStore implements RefreshStore {
     try {
       if (!this.#encryption.isEncryptionAvailable()
         || (this.#platform === 'linux' && !linuxBackends.has(this.#encryption.getSelectedStorageBackend?.() ?? 'unknown'))) {
-        throw new HalluCodexAuthError('secure_storage_unavailable')
+        throw new NovaFlowAuthError('secure_storage_unavailable')
       }
     } catch (_error) {
-      throw new HalluCodexAuthError('secure_storage_unavailable')
+      throw new NovaFlowAuthError('secure_storage_unavailable')
     }
   }
 
@@ -95,7 +95,7 @@ export class SafeStorageRefreshStore implements RefreshStore {
       } finally { closeSync(fd) }
       return parseRefreshRecord(JSON.parse(this.#encryption.decryptString(encrypted)), this.#origin())
     } catch (_error) {
-      throw new HalluCodexAuthError('storage_error')
+      throw new NovaFlowAuthError('storage_error')
     }
   }
 
@@ -118,7 +118,7 @@ export class SafeStorageRefreshStore implements RefreshStore {
         profile: { id: grant.profile.id, displayName: grant.profile.displayName },
       }, origin)
       const encrypted = this.#encryption.encryptString(JSON.stringify({ version: 1, origin, ...record }))
-      if (encrypted.byteLength === 0 || encrypted.byteLength > 65_536) throw new HalluCodexAuthError('storage_error')
+      if (encrypted.byteLength === 0 || encrypted.byteLength > 65_536) throw new NovaFlowAuthError('storage_error')
       temporary = join(this.#directory, `.refresh-${randomBytes(16).toString('hex')}.tmp`)
       const fd = openSync(temporary, 'wx', 0o600)
       try {
@@ -131,7 +131,7 @@ export class SafeStorageRefreshStore implements RefreshStore {
       temporary = undefined
       this.syncDirectory()
     } catch (_error) {
-      throw new HalluCodexAuthError('storage_error')
+      throw new NovaFlowAuthError('storage_error')
     } finally {
       if (temporary !== undefined) {
         try { unlinkSync(temporary) }
@@ -150,28 +150,28 @@ export class SafeStorageRefreshStore implements RefreshStore {
       const file = lstatSync(this.#file, { throwIfNoEntry: false })
       if (!file) return
       // Unlink removes a replaced symlink itself without following its target.
-      if (!file.isFile() && !file.isSymbolicLink()) throw new HalluCodexAuthError('storage_error')
+      if (!file.isFile() && !file.isSymbolicLink()) throw new NovaFlowAuthError('storage_error')
       unlinkSync(this.#file)
       this.syncDirectory()
     } catch (_error) {
-      throw new HalluCodexAuthError('storage_error')
+      throw new NovaFlowAuthError('storage_error')
     }
   }
 
   private prepareDirectory(): void {
     mkdirSync(this.#directory, { recursive: true, mode: 0o700 })
     const directory = lstatSync(this.#directory)
-    if (!directory.isDirectory() || directory.isSymbolicLink()) throw new HalluCodexAuthError('storage_error')
+    if (!directory.isDirectory() || directory.isSymbolicLink()) throw new NovaFlowAuthError('storage_error')
     if (this.#platform !== 'win32') {
-      if (process.getuid && directory.uid !== process.getuid()) throw new HalluCodexAuthError('storage_error')
+      if (process.getuid && directory.uid !== process.getuid()) throw new NovaFlowAuthError('storage_error')
       chmodSync(this.#directory, 0o700)
     }
   }
 
   private checkPrivateFile(file: Stats): void {
-    if (!file.isFile() || file.nlink !== 1 || file.size > 65_536) throw new HalluCodexAuthError('storage_error')
+    if (!file.isFile() || file.nlink !== 1 || file.size > 65_536) throw new NovaFlowAuthError('storage_error')
     if (this.#platform !== 'win32' && ((file.mode & 0o777) !== 0o600 || (process.getuid && file.uid !== process.getuid()))) {
-      throw new HalluCodexAuthError('storage_error')
+      throw new NovaFlowAuthError('storage_error')
     }
   }
 

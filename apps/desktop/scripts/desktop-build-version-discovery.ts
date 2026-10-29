@@ -4,7 +4,7 @@
  *
  * `apps/desktop/README.md` gives the form as `<product version>.<date>.<index>`
  * for a prerelease base and `<product version>-test.<date>.<index>` for a
- * stable one. What makes an index correct is which ones are taken. HalluCodex
+ * stable one. What makes an index correct is which ones are taken. NovaFlow
  * publishes to no update bucket, so the only record is the target's local
  * output directory; indexes handed out from another machine or a cleaned
  * directory are not visible here.
@@ -16,7 +16,7 @@ import { desktopBuildVersionPrefix, validateDesktopBuildVersion } from './deskto
 
 /**
  * Artifact name electron-builder writes for one build; unsigned Windows builds add a suffix.
- * Artifacts named before the HalluCodex rename still occupy their index in the same directory.
+ * Artifacts named before the NovaFlow rename still occupy their index in the same directory.
  */
 const ARTIFACT = new RegExp(
   '^(?:deepseek-harness|hallucodex)-(?<version>.+)-(?:mac|win|linux)-(?:arm64|x64|x86_64|arm_aarch64|amd64)'

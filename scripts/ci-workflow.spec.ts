@@ -1173,7 +1173,7 @@ describe('npm release workflows', () => {
   })
 })
 
-describe('HalluCodex desktop release workflow', () => {
+describe('NovaFlow desktop release workflow', () => {
   const workflow = loadWorkflow('.github/workflows/hallucodex-desktop-release.yml')
   const steps = (name: string): Record<string, unknown>[] => {
     const job = workflowJob(workflow, name)

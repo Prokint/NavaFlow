@@ -1,5 +1,5 @@
 ---
-description: "侧栏与会话首屏的 HalluCodex 品牌填充，以及桌面端账号入口；供选择或替换品牌呈现的用户与维护者阅读。"
+description: "侧栏与会话首屏的 NovaFlow 品牌填充，以及桌面端账号入口；供选择或替换品牌呈现的用户与维护者阅读。"
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-本包让所有客户端构建都以 HalluCodex 呈现：无论构建 profile 如何，侧栏都显示 HalluCodex 标志与名称，会话首屏显示该标志。在 HalluCodex 桌面外壳中，它还会在主区域加入账号页面，并在「设置」上方加一个账号入口，显示已登录的名字或登录提示，点击后切到该页面。使用其他品牌的部署应提供替代品牌包。本包不保留自己的运行时状态，也不影响模型请求。
+本包让所有客户端构建都以 NovaFlow 呈现：无论构建 profile 如何，侧栏都显示 NovaFlow 标志与名称，会话首屏显示该标志。在 NovaFlow 桌面外壳中，它还会在主区域加入账号页面，并在「设置」上方加一个账号入口，显示已登录的名字或登录提示，点击后切到该页面。使用其他品牌的部署应提供替代品牌包。本包不保留自己的运行时状态，也不影响模型请求。
 
 ## 目录
 
@@ -29,7 +29,7 @@ kind: "package-reference"
 
 ### 桌面端账号入口
 
-HalluCodex preload 暴露的 `window.dshHalluCodex` 只有三个操作：`subscribe` 推送不含凭据的摘要（`signed-out`、`signing-in`，或带显示名的 `signed-in`）；`onOpen` 推送外壳要求显示账号页面的请求，来自应用菜单或未登录时打开的工作区；`mount` 把原生账号页面渲染进页面框架的标题区和内容区，并返回卸载函数。页面是 `hallucodex-account` 主区域面板：高度固定的框架，标题行可拖动 macOS 窗口，在外壳渲染的标题旁显示 HalluCodex 标志，其余部分由外壳内容填满。入口渲染在 `sidebar.footer.action` slot 中，样式与「设置」触发器一致，点击后切到该页面，显示期间保持选中样式，收起侧栏时变成头像或图标。Web 客户端没有这个桥，因此两者都不显示。
+NovaFlow preload 暴露的 `window.dshNovaFlow` 只有三个操作：`subscribe` 推送不含凭据的摘要（`signed-out`、`signing-in`，或带显示名的 `signed-in`）；`onOpen` 推送外壳要求显示账号页面的请求，来自应用菜单或未登录时打开的工作区；`mount` 把原生账号页面渲染进页面框架的标题区和内容区，并返回卸载函数。页面是 `hallucodex-account` 主区域面板：高度固定的框架，标题行可拖动 macOS 窗口，在外壳渲染的标题旁显示 NovaFlow 标志，其余部分由外壳内容填满。入口渲染在 `sidebar.footer.action` slot 中，样式与「设置」触发器一致，点击后切到该页面，显示期间保持选中样式，收起侧栏时变成头像或图标。Web 客户端没有这个桥，因此两者都不显示。
 
 ### 替换品牌
 

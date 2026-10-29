@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
-import { createHalluCodexAccountUi, halluCodexAccountCopy } from '../src/hallucodex/account-ui.ts'
+import { createNovaFlowAccountUi, halluCodexAccountCopy } from '../src/hallucodex/account-ui.ts'
 import type { GroupSelection } from '../src/hallucodex/group-policy.ts'
-import type { GroupSelectionResult, HalluCodexDesktopSnapshot } from '../src/hallucodex/runtime.ts'
+import type { GroupSelectionResult, NovaFlowDesktopSnapshot } from '../src/hallucodex/runtime.ts'
 
 const serverOrigin = 'https://api.hallucodex.com'
-const signedOut: HalluCodexDesktopSnapshot = { account: { status: 'signed-out' }, serverOrigin, catalogStatus: 'unavailable' }
-const signedIn: HalluCodexDesktopSnapshot = {
+const signedOut: NovaFlowDesktopSnapshot = { account: { status: 'signed-out' }, serverOrigin, catalogStatus: 'unavailable' }
+const signedIn: NovaFlowDesktopSnapshot = {
   account: { status: 'signed-in', profile: { id: 'fixture-id', displayName: '<img src=x onerror=alert(1)>' }, group: 'discount', allowedGroups: ['discount'],
     autoGroups: null, crossGroupRetry: false, canSelectGroup: false },
   serverOrigin, walletStatus: 'ready', wallet: { remaining: '900', accountUsage: '100', deviceUsage: '40', deviceLimit: '500', unit: 'quota' },
@@ -30,12 +30,12 @@ function hosts() {
 
 function fixture(initial = signedOut, language = 'en') {
   let latest = initial
-  let listener: (state: HalluCodexDesktopSnapshot) => void = () => {}
+  let listener: (state: NovaFlowDesktopSnapshot) => void = () => {}
   const unsubscribe = vi.fn()
   const operations = {
     state: vi.fn(async () => latest),
-    start: vi.fn<() => Promise<HalluCodexDesktopSnapshot>>(async () => ({ account: { status: 'signing-in' as const, expiresAt: 100 }, serverOrigin, catalogStatus: 'unavailable' as const })),
-    setServer: vi.fn<(origin: string) => Promise<HalluCodexDesktopSnapshot>>(async origin => ({ ...signedOut, serverOrigin: origin })),
+    start: vi.fn<() => Promise<NovaFlowDesktopSnapshot>>(async () => ({ account: { status: 'signing-in' as const, expiresAt: 100 }, serverOrigin, catalogStatus: 'unavailable' as const })),
+    setServer: vi.fn<(origin: string) => Promise<NovaFlowDesktopSnapshot>>(async origin => ({ ...signedOut, serverOrigin: origin })),
     openPage: vi.fn(async (_page: 'wallet' | 'usage' | 'devices') => {}),
     cancel: vi.fn(async () => signedOut), signOut: vi.fn(async () => ({ remoteRevoked: true })),
     refresh: vi.fn(async () => {}), refreshWallet: vi.fn(async () => {}), refreshCatalog: vi.fn(async () => {}),
@@ -43,12 +43,12 @@ function fixture(initial = signedOut, language = 'en') {
     selectGroup: vi.fn<(selection: GroupSelection) => Promise<GroupSelectionResult>>(async () => 'selected'),
     subscribe: (callback: typeof listener) => { listener = callback; return unsubscribe },
   }
-  const view = createHalluCodexAccountUi(document, operations, halluCodexAccountCopy(language))
+  const view = createNovaFlowAccountUi(document, operations, halluCodexAccountCopy(language))
   disposers.push(() => { view.dispose() })
   const { page, head, content } = hosts()
   const ui = { open: () => view.mount(head, content), unmount: () => { view.unmount() }, dispose: () => { view.dispose() } }
   return { ui, operations, page, unsubscribe,
-    publish: (snapshot: HalluCodexDesktopSnapshot) => { latest = snapshot; listener(snapshot) },
+    publish: (snapshot: NovaFlowDesktopSnapshot) => { latest = snapshot; listener(snapshot) },
   }
 }
 
@@ -64,11 +64,11 @@ function row(label: string): string | null | undefined {
   return term?.nextElementSibling?.textContent
 }
 
-describe('native HalluCodex account UI', () => {
+describe('native NovaFlow account UI', () => {
   it('renders safe identity and concrete group without interpreting account HTML', async () => {
     const { ui, page, operations } = fixture(signedIn)
     await ui.open()
-    expect(page.querySelector('.hcx-head h1')?.textContent).toBe('HalluCodex account')
+    expect(page.querySelector('.hcx-head h1')?.textContent).toBe('NovaFlow account')
     expect(page.querySelector('.hcx-chip')?.textContent).toBe('Signed in')
     expect(page.textContent).toContain('<img src=x onerror=alert(1)>')
     expect(page.querySelector('img')).toBeNull()
@@ -99,7 +99,7 @@ describe('native HalluCodex account UI', () => {
 
   it('keeps a pending login while the page is away, cancels it from the page and ignores the late start result', async () => {
     const { ui, operations, page } = fixture()
-    const pending = Promise.withResolvers<HalluCodexDesktopSnapshot>()
+    const pending = Promise.withResolvers<NovaFlowDesktopSnapshot>()
     operations.start.mockImplementationOnce(() => pending.promise)
     await ui.open()
     button('Sign in using browser').click()
@@ -132,7 +132,7 @@ describe('native HalluCodex account UI', () => {
   })
   it('does not reopen a disposed view when an earlier state read resolves', async () => {
     const { ui, operations, page, unsubscribe } = fixture()
-    const pending = Promise.withResolvers<HalluCodexDesktopSnapshot>()
+    const pending = Promise.withResolvers<NovaFlowDesktopSnapshot>()
     operations.state.mockImplementationOnce(() => pending.promise)
     const opening = ui.open()
     ui.dispose()
@@ -162,13 +162,13 @@ describe('native HalluCodex account UI', () => {
     button('Switch').click()
     await vi.waitFor(() => { expect(page.textContent).toContain('Invalid server address') })
     publish({ ...signedOut, serverOrigin: 'http://localhost:3000' })
-    button('Use HalluCodex service').click()
+    button('Use NovaFlow service').click()
     await vi.waitFor(() => { expect(operations.setServer).toHaveBeenLastCalledWith(serverOrigin) })
   })
   it('switches groups in the page when the server allows it', async () => {
     const groups = [{ name: 'discount', description: '', ratio: 1 }, { name: 'premium', description: 'Fast', ratio: 2 }]
-    const selectable = (group: string): HalluCodexDesktopSnapshot => ({
-      ...signedIn, account: { ...signedIn.account, group, allowedGroups: ['discount', 'premium'], canSelectGroup: true } as HalluCodexDesktopSnapshot['account'],
+    const selectable = (group: string): NovaFlowDesktopSnapshot => ({
+      ...signedIn, account: { ...signedIn.account, group, allowedGroups: ['discount', 'premium'], canSelectGroup: true } as NovaFlowDesktopSnapshot['account'],
       catalog: { group, groups, auto: null, routeGroups: [group], models: [] },
     })
     const { ui, page, operations, publish } = fixture(selectable('discount'))
@@ -218,8 +218,8 @@ describe('native HalluCodex account UI', () => {
   it('moves to automatic routing and edits its order, limit and retry choice before saving', async () => {
     const groups = [{ name: 'discount', description: '', ratio: 1 }, { name: 'premium', description: '', ratio: 2 }, { name: 'cheap', description: '', ratio: 0.5 }]
     const auto = { description: 'Picks for you', defaultGroups: ['premium', 'discount'], maxGroups: 2 }
-    const routed = (selection: GroupSelection, routeGroups: string[]): HalluCodexDesktopSnapshot => ({
-      ...signedIn, account: { ...signedIn.account, ...selection, allowedGroups: ['discount', 'premium', 'cheap'], canSelectGroup: true } as HalluCodexDesktopSnapshot['account'],
+    const routed = (selection: GroupSelection, routeGroups: string[]): NovaFlowDesktopSnapshot => ({
+      ...signedIn, account: { ...signedIn.account, ...selection, allowedGroups: ['discount', 'premium', 'cheap'], canSelectGroup: true } as NovaFlowDesktopSnapshot['account'],
       catalog: { group: selection.group, groups, auto, routeGroups, models: [] },
     })
     const { ui, page, operations, publish } = fixture(routed({ group: 'discount', autoGroups: null, crossGroupRetry: false }, ['discount']))
@@ -293,8 +293,8 @@ describe('native HalluCodex account UI', () => {
   })
   it('asks for an order when the site sets no default and hides auto when the site withdraws it', async () => {
     const groups = [{ name: 'discount', description: '', ratio: 1 }, { name: 'premium', description: '', ratio: 2 }]
-    const offered = (auto: { description: string; defaultGroups: string[]; maxGroups: number } | null): HalluCodexDesktopSnapshot => ({
-      ...signedIn, account: { ...signedIn.account, allowedGroups: ['discount', 'premium'], canSelectGroup: true } as HalluCodexDesktopSnapshot['account'],
+    const offered = (auto: { description: string; defaultGroups: string[]; maxGroups: number } | null): NovaFlowDesktopSnapshot => ({
+      ...signedIn, account: { ...signedIn.account, allowedGroups: ['discount', 'premium'], canSelectGroup: true } as NovaFlowDesktopSnapshot['account'],
       catalog: { group: 'discount', groups, auto, routeGroups: ['discount'], models: [] },
     })
     const { ui, page, operations, publish } = fixture(offered({ description: '', defaultGroups: [], maxGroups: 5 }))
@@ -318,7 +318,7 @@ describe('native HalluCodex account UI', () => {
   it('starts a custom order from the first allowed groups of a longer global order', async () => {
     const groups = ['a', 'b', 'c', 'd'].map((name, index) => ({ name, description: '', ratio: index + 1 }))
     const { ui, page, operations } = fixture({
-      ...signedIn, account: { ...signedIn.account, group: 'auto', allowedGroups: ['a', 'b', 'c', 'd'], canSelectGroup: true } as HalluCodexDesktopSnapshot['account'],
+      ...signedIn, account: { ...signedIn.account, group: 'auto', allowedGroups: ['a', 'b', 'c', 'd'], canSelectGroup: true } as NovaFlowDesktopSnapshot['account'],
       catalog: { group: 'auto', groups, auto: { description: '', defaultGroups: ['c', 'a', 'b'], maxGroups: 2 }, routeGroups: ['c', 'a', 'b'], models: [] },
     })
     await ui.open()
@@ -423,7 +423,7 @@ describe('native HalluCodex account UI', () => {
 
   it('ignores an older state query after a subscribed balance update', async () => {
     const { ui, operations, publish } = fixture(signedIn)
-    const delayed = Promise.withResolvers<HalluCodexDesktopSnapshot>()
+    const delayed = Promise.withResolvers<NovaFlowDesktopSnapshot>()
     operations.state.mockReturnValueOnce(delayed.promise)
     const opening = ui.open()
     publish({ ...signedIn, wallet: { ...signedIn.wallet!, remaining: '45' } })
@@ -434,7 +434,7 @@ describe('native HalluCodex account UI', () => {
 
   it('clears old account group choices on sign-out and keeps long descriptions as text', async () => {
     const description = '<img src=x onerror=alert(1)> ' + 'Long description '.repeat(20)
-    const initial: HalluCodexDesktopSnapshot = { ...signedIn,
+    const initial: NovaFlowDesktopSnapshot = { ...signedIn,
       account: { status: 'signed-in', profile: { id: 'first', displayName: 'First' }, group: 'discount', allowedGroups: ['discount', 'premium'],
         autoGroups: null, crossGroupRetry: false, canSelectGroup: true },
       catalog: { group: 'discount', models: [], auto: null, routeGroups: ['discount'], groups: [{ name: 'discount', ratio: 1, description: '' }, { name: 'premium', ratio: 2, description }] },
@@ -447,7 +447,7 @@ describe('native HalluCodex account UI', () => {
     expect(page.querySelector('img')).toBeNull()
     publish(signedOut)
     expect(select.options.length).toBe(0)
-    publish({ ...initial, account: { ...initial.account, profile: { id: 'second', displayName: 'Second' } } as HalluCodexDesktopSnapshot['account'], catalogStatus: 'loading' })
+    publish({ ...initial, account: { ...initial.account, profile: { id: 'second', displayName: 'Second' } } as NovaFlowDesktopSnapshot['account'], catalogStatus: 'loading' })
     expect(select.options.length).toBe(0)
     expect(page.querySelector<HTMLElement>('.hcx-group')?.hidden).toBe(true)
   })
@@ -471,8 +471,8 @@ describe('native HalluCodex account UI', () => {
   })
 
   it('drives capability refresh, group confirmation and balance recovery through the real native runtime', async () => {
-    const { HalluCodexDesktopRuntime } = await import('../src/hallucodex/runtime.ts')
-    const { HalluCodexHttpAuthTransport } = await import('../src/hallucodex/auth-protocol.ts')
+    const { NovaFlowDesktopRuntime } = await import('../src/hallucodex/runtime.ts')
+    const { NovaFlowHttpAuthTransport } = await import('../src/hallucodex/auth-protocol.ts')
     const { ServerOriginSetting } = await import('../src/hallucodex/server-origin.ts')
     const now = Date.UTC(2026, 9, 7, 4, 5, 6)
     let rotations = 0
@@ -507,16 +507,16 @@ describe('native HalluCodex account UI', () => {
       if (path === '/api/status') return Response.json({ success: true, data: { quota_per_unit: 500000, quota_display_type: 'USD' } })
       throw new Error('unexpected endpoint')
     })
-    let listener: (snapshot: HalluCodexDesktopSnapshot) => void = () => {}
-    const runtime = new HalluCodexDesktopRuntime({
+    let listener: (snapshot: NovaFlowDesktopSnapshot) => void = () => {}
+    const runtime = new NovaFlowDesktopRuntime({
       server: new ServerOriginSetting(undefined, serverOrigin), fetch: fetcher, now: () => now, maxRequestBytes: 4096,
-      transport: new HalluCodexHttpAuthTransport(() => serverOrigin, fetcher, () => now), deviceName: 'Fixture', openExternal: vi.fn(),
+      transport: new NovaFlowHttpAuthTransport(() => serverOrigin, fetcher, () => now), deviceName: 'Fixture', openExternal: vi.fn(),
       store: { assertAvailable() {}, load: async () => ({ refreshToken: 'dsr.saved', refreshExpiresAt: now + 86_400_000,
         deviceSessionId: 'fixture-device', profile: { id: 'fixture', displayName: 'Fixture' }, group: 'discount' }), save: vi.fn(), clear: vi.fn() },
       onChange: (snapshot) => { listener(snapshot) },
     })
     onTestFinished(() => runtime.dispose())
-    const ui = createHalluCodexAccountUi(document, {
+    const ui = createNovaFlowAccountUi(document, {
       state: async () => runtime.getSnapshot(), start: () => runtime.startSignIn(), cancel: () => runtime.cancelSignIn(),
       signOut: () => runtime.signOut(), restore: () => runtime.restore(), refresh: () => runtime.refreshAccount(),
       refreshCatalog: () => runtime.refreshCatalog(), refreshWallet: () => runtime.refreshWallet(),

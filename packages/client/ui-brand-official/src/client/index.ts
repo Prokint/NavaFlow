@@ -1,4 +1,4 @@
-/** HalluCodex occupants for the generic brand slots, plus the desktop account entry and page. */
+/** NovaFlow occupants for the generic brand slots, plus the desktop account entry and page. */
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -8,19 +8,19 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { AccountAction, type AccountActionFace } from './AccountAction.tsx'
 import { ACCOUNT_PANEL_ID, AccountPage, type AccountPageFace } from './AccountPage.tsx'
 import { readDesktopAccountBridge } from './bridge.ts'
-import { HalluCodexMark, HalluCodexName } from './Brand.tsx'
+import { NovaFlowMark, NovaFlowName } from './Brand.tsx'
 import { en, NS, zh } from './locales.ts'
 
 export type { AccountActionFace } from './AccountAction.tsx'
 export type { AccountPageFace } from './AccountPage.tsx'
 export type { DesktopAccountBridge, DesktopAccountState } from './bridge.ts'
-export type { HalluCodexKey } from './locales.ts'
+export type { NovaFlowKey } from './locales.ts'
 
 /** Required services: the UI slot registry, the locale registry, and the layout that selects the account page. */
 export const inject = ['slots', 'locale', 'layout']
 
 /**
- * Brand the sidebar and conversation hero as HalluCodex in every build profile and,
+ * Brand the sidebar and conversation hero as NovaFlow in every build profile and,
  * when the desktop shell exposes its account bridge, add the account page with its entry above Settings.
  * @param ctx - Client root context.
  */
@@ -28,10 +28,10 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'hallucodex: dictionaries')
   ctx.slots.inject('sidebar.brand.mark', () =>
     ctx.slots.inject('sidebar.brand.name', function* () {
-      yield ctx.slots.register({ name: 'sidebar.brand.mark' }, HalluCodexMark)
-      yield ctx.slots.register({ name: 'sidebar.brand.name', locale: NS }, HalluCodexName)
+      yield ctx.slots.register({ name: 'sidebar.brand.mark' }, NovaFlowMark)
+      yield ctx.slots.register({ name: 'sidebar.brand.name', locale: NS }, NovaFlowName)
     }))
-  ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark' }, HalluCodexMark))
+  ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark' }, NovaFlowMark))
   const bridge = readDesktopAccountBridge(globalThis)
   if (bridge === undefined) return
   const openPage = (): void => { ctx.layout.selectPanel(ACCOUNT_PANEL_ID) }

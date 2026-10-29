@@ -3,11 +3,11 @@ import type { IncomingHttpHeaders, OutgoingHttpHeaders } from 'node:http'
 import { connect } from 'node:net'
 import type { Socket } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { startHalluCodexLoopbackRelay } from '../src/hallucodex/loopback-relay.ts'
-import type { HalluCodexLoopbackRelay, HalluCodexLoopbackRelayOptions } from '../src/hallucodex/loopback-relay.ts'
+import { startNovaFlowLoopbackRelay } from '../src/hallucodex/loopback-relay.ts'
+import type { NovaFlowLoopbackRelay, NovaFlowLoopbackRelayOptions } from '../src/hallucodex/loopback-relay.ts'
 import type { DesktopRelayResult } from '../src/hallucodex/relay-broker.ts'
 
-const relays = new Set<HalluCodexLoopbackRelay>()
+const relays = new Set<NovaFlowLoopbackRelay>()
 const sockets = new Set<Socket>()
 const payload = { model: 'fixture-model', input: 'hello', stream: true }
 
@@ -23,24 +23,24 @@ afterEach(async () => {
   relays.clear()
 })
 
-async function fixture(overrides: Partial<Omit<HalluCodexLoopbackRelayOptions, 'runtime'>> = {}) {
-  const invoke = vi.fn<HalluCodexLoopbackRelayOptions['runtime']['invoke']>().mockImplementation(async () => ({
+async function fixture(overrides: Partial<Omit<NovaFlowLoopbackRelayOptions, 'runtime'>> = {}) {
+  const invoke = vi.fn<NovaFlowLoopbackRelayOptions['runtime']['invoke']>().mockImplementation(async () => ({
     response: new Response('data: {"delta":"ok"}\n\ndata: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } }),
     group: 'fixture-group', model: 'fixture-model',
   }))
   const getRelayRevision = vi.fn().mockReturnValue(1)
-  const relay = await startHalluCodexLoopbackRelay({
+  const relay = await startNovaFlowLoopbackRelay({
     runtime: { invoke, getRelayRevision }, maxRequestBytes: 1024, maxConcurrentRequests: 2, requestTimeoutMs: 1000, ...overrides,
   })
   relays.add(relay)
   return { relay, invoke, getRelayRevision }
 }
 
-function headers(relay: HalluCodexLoopbackRelay): OutgoingHttpHeaders {
+function headers(relay: NovaFlowLoopbackRelay): OutgoingHttpHeaders {
   return { authorization: `Bearer ${relay.localCapability}`, 'content-type': 'application/json', 'x-hallucodex-revision': '1' }
 }
 
-function exchange(relay: HalluCodexLoopbackRelay, options: {
+function exchange(relay: NovaFlowLoopbackRelay, options: {
   path?: string
   method?: string
   headers?: OutgoingHttpHeaders
@@ -69,7 +69,7 @@ function exchange(relay: HalluCodexLoopbackRelay, options: {
   })
 }
 
-describe('HalluCodex authenticated loopback relay', () => {
+describe('NovaFlow authenticated loopback relay', () => {
   it('binds only IPv4 loopback with an independently random capability per listener', async () => {
     const first = await fixture()
     const second = await fixture()
@@ -437,7 +437,7 @@ it.each([
 ] as const)('dispatches the actual %s serializer through the authenticated native relay', async (provider, endpoint) => {
   const { Context } = await import('@deepseek-ai/cordis')
   const { default: LlmRuntime, createUserMessage } = await import('@deepseek-ai/dsh-llm')
-  const { installHalluCodexProvider } = await import('../../desktop-host/src/hallucodex.ts')
+  const { installNovaFlowProvider } = await import('../../desktop-host/src/hallucodex.ts')
   const { relay, invoke } = await fixture()
   invoke.mockResolvedValue({
     response: Response.json({ error: { type: 'invalid_request_error', message: 'fixture-terminal' } }, { status: 400 }),
@@ -446,7 +446,7 @@ it.each([
   const ctx = new Context()
   try {
     await ctx.plugin(LlmRuntime)
-    await ctx.plugin((scope) => { installHalluCodexProvider(scope, {
+    await ctx.plugin((scope) => { installNovaFlowProvider(scope, {
       type: 'hallucodex-config', baseURL: relay.baseURL, localCapability: relay.localCapability, revision: 1,
       models: [{ id: 'fixture-model', endpoints: [endpoint], contextWindow: 8192, maxOutputTokens: 2048 }],
     }, () => Promise.reject(new Error('fixture: saving is not expected'))) })

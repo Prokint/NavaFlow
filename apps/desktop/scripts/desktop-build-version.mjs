@@ -2,7 +2,7 @@
  * Resolve the version one build carries, which is not always the version the
  * repository declares.
  *
- * HalluCodex releases follow their own version line: the release workflow
+ * NovaFlow releases follow their own version line: the release workflow
  * passes the version from a `hallucodex-v<version>` tag, and local test builds
  * may number themselves after the product version as
  * `<product version>.<date>.<sequence>` (or `-test.<date>.<sequence>` on a

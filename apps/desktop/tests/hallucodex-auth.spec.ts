@@ -4,8 +4,8 @@ import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
-import { HalluCodexAuthBroker } from '../src/hallucodex/auth-broker.ts'
-import { authorizationUrl, HalluCodexAuthError, HalluCodexHttpAuthTransport, parseAccessGrant, parseRefreshRecord, type AccessGrant, type AuthorizationRequest, type CodeExchange, type RefreshGrant } from '../src/hallucodex/auth-protocol.ts'
+import { NovaFlowAuthBroker } from '../src/hallucodex/auth-broker.ts'
+import { authorizationUrl, NovaFlowAuthError, NovaFlowHttpAuthTransport, parseAccessGrant, parseRefreshRecord, type AccessGrant, type AuthorizationRequest, type CodeExchange, type RefreshGrant } from '../src/hallucodex/auth-protocol.ts'
 import { createLoopbackLogin } from '../src/hallucodex/loopback-login.ts'
 import type { GroupSelection } from '../src/hallucodex/group-policy.ts'
 import { CALLBACK_PAGE_CSP, callbackLanguage, callbackPage } from '../src/hallucodex/callback-page.ts'
@@ -52,7 +52,7 @@ function fixture(scope = scopes) {
   }
   const openExternal = vi.fn(async (_url: string) => {})
   const onChange = vi.fn()
-  const broker = new HalluCodexAuthBroker({ store, transport, openExternal, origin: () => HALLUCODEX_ORIGIN, deviceName: 'Test desktop', now: () => now, onChange })
+  const broker = new NovaFlowAuthBroker({ store, transport, openExternal, origin: () => HALLUCODEX_ORIGIN, deviceName: 'Test desktop', now: () => now, onChange })
   onTestFinished(() => broker.dispose())
   const registration = () => {
     const value = transport.authorize.mock.calls.at(-1)?.[0]
@@ -100,7 +100,7 @@ describe('desktop authorization wire validation', () => {
     { refresh_token: 'website-jwt' }, { refresh_expires_at: start / 1000 }, { refresh_expires_at: refreshDeadline + 601 },
     { scope: 'relay:invoke' }, { scope: `${scopes} admin` }, { profile: { id: 'a', display_name: 'line\nbreak' } },
   ])('rejects unsafe token fields: %j', (fields) => {
-    expect(() => parseAccessGrant(wire(fields), start)).toThrow(HalluCodexAuthError)
+    expect(() => parseAccessGrant(wire(fields), start)).toThrow(NovaFlowAuthError)
   })
 
   it('accepts an automatic grant with its order and retry choice; servers that predate them send neither', () => {
@@ -147,7 +147,7 @@ describe('desktop authorization wire validation', () => {
   it('pins requests to the selected origin, omits browser cookies, refuses redirects, and redeems PKCE without retries', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json(wire()))
     let origin = HALLUCODEX_ORIGIN
-    const transport = new HalluCodexHttpAuthTransport(() => origin, fetcher, () => start)
+    const transport = new NovaFlowHttpAuthTransport(() => origin, fetcher, () => start)
     await transport.exchange({ code: 'dsc.single', codeVerifier: 'private-verifier', redirectUri: 'http://127.0.0.1:1234/oauth/callback' }, new AbortController().signal)
     expect(fetcher).toHaveBeenCalledOnce()
     expect(fetcher.mock.calls[0]?.[0]).toBe(`${HALLUCODEX_ORIGIN}/api/desktop/v1/token`)
@@ -162,7 +162,7 @@ describe('desktop authorization wire validation', () => {
 
   it('discards server messages and limits secret-bearing response bodies', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json({ error: { code: 'invalid_grant', message: 'dsr.do-not-log' } }, { status: 401 }))
-    const transport = new HalluCodexHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
+    const transport = new NovaFlowHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
     await expect(transport.refresh(parseAccessGrant(wire(), start), new AbortController().signal)).rejects.toThrow(/^invalid_grant$/u)
     fetcher.mockResolvedValueOnce(Response.json({ huge: 'x'.repeat(70_000) }))
     await expect(transport.refresh(parseAccessGrant(wire(), start), new AbortController().signal)).rejects.toThrow(/^invalid_response$/u)
@@ -172,7 +172,7 @@ describe('desktop authorization wire validation', () => {
 
   it('posts a group move to the selected server and keeps an unavailable group distinct from a dead login', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json(wire({ group: 'default', scope: selectScopes })))
-    const transport = new HalluCodexHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
+    const transport = new NovaFlowHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
     const grant = parseAccessGrant(wire(), start)
     const signal = new AbortController().signal
     await expect(transport.selectGroup(grant, toDefault, signal)).resolves.toMatchObject({ group: 'default', canSelectGroup: true })
@@ -202,13 +202,13 @@ describe('desktop authorization wire validation', () => {
 
   it('treats an unavailable server as transient even when it answers 404', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json({ error: 'temporarily_unavailable' }, { status: 404 }))
-    const transport = new HalluCodexHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
+    const transport = new NovaFlowHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
     await expect(transport.refresh(parseAccessGrant(wire(), start), new AbortController().signal)).rejects.toThrow('network_error')
   })
 
   it.each([408, 429, 500, 502, 503])('classifies non-JSON status %s as transient without discarding an account', async (status) => {
     const fetcher = vi.fn<typeof fetch>(async () => new Response('<html>temporary proxy error</html>', { status }))
-    const transport = new HalluCodexHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
+    const transport = new NovaFlowHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
     await expect(transport.refresh(parseAccessGrant(wire(), start), new AbortController().signal)).rejects.toThrow('network_error')
   })
 
@@ -430,7 +430,7 @@ describe('main-process account generations', () => {
     const f = fixture()
     f.store.save.mockImplementationOnce((grant) => {
       f.setSaved(grant)
-      return Promise.reject(new HalluCodexAuthError('storage_error'))
+      return Promise.reject(new NovaFlowAuthError('storage_error'))
     })
     f.transport.revoke.mockRejectedValueOnce(new Error('offline'))
     await f.broker.startSignIn()
@@ -446,7 +446,7 @@ describe('main-process account generations', () => {
     f.store.save.mockImplementationOnce(async (grant) => {
       await release.promise
       f.setSaved(grant)
-      throw new HalluCodexAuthError('storage_error')
+      throw new NovaFlowAuthError('storage_error')
     })
     f.transport.revoke.mockRejectedValueOnce(new Error('offline'))
     await f.broker.startSignIn()
@@ -484,7 +484,7 @@ describe('main-process account generations', () => {
     expect(f.transport.refresh).toHaveBeenCalledTimes(2)
     expect(f.broker.getSnapshot().status).toBe('signed-in')
     expect(f.saved()?.refreshToken).toBe('dsr.refresh-secret')
-    f.transport.refresh.mockRejectedValueOnce(new HalluCodexAuthError('invalid_grant'))
+    f.transport.refresh.mockRejectedValueOnce(new NovaFlowAuthError('invalid_grant'))
     await expect(f.broker.getAccessToken()).rejects.toThrow('invalid_grant')
     expect(f.transport.refresh).toHaveBeenCalledTimes(3)
     expect(f.broker.getSnapshot()).toEqual({ status: 'signed-out', errorCode: 'invalid_grant' })
@@ -514,7 +514,7 @@ describe('main-process account generations', () => {
     const f = fixture()
     await f.login()
     f.advance(880_000)
-    f.store.save.mockRejectedValueOnce(new HalluCodexAuthError('storage_error'))
+    f.store.save.mockRejectedValueOnce(new NovaFlowAuthError('storage_error'))
     await expect(f.broker.getAccessToken()).rejects.toThrow('storage_error')
     expect(f.saved()).toBeNull()
     await expect(f.broker.getAccessToken()).rejects.toThrow('signed_out')
@@ -552,8 +552,8 @@ describe('main-process account generations', () => {
   it('revokes the saved family after restore failed transiently', async () => {
     const f = fixture()
     f.setSaved(parseAccessGrant(wire(), start))
-    f.transport.refresh.mockRejectedValueOnce(new HalluCodexAuthError('network_error'))
-    f.transport.refresh.mockRejectedValueOnce(new HalluCodexAuthError('network_error'))
+    f.transport.refresh.mockRejectedValueOnce(new NovaFlowAuthError('network_error'))
+    f.transport.refresh.mockRejectedValueOnce(new NovaFlowAuthError('network_error'))
     await f.broker.restore()
     expect(f.saved()?.refreshToken).toBe('dsr.refresh-secret')
     await expect(f.broker.signOut()).resolves.toEqual({ remoteRevoked: true })
@@ -576,7 +576,7 @@ describe('main-process account generations', () => {
   it('still revokes remotely when local deletion fails, and exposes the local cleanup failure', async () => {
     const f = fixture()
     await f.login()
-    f.store.clear.mockRejectedValueOnce(new HalluCodexAuthError('storage_error'))
+    f.store.clear.mockRejectedValueOnce(new NovaFlowAuthError('storage_error'))
     await expect(f.broker.signOut()).rejects.toThrow('storage_error')
     expect(f.transport.revoke).toHaveBeenCalledWith('dsr.refresh-secret')
     expect(f.broker.getSnapshot()).toEqual({ status: 'signed-out', errorCode: 'storage_error' })
@@ -612,7 +612,7 @@ describe('main-process account generations', () => {
 
   it('does not launch the browser without OS-backed storage, and sanitizes observer exceptions', async () => {
     const f = fixture()
-    f.store.assertAvailable.mockImplementation(() => { throw new HalluCodexAuthError('secure_storage_unavailable') })
+    f.store.assertAvailable.mockImplementation(() => { throw new NovaFlowAuthError('secure_storage_unavailable') })
     f.onChange.mockImplementation(() => { throw new Error('observer failed') })
     expect(await f.broker.startSignIn()).toEqual({ status: 'signed-out', errorCode: 'secure_storage_unavailable' })
     expect(f.openExternal).not.toHaveBeenCalled()
@@ -707,7 +707,7 @@ describe('group selection', () => {
   it('keeps the login and group when the server refuses the group', async () => {
     const f = fixture(selectScopes)
     await f.login()
-    f.transport.selectGroup.mockRejectedValueOnce(new HalluCodexAuthError('group_unavailable'))
+    f.transport.selectGroup.mockRejectedValueOnce(new NovaFlowAuthError('group_unavailable'))
     await expect(f.broker.selectGroup(toDefault)).rejects.toThrow('group_unavailable')
     expect(f.broker.getSnapshot()).toMatchObject({ status: 'signed-in', group: 'discount' })
     expect(f.saved()).toMatchObject({ refreshToken: 'dsr.refresh-secret', group: 'discount' })
@@ -718,7 +718,7 @@ describe('group selection', () => {
   it('retries one lost move response, since the server repeats the committed successor', async () => {
     const f = fixture(selectScopes)
     await f.login()
-    f.transport.selectGroup.mockRejectedValueOnce(new HalluCodexAuthError('network_error'))
+    f.transport.selectGroup.mockRejectedValueOnce(new NovaFlowAuthError('network_error'))
     await expect(f.broker.selectGroup(toDefault)).resolves.toMatchObject({ group: 'default' })
     expect(f.transport.selectGroup).toHaveBeenCalledTimes(2)
     expect(f.transport.selectGroup.mock.calls[1]?.[0].refreshToken).toBe('dsr.refresh-secret')
@@ -806,7 +806,7 @@ it('accepts the complete server group limit without rejecting a legitimate large
   const data = wire({ group: groups[0], allowed_groups: groups })
   expect(Buffer.byteLength(JSON.stringify(data))).toBeGreaterThan(65_536)
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json(data))
-  const transport = new HalluCodexHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
+  const transport = new NovaFlowHttpAuthTransport(() => HALLUCODEX_ORIGIN, fetcher, () => start)
   const grant = await transport.exchange({ code: 'dsc.fixture', codeVerifier: 'v'.repeat(43), redirectUri: 'http://127.0.0.1:43210/oauth/callback' }, new AbortController().signal)
   expect(grant.allowedGroups).toHaveLength(1024)
   expect(() => parseAccessGrant(wire({ group: groups[0], allowed_groups: [...groups, 'extra'] }), start)).toThrow('group_invalid')
@@ -815,7 +815,7 @@ it('accepts the complete server group limit without rejecting a legitimate large
 describe('server selection and device naming', () => {
   it('normalizes a site address to its origin and refuses paths, credentials and other schemes', async () => {
     const { normalizeServerOrigin } = await import('../src/hallucodex/server-origin.ts')
-    expect(normalizeServerOrigin(' https://API.HalluCodex.com/ ')).toBe('https://api.hallucodex.com')
+    expect(normalizeServerOrigin(' https://API.NovaFlow.com/ ')).toBe('https://api.hallucodex.com')
     expect(normalizeServerOrigin('http://192.168.1.20:3000')).toBe('http://192.168.1.20:3000')
     for (const value of ['http://sgm1.example:60003/v1', 'https://user:pass@example.com', 'ftp://example.com', 'https://example.com/?a=1', 'https://example.com/#x', 'example.com', 7]) {
       expect(() => normalizeServerOrigin(value)).toThrow('invalid server address')
@@ -838,7 +838,7 @@ describe('server selection and device naming', () => {
     const { desktopDeviceName } = await import('../src/hallucodex/device-name.ts')
     expect(desktopDeviceName('akuma-laptop', 'linux', 'x64')).toBe('akuma-laptop · Linux x64')
     expect(desktopDeviceName('DESKTOP-01\n', 'win32', 'x64')).toBe('DESKTOP-01 · Windows x64')
-    expect(desktopDeviceName('', 'darwin', 'arm64')).toBe('HalluCodex · macOS arm64')
+    expect(desktopDeviceName('', 'darwin', 'arm64')).toBe('NovaFlow · macOS arm64')
     const long = desktopDeviceName('主机'.repeat(80), 'darwin', 'arm64')
     expect(Buffer.byteLength(long)).toBeLessThanOrEqual(128)
     expect(long.endsWith(' · macOS arm64')).toBe(true)

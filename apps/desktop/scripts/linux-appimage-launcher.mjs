@@ -7,13 +7,13 @@ import { join, resolve } from 'node:path'
 
 /**
  * Return the application-owned AppRun program, without automatic sandbox-disabling arguments.
- * @returns {string} POSIX shell launcher for the fixed HalluCodex executable.
+ * @returns {string} POSIX shell launcher for the fixed NovaFlow executable.
  */
 export function desktopLinuxAppRun() {
   return `#!/bin/sh
 set -eu
 if [ "$(id -u)" = 0 ]; then
-  printf '%s\\n' 'HalluCodex must run as an ordinary user.' >&2
+  printf '%s\\n' 'NovaFlow must run as an ordinary user.' >&2
   exit 1
 fi
 if [ -z "\${APPDIR:-}" ]; then

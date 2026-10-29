@@ -1,11 +1,11 @@
 /** Minimal wallet quota read for the owned account dialog; currency comes only from the site's own display settings. */
-import { parseQuotaDisplay, type HalluCodexQuotaDisplay } from './quota-display.ts'
+import { parseQuotaDisplay, type NovaFlowQuotaDisplay } from './quota-display.ts'
 import type { RelayAccess } from './relay-broker.ts'
-import { accountFailure, HalluCodexReadError, HalluCodexUnauthorizedError, readAccountJson } from './account-errors.ts'
-export { HalluCodexUnauthorizedError } from './account-errors.ts'
+import { accountFailure, NovaFlowReadError, NovaFlowUnauthorizedError, readAccountJson } from './account-errors.ts'
+export { NovaFlowUnauthorizedError } from './account-errors.ts'
 
 /** Server-authoritative wallet balance, account-wide usage and this device's usage and cap, preserving integer precision. */
-export interface HalluCodexWalletQuota {
+export interface NovaFlowWalletQuota {
   readonly remaining: string
   readonly accountUsage: string
   readonly deviceUsage: string
@@ -21,11 +21,11 @@ export interface HalluCodexWalletQuota {
  * @param access - private grant, never a renderer argument.
  * @param signal - account generation cancellation.
  * @returns precise quota counters, independent of model availability.
- * @throws {HalluCodexUnauthorizedError} When the server rejects the access token.
+ * @throws {NovaFlowUnauthorizedError} When the server rejects the access token.
  */
-export async function readHalluCodexWalletQuota(
+export async function readNovaFlowWalletQuota(
   fetcher: typeof fetch, origin: string, access: RelayAccess, signal: AbortSignal,
-): Promise<HalluCodexWalletQuota> {
+): Promise<NovaFlowWalletQuota> {
   try {
     const value = await readAccountJson(fetcher, `${origin}/api/desktop/v1/balance`, {
       headers: { authorization: `Bearer ${access.accessToken}`, accept: 'application/json' },
@@ -45,8 +45,8 @@ export async function readHalluCodexWalletQuota(
       ...(value.device_quota_limit === null ? {} : { deviceLimit: value.device_quota_limit }), unit: 'quota',
     }
   } catch (error) {
-    if (error instanceof HalluCodexUnauthorizedError) throw error
-    throw new HalluCodexReadError(accountFailure(error, 'wallet_unavailable'), 'hallucodex: wallet quota unavailable')
+    if (error instanceof NovaFlowUnauthorizedError) throw error
+    throw new NovaFlowReadError(accountFailure(error, 'wallet_unavailable'), 'hallucodex: wallet quota unavailable')
   }
 }
 
@@ -57,9 +57,9 @@ export async function readHalluCodexWalletQuota(
  * @param signal - account generation cancellation.
  * @returns the site's quota unit and currency settings.
  */
-export async function readHalluCodexQuotaDisplay(
+export async function readNovaFlowQuotaDisplay(
   fetcher: typeof fetch, origin: string, signal: AbortSignal,
-): Promise<HalluCodexQuotaDisplay> {
+): Promise<NovaFlowQuotaDisplay> {
   try {
     // The status also carries site notices and pages, so it gets a larger bound than the wallet.
     return parseQuotaDisplay(await readAccountJson(fetcher, `${origin}/api/status`, {

@@ -1,4 +1,4 @@
-/** How a packaged HalluCodex build may deliver an update the user has confirmed. */
+/** How a packaged NovaFlow build may deliver an update the user has confirmed. */
 
 /**
  * `install` downloads and installs inside the app after separate confirmations; `download-page` only shows the

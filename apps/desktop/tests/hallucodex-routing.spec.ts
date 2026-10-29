@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { allowedGroup, concreteGroup, groupSelection, parseDesktopGroups, routingGroup, sameGroupSelection } from '../src/hallucodex/group-policy.ts'
 import { desktopEndpoint, parseDesktopModels } from '../src/hallucodex/catalog.ts'
-import { HalluCodexRelayBroker } from '../src/hallucodex/relay-broker.ts'
+import { NovaFlowRelayBroker } from '../src/hallucodex/relay-broker.ts'
 import type { RelayAccess, RelaySelection } from '../src/hallucodex/relay-broker.ts'
 import type { GroupSelection } from '../src/hallucodex/group-policy.ts'
 
@@ -18,12 +18,12 @@ function fixture(response = new Response('data: {"delta":"ok"}\n\ndata: [DONE]\n
 })) {
   const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(response)
   const resolve = vi.fn<() => Promise<RelayAccess>>().mockResolvedValue(access)
-  const broker = new HalluCodexRelayBroker({ fetch, access: resolve, origin: () => ORIGIN, maxRequestBytes: 1024 })
+  const broker = new NovaFlowRelayBroker({ fetch, access: resolve, origin: () => ORIGIN, maxRequestBytes: 1024 })
   broker.configure(selection)
   return { broker, fetch, resolve }
 }
 
-describe('HalluCodex explicit group policy', () => {
+describe('NovaFlow explicit group policy', () => {
   it.each(['', 'auto', 'AUTO', 'Auto', ' auto', 'default ', '\n', null, undefined])('refuses implicit or automatic group %s where one concrete group fits', (group) => {
     expect(() => concreteGroup(group)).toThrow('concrete group')
   })
@@ -76,7 +76,7 @@ describe('HalluCodex explicit group policy', () => {
   })
 })
 
-describe('HalluCodex group-scoped catalog', () => {
+describe('NovaFlow group-scoped catalog', () => {
   it('normalizes advertised response aliases and refuses unknown protocols', () => {
     expect(desktopEndpoint('openai-response')).toBe('/v1/responses')
     expect(desktopEndpoint('openai-responses')).toBe('/v1/responses')
@@ -124,7 +124,7 @@ describe('HalluCodex group-scoped catalog', () => {
   })
 })
 
-describe('HalluCodex private relay admission', () => {
+describe('NovaFlow private relay admission', () => {
   it.each(['/v1/chat/completions', '/v1/responses', '/v1/messages'] as const)('streams %s only to the configured origin', async (endpoint) => {
     const { broker, fetch } = fixture()
     const result = await broker.invoke(endpoint, { model: 'fixture-model', stream: true, messages: [] })
@@ -228,16 +228,16 @@ describe('HalluCodex private relay admission', () => {
   })
 })
 
-describe('HalluCodex authenticated catalog refresh', () => {
+describe('NovaFlow authenticated catalog refresh', () => {
   const groups = { groups: [{ name: 'discount', description: 'Fixture', ratio: 0.5 }] }
   const models = { group: 'discount', data: [{ id: 'fixture-model', endpoints: ['openai-response'] }] }
   async function controllerFixture() {
-    const { HalluCodexCatalogController } = await import('../src/hallucodex/catalog-controller.ts')
+    const { NovaFlowCatalogController } = await import('../src/hallucodex/catalog-controller.ts')
     const { broker, resolve } = fixture()
     const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
       return Response.json((typeof input === 'string' ? input : input instanceof URL ? input.href : input.url).endsWith('/groups') ? groups : models)
     })
-    const controller = new HalluCodexCatalogController({ access: resolve, origin: () => ORIGIN, fetch, relay: broker })
+    const controller = new NovaFlowCatalogController({ access: resolve, origin: () => ORIGIN, fetch, relay: broker })
     return { controller, broker, resolve, fetch }
   }
   it('commits a whole authenticated catalog and admits its protocol only', async () => {
@@ -348,16 +348,16 @@ describe('HalluCodex authenticated catalog refresh', () => {
     expect(controller.getSnapshot()).toBeUndefined()
   })
   it('reports a rejected access token separately so the runtime can rotate it', async () => {
-    const { HalluCodexUnauthorizedError } = await import('../src/hallucodex/account-info.ts')
+    const { NovaFlowUnauthorizedError } = await import('../src/hallucodex/account-info.ts')
     const { controller, fetch } = await controllerFixture()
     fetch.mockResolvedValueOnce(Response.json({ error: 'invalid_token' }, { status: 401 }))
-    await expect(controller.refresh()).rejects.toBeInstanceOf(HalluCodexUnauthorizedError)
+    await expect(controller.refresh()).rejects.toBeInstanceOf(NovaFlowUnauthorizedError)
   })
 })
 
-describe('HalluCodex native account-to-relay composition', () => {
+describe('NovaFlow native account-to-relay composition', () => {
   async function runtimeFixture() {
-    const { HalluCodexDesktopRuntime } = await import('../src/hallucodex/runtime.ts')
+    const { NovaFlowDesktopRuntime } = await import('../src/hallucodex/runtime.ts')
     const now = Date.now()
     const clock = { now }
     const saved = {
@@ -402,7 +402,7 @@ describe('HalluCodex native account-to-relay composition', () => {
       return new Response('data: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } })
     })
     const { ServerOriginSetting } = await import('../src/hallucodex/server-origin.ts')
-    const runtime = new HalluCodexDesktopRuntime({
+    const runtime = new NovaFlowDesktopRuntime({
       server: new ServerOriginSetting(undefined, ORIGIN),
       transport, store, fetch, maxRequestBytes: 4096, openExternal: vi.fn(), deviceName: 'Fixture Linux', now: () => clock.now,
     })
@@ -599,8 +599,8 @@ describe('HalluCodex native account-to-relay composition', () => {
     try {
       await runtime.restore()
       await vi.waitFor(() => { expect(runtime.getSnapshot().walletStatus).toBe('ready') })
-      const { HalluCodexAuthError } = await import('../src/hallucodex/auth-protocol.ts')
-      transport.refresh.mockRejectedValueOnce(new HalluCodexAuthError('invalid_grant'))
+      const { NovaFlowAuthError } = await import('../src/hallucodex/auth-protocol.ts')
+      transport.refresh.mockRejectedValueOnce(new NovaFlowAuthError('invalid_grant'))
       fetch.mockResolvedValueOnce(new Response('revoked', { status: 401 }))
       expect((await runtime.invoke('/v1/responses', { model: 'discount-model' })).response.status).toBe(401)
       await vi.waitFor(() => { expect(runtime.getSnapshot().account).toEqual({ status: 'signed-out', errorCode: 'invalid_grant' }) })
@@ -671,8 +671,8 @@ describe('HalluCodex native account-to-relay composition', () => {
     try {
       await runtime.restore()
       await vi.waitFor(() => { expect(runtime.getSnapshot().walletStatus).toBe('ready') })
-      const { HalluCodexAuthError } = await import('../src/hallucodex/auth-protocol.ts')
-      transport.selectGroup.mockRejectedValueOnce(new HalluCodexAuthError('group_unavailable'))
+      const { NovaFlowAuthError } = await import('../src/hallucodex/auth-protocol.ts')
+      transport.selectGroup.mockRejectedValueOnce(new NovaFlowAuthError('group_unavailable'))
       await expect(runtime.selectGroup(premium)).resolves.toBe('group_unavailable')
       expect(store.clear).not.toHaveBeenCalled()
       await vi.waitFor(() => { expect(runtime.getSnapshot()).toMatchObject({ catalogStatus: 'ready', walletStatus: 'ready' }) })
@@ -705,25 +705,25 @@ it.each(['Model', 'MODEL', 'mOdEl'])('rejects ambiguous protocol model field %s 
 })
 
 it('keeps quota errors unavailable instead of inventing zero or a currency', async () => {
-  const { readHalluCodexWalletQuota } = await import('../src/hallucodex/account-info.ts')
+  const { readNovaFlowWalletQuota } = await import('../src/hallucodex/account-info.ts')
   const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({
     quota_remaining: 10, quota_used: '1', unit: 'USD', quota_used_kind: 'account_usage_total',
   })).mockRejectedValueOnce(new Error('Authorization: secret'))
-  await expect(readHalluCodexWalletQuota(fetcher, ORIGIN, access, new AbortController().signal))
+  await expect(readNovaFlowWalletQuota(fetcher, ORIGIN, access, new AbortController().signal))
     .rejects.toThrow(/^hallucodex: wallet quota unavailable$/u)
-  await expect(readHalluCodexWalletQuota(fetcher, ORIGIN, access, new AbortController().signal))
+  await expect(readNovaFlowWalletQuota(fetcher, ORIGIN, access, new AbortController().signal))
     .rejects.toThrow(/^hallucodex: wallet quota unavailable$/u)
 })
 
 it('reads this device usage and cap from the selected server', async () => {
-  const { readHalluCodexWalletQuota, HalluCodexUnauthorizedError } = await import('../src/hallucodex/account-info.ts')
+  const { readNovaFlowWalletQuota, NovaFlowUnauthorizedError } = await import('../src/hallucodex/account-info.ts')
   const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({
     quota_remaining: '10', quota_used: '1', unit: 'quota', quota_used_kind: 'account_usage_total',
     device_quota_used: '7', device_quota_limit: '500',
   })).mockResolvedValueOnce(Response.json({ error: 'invalid_token' }, { status: 401 }))
-  await expect(readHalluCodexWalletQuota(fetcher, 'http://localhost:3000', access, new AbortController().signal))
+  await expect(readNovaFlowWalletQuota(fetcher, 'http://localhost:3000', access, new AbortController().signal))
     .resolves.toEqual({ remaining: '10', accountUsage: '1', deviceUsage: '7', deviceLimit: '500', unit: 'quota' })
   expect(fetcher.mock.calls[0]?.[0]).toBe('http://localhost:3000/api/desktop/v1/balance')
-  await expect(readHalluCodexWalletQuota(fetcher, ORIGIN, access, new AbortController().signal))
-    .rejects.toBeInstanceOf(HalluCodexUnauthorizedError)
+  await expect(readNovaFlowWalletQuota(fetcher, ORIGIN, access, new AbortController().signal))
+    .rejects.toBeInstanceOf(NovaFlowUnauthorizedError)
 })

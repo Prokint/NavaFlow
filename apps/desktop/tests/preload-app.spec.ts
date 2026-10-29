@@ -227,12 +227,12 @@ it('forwards browser guest input only for the focused live webview lease', async
   off()
 })
 
-it('exposes only a credential-free HalluCodex account summary, open requests and the account page mount to the page', async () => {
+it('exposes only a credential-free NovaFlow account summary, open requests and the account page mount to the page', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   const signedIn = { account: { status: 'signed-in', profile: { id: '7', displayName: '' }, group: 'vip', allowedGroups: ['vip'] }, serverOrigin: 'https://api.example.com', catalogStatus: 'ready' }
   electron.ipcRenderer.invoke.mockImplementation((channel: string) => Promise.resolve(channel === 'hallucodex:state' ? signedIn : null))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshHalluCodex')?.[1] as
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshNovaFlow')?.[1] as
     { subscribe(listener: (state: unknown) => void): () => void; mount(head: HTMLElement, content: HTMLElement): () => void }
   expect(Object.keys(api).sort()).toEqual(['mount', 'onOpen', 'subscribe'])
   const listener = vi.fn()
@@ -248,5 +248,5 @@ it('exposes only a credential-free HalluCodex account summary, open requests and
   const content = document.createElement('div')
   document.body.append(head, content)
   api.mount(head, content)
-  await vi.waitFor(() => { expect(head.textContent).toContain('HalluCodex 账号') })
+  await vi.waitFor(() => { expect(head.textContent).toContain('NovaFlow 账号') })
 })

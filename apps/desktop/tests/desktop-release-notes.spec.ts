@@ -31,7 +31,7 @@ const CHANGELOG = `# 更新日志
 - 设备名称
 `
 
-describe('HalluCodex release tags', () => {
+describe('NovaFlow release tags', () => {
   it.each([
     ['hallucodex-v0.1.0', '0.1.0', false],
     ['hallucodex-v0.1.0-beta.1', '0.1.0-beta.1', true],
@@ -46,7 +46,7 @@ describe('HalluCodex release tags', () => {
   })
 })
 
-describe('HalluCodex release notes', () => {
+describe('NovaFlow release notes', () => {
   it('extracts exactly the section of the released version', () => {
     expect(desktopChangelogSection(CHANGELOG, '0.1.0')).toBe('### 新增\n\n- 浏览器授权\n\n### 修复\n\n- 设备名称')
     expect(desktopChangelogSection(CHANGELOG, '0.1.0-beta.1')).toBe('- 测试版')
@@ -67,7 +67,7 @@ describe('HalluCodex release notes', () => {
     expect(notes.split(DESKTOP_INSTALL_NOTES_MARKER)).toHaveLength(2)
     const [shown, install] = notes.split(DESKTOP_INSTALL_NOTES_MARKER)
     expect(shown).not.toContain('xattr')
-    expect(install).toContain('xattr -dr com.apple.quarantine /Applications/HalluCodex.app')
+    expect(install).toContain('xattr -dr com.apple.quarantine /Applications/NovaFlow.app')
     expect(install).toContain('仍要运行')
     expect(install).toContain('Run anyway')
     expect(notes.endsWith('\n')).toBe(true)
@@ -89,7 +89,7 @@ describe('HalluCodex release notes', () => {
     } finally { await rm(directory, { recursive: true, force: true }) }
   })
 
-  it('has a section for the first HalluCodex release in the repository changelog', async () => {
+  it('has a section for the first NovaFlow release in the repository changelog', async () => {
     const changelog = await readFile(new URL('../../../CHANGELOG.md', import.meta.url), 'utf8')
     expect(desktopChangelogSection(changelog, '0.1.0')).not.toContain(DESKTOP_INSTALL_NOTES_MARKER)
   })

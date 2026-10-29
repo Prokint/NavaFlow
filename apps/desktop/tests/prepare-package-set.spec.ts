@@ -78,7 +78,7 @@ describe('desktop package-set selection', () => {
     ])
   })
 
-  it('requires the Host, public CLI, and HalluCodex module and overlay', () => {
+  it('requires the Host, public CLI, and NovaFlow module and overlay', () => {
     const files = [
       'package/lib/index.js',
       'package/lib/cli.js',

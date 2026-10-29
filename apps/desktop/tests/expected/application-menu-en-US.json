@@ -7,7 +7,7 @@
   },
   {
     "role": "hide",
-    "label": "Hide HalluCodex"
+    "label": "Hide NovaFlow"
   },
   {
     "role": "hideOthers",
@@ -19,6 +19,6 @@
   },
   {
     "role": "quit",
-    "label": "Quit HalluCodex"
+    "label": "Quit NovaFlow"
   }
 ]

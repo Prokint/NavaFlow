@@ -196,14 +196,14 @@ export interface DesktopPackagedApplication {
 export function desktopPackagedApplication(target: DesktopPackageTarget, artifactsRoot: string): DesktopPackagedApplication {
   if (target.platform === 'win32') {
     const application = join(artifactsRoot, 'win-unpacked')
-    return { application, resources: join(application, 'resources'), executable: join(application, 'HalluCodex.exe') }
+    return { application, resources: join(application, 'resources'), executable: join(application, 'NovaFlow.exe') }
   }
   if (target.platform === 'linux') {
     const application = join(artifactsRoot, target.arch === 'arm64' ? 'linux-arm64-unpacked' : 'linux-unpacked')
     return { application, resources: join(application, 'resources'), executable: join(application, 'hallucodex') }
   }
-  const application = join(artifactsRoot, target.arch === 'arm64' ? 'mac-arm64' : 'mac', 'HalluCodex.app', 'Contents')
-  return { application, resources: join(application, 'Resources'), executable: join(application, 'MacOS', 'HalluCodex') }
+  const application = join(artifactsRoot, target.arch === 'arm64' ? 'mac-arm64' : 'mac', 'NovaFlow.app', 'Contents')
+  return { application, resources: join(application, 'Resources'), executable: join(application, 'MacOS', 'NovaFlow') }
 }
 
 /**
@@ -541,7 +541,7 @@ export async function packageTarget(
   } else if (target.platform === 'darwin' && !invocation.unsigned) {
     await execute([...desktopElectronBuilderArguments(target, true), '--config.mac.notarize=false'], electronBuilderEnv)
     await execute(['exec', 'node', '--import', 'tsx/esm', 'scripts/smoke-packaged-runtime.ts'], targetEnv)
-    const appPath = join(buildPaths.artifacts, target.arch === 'arm64' ? 'mac-arm64' : 'mac', 'HalluCodex.app')
+    const appPath = join(buildPaths.artifacts, target.arch === 'arm64' ? 'mac-arm64' : 'mac', 'NovaFlow.app')
     await withMacOSNotarizationProxy(mac?.notarizationProxy,
       () => notarizeMacOS({ appPath, ...resolveMacOSNotarizationEnvironment(environment) }), undefined, undefined, proxyEvent)
   } else {

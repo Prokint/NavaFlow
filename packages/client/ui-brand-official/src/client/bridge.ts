@@ -7,7 +7,7 @@ export interface DesktopAccountState {
   readonly name?: string
 }
 
-/** Desktop shell bridge exposed by the HalluCodex preload as `window.dshHalluCodex`. */
+/** Desktop shell bridge exposed by the NovaFlow preload as `window.dshNovaFlow`. */
 export interface DesktopAccountBridge {
   /**
    * Receive the current state once known and every later change.
@@ -36,7 +36,7 @@ export interface DesktopAccountBridge {
  * @returns The bridge when all of its operations are present.
  */
 export function readDesktopAccountBridge(scope: object): DesktopAccountBridge | undefined {
-  const candidate: unknown = Reflect.get(scope, 'dshHalluCodex')
+  const candidate: unknown = Reflect.get(scope, 'dshNovaFlow')
   if (typeof candidate !== 'object' || candidate === null) return undefined
   if (!['subscribe', 'onOpen', 'mount'].every(operation => typeof Reflect.get(candidate, operation) === 'function')) return undefined
   return candidate as DesktopAccountBridge

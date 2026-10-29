@@ -1,6 +1,6 @@
-/** Locale-owned text for the native HalluCodex account page. */
+/** Locale-owned text for the native NovaFlow account page. */
 /** Localized account page copy. */
-export interface HalluCodexAccountCopy {
+export interface NovaFlowAccountCopy {
   title: string
   signIn: string
   cancel: string
@@ -92,12 +92,12 @@ export interface HalluCodexAccountCopy {
  * @param language - desktop UI language.
  * @returns the complete localized dictionary.
  */
-export function halluCodexAccountCopy(language: string): HalluCodexAccountCopy {
+export function halluCodexAccountCopy(language: string): NovaFlowAccountCopy {
   return language.toLowerCase().startsWith('zh') ? {
     devicePage: '安全与设备', walletPage: '钱包与充值', usagePage: '用量记录', wallet: '钱包剩余', walletQuota: '钱包剩余（额度）', numberLocale: 'zh-CN', accountUsage: '账号累计用量', quotaUnavailable: '暂不可用',
-    title: 'HalluCodex 账号', signIn: '在浏览器中登录', cancel: '取消登录', signOut: '退出登录', refresh: '刷新账号', signedIn: '已登录', signingIn: '正在登录…',
+    title: 'NovaFlow 账号', signIn: '在浏览器中登录', cancel: '取消登录', signOut: '退出登录', refresh: '刷新账号', signedIn: '已登录', signingIn: '正在登录…',
     signedOut: '尚未登录', waiting: '请在系统浏览器中完成授权…', group: '分组', models: '可用模型', unavailable: '暂不可用',
-    failed: '操作未完成，请重试', privacy: '发送给模型的内容会经过 HalluCodex 并可能发送给模型供应商。本机文件不会自动全部上传。',
+    failed: '操作未完成，请重试', privacy: '发送给模型的内容会经过 NovaFlow 并可能发送给模型供应商。本机文件不会自动全部上传。',
     secureStorage: '请先启用系统钥匙串。不能使用明文存储登录凭证。', selectGroup: '登录时在网页中选择账号允许的分组。',
     refreshing: '正在刷新…', updatedAt: '上次成功更新', staleWallet: '刷新失败，显示上次数据。', refreshWallet: '刷新余额',
     retryCatalog: '刷新可用分组与模型', retryRestore: '重试恢复登录', networkError: '网络连接失败或服务器暂不可用，请稍后重试。',
@@ -121,10 +121,10 @@ export function halluCodexAccountCopy(language: string): HalluCodexAccountCopy {
     moveUp: '上移', moveDown: '下移', saveRouting: '保存设置', routingSaved: '已保存分组设置',
   } : {
     devicePage: 'Security & devices', walletPage: 'Wallet & top-up', usagePage: 'Usage', wallet: 'Wallet balance', walletQuota: 'Wallet balance (quota)', numberLocale: 'en-US', accountUsage: 'Account usage', quotaUnavailable: 'Unavailable',
-    title: 'HalluCodex account', signIn: 'Sign in using browser', cancel: 'Cancel sign-in', signOut: 'Sign out', refresh: 'Refresh account', signedIn: 'Signed in', signingIn: 'Signing in…',
+    title: 'NovaFlow account', signIn: 'Sign in using browser', cancel: 'Cancel sign-in', signOut: 'Sign out', refresh: 'Refresh account', signedIn: 'Signed in', signingIn: 'Signing in…',
     signedOut: 'Not signed in', waiting: 'Finish authorization in your browser…', group: 'Group', models: 'Available models',
     unavailable: 'Unavailable', failed: 'The operation did not complete. Please retry.',
-    privacy: 'Model context is sent through HalluCodex and may reach the model provider. Your entire workspace is not uploaded automatically.',
+    privacy: 'Model context is sent through NovaFlow and may reach the model provider. Your entire workspace is not uploaded automatically.',
     secureStorage: 'Enable your operating-system keyring first. Plaintext credential storage is not allowed.',
     selectGroup: 'Choose an account-allowed group on the authorization page.',
     refreshing: 'Refreshing…', updatedAt: 'Last updated', staleWallet: 'Refresh failed; showing the last successful data.', refreshWallet: 'Refresh balance',
@@ -139,7 +139,7 @@ export function halluCodexAccountCopy(language: string): HalluCodexAccountCopy {
     server: 'Server', serverSave: 'Switch', serverHint: 'Enter a New API site address, such as your test server, without a path like /v1.',
     insecureServer: 'This is an HTTP address. Credentials and conversations travel unencrypted; use it only for local or private-network testing.',
     invalidServer: 'Invalid server address. Enter a site address starting with http:// or https://, without a path.',
-    denied: 'You denied the authorization in the browser.', customServer: 'Use a custom server', changeServer: 'Change', useDefaultServer: 'Use HalluCodex service',
+    denied: 'You denied the authorization in the browser.', customServer: 'Use a custom server', changeServer: 'Change', useDefaultServer: 'Use NovaFlow service',
     autoOption: 'auto (automatic routing)', autoFollowSite: count => `Using the complete global Auto order (${count} groups)`,
     autoCustom: (count, max) => `${count} / ${max} groups selected`, autoRestore: 'Restore global Auto', autoLimitReached: max => `Maximum ${max} groups selected`,
     autoKeepFirst: max => `A custom order keeps at most the first ${max} groups.`,

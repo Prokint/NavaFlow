@@ -1,5 +1,5 @@
 /**
- * Gather one HalluCodex version's installers and update files into a GitHub Release directory.
+ * Gather one NovaFlow version's installers and update files into a GitHub Release directory.
  *
  * Inputs are electron-builder output directories, or earlier collections, from separate runners.
  * Same-named macOS metadata from the arm64 and x64 runners is merged into one `latest-mac.yml`.

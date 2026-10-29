@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { readHalluCodexQuotaDisplay } from '../src/hallucodex/account-info.ts'
-import { formatQuota, parseQuotaDisplay, type HalluCodexQuotaDisplay } from '../src/hallucodex/quota-display.ts'
+import { readNovaFlowQuotaDisplay } from '../src/hallucodex/account-info.ts'
+import { formatQuota, parseQuotaDisplay, type NovaFlowQuotaDisplay } from '../src/hallucodex/quota-display.ts'
 
 function status(data: Record<string, unknown>): unknown {
   return { success: true, message: '', data: { quota_per_unit: 500000, ...data } }
@@ -29,7 +29,7 @@ describe('site quota display settings', () => {
 })
 
 describe('quota amounts', () => {
-  const display = (type: HalluCodexQuotaDisplay['type'], rate = 1, symbol = '¤'): HalluCodexQuotaDisplay => ({ type, quotaPerUnit: 500000, rate, symbol })
+  const display = (type: NovaFlowQuotaDisplay['type'], rate = 1, symbol = '¤'): NovaFlowQuotaDisplay => ({ type, quotaPerUnit: 500000, rate, symbol })
 
   it('converts quota to the site currency with two decimals, or four below one unit', () => {
     expect(formatQuota('6172839', display('USD'), 'en-US')).toBe('$12.35')
@@ -50,12 +50,12 @@ describe('quota amounts', () => {
   it('reads the settings from the public status without an account credential', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(status({ quota_display_type: 'CNY', usd_exchange_rate: 7 })))
       .mockResolvedValueOnce(new Response('<html></html>', { headers: { 'content-type': 'text/html' } }))
-    await expect(readHalluCodexQuotaDisplay(fetcher, 'http://localhost:3000', new AbortController().signal))
+    await expect(readNovaFlowQuotaDisplay(fetcher, 'http://localhost:3000', new AbortController().signal))
       .resolves.toEqual({ type: 'CNY', quotaPerUnit: 500000, rate: 7, symbol: '¤' })
     expect(fetcher.mock.calls[0]?.[0]).toBe('http://localhost:3000/api/status')
     expect(fetcher.mock.calls[0]?.[1]).toMatchObject({ credentials: 'omit', redirect: 'error' })
     expect(fetcher.mock.calls[0]?.[1]?.headers).not.toHaveProperty('authorization')
-    await expect(readHalluCodexQuotaDisplay(fetcher, 'http://localhost:3000', new AbortController().signal))
+    await expect(readNovaFlowQuotaDisplay(fetcher, 'http://localhost:3000', new AbortController().signal))
       .rejects.toThrow(/^hallucodex: quota display unavailable$/u)
   })
 })

@@ -1,5 +1,5 @@
-HalluCodex is unavailable
+NovaFlow is unavailable
 The application could not start or stopped unexpectedly.
-Another HalluCodex instance (such as dsh web or the desktop app) is running. They cannot start at the same time. Quit the other running HalluCodex instance, then restart.
+Another NovaFlow instance (such as dsh web or the desktop app) is running. They cannot start at the same time. Quit the other running NovaFlow instance, then restart.
 Exit
 Restart

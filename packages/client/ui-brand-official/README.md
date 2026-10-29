@@ -1,5 +1,5 @@
 ---
-description: "HalluCodex brand occupants for the sidebar and conversation hero, plus the desktop account entry; for users and maintainers choosing or replacing brand presentation."
+description: "NovaFlow brand occupants for the sidebar and conversation hero, plus the desktop account entry; for users and maintainers choosing or replacing brand presentation."
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This package brands every client build as HalluCodex: the HalluCodex mark and name in the sidebar and the mark in the conversation hero, whatever the build profile. Inside the HalluCodex desktop shell it also adds the account page to the main column and an account entry above Settings, which shows the signed-in name or a sign-in prompt and selects that page. Deployments with another identity should provide a replacement brand package. It keeps no runtime state of its own and does not affect model requests.
+This package brands every client build as NovaFlow: the NovaFlow mark and name in the sidebar and the mark in the conversation hero, whatever the build profile. Inside the NovaFlow desktop shell it also adds the account page to the main column and an account entry above Settings, which shows the signed-in name or a sign-in prompt and selects that page. Deployments with another identity should provide a replacement brand package. It keeps no runtime state of its own and does not affect model requests.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ Mount this plugin in the browser roster. The brand occupants register in every b
 
 ### The desktop account entry
 
-The HalluCodex preload exposes `window.dshHalluCodex` with exactly three operations: `subscribe`, which delivers a credential-free summary (`signed-out`, `signing-in`, or `signed-in` with a display name); `onOpen`, which delivers the shell's requests to show the account page from the application menu or a workspace that opens signed out; and `mount`, which renders the native account page into the page frame's head and content hosts and returns its unmount. The page is the `hallucodex-account` main panel: a fixed-height frame whose head row drags the macOS window and shows the HalluCodex mark beside the shell-rendered title, with the shell content filling the rest. The entry renders in the `sidebar.footer.action` slot, mirrors the Settings trigger, selects the page, stays marked while it is shown, and collapses to an avatar or icon in the rail. The Web client has no bridge, so it shows neither.
+The NovaFlow preload exposes `window.dshNovaFlow` with exactly three operations: `subscribe`, which delivers a credential-free summary (`signed-out`, `signing-in`, or `signed-in` with a display name); `onOpen`, which delivers the shell's requests to show the account page from the application menu or a workspace that opens signed out; and `mount`, which renders the native account page into the page frame's head and content hosts and returns its unmount. The page is the `hallucodex-account` main panel: a fixed-height frame whose head row drags the macOS window and shows the NovaFlow mark beside the shell-rendered title, with the shell content filling the rest. The entry renders in the `sidebar.footer.action` slot, mirrors the Settings trigger, selects the page, stays marked while it is shown, and collapses to an avatar or icon in the rail. The Web client has no bridge, so it shows neither.
 
 ### Replacing the brand
 

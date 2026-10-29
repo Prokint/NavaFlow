@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { HalluCodexDesktopSnapshot } from '../src/hallucodex/runtime.ts'
+import type { NovaFlowDesktopSnapshot } from '../src/hallucodex/runtime.ts'
 
 const electron = vi.hoisted(() => ({
   exposed: new Map<string, unknown>(),
@@ -16,7 +16,7 @@ vi.mock('electron', () => ({
   },
 }))
 
-const { createAccountOpenRequests, installHalluCodexAccountUi } = await import('../src/preload-hallucodex.ts')
+const { createAccountOpenRequests, installNovaFlowAccountUi } = await import('../src/preload-hallucodex.ts')
 
 interface ExposedBridge {
   subscribe(listener: (state: unknown) => void): () => void
@@ -24,7 +24,7 @@ interface ExposedBridge {
   mount(head: unknown, content: unknown): () => void
 }
 
-const signedOut: HalluCodexDesktopSnapshot = { account: { status: 'signed-out' }, serverOrigin: 'https://api.hallucodex.com', catalogStatus: 'unavailable' }
+const signedOut: NovaFlowDesktopSnapshot = { account: { status: 'signed-out' }, serverOrigin: 'https://api.hallucodex.com', catalogStatus: 'unavailable' }
 
 afterEach(() => {
   window.dispatchEvent(new Event('unload'))
@@ -35,11 +35,11 @@ afterEach(() => {
 
 function install(): ExposedBridge {
   electron.invoke.mockImplementation(async (channel: string) => channel === 'hallucodex:state' ? signedOut : null)
-  installHalluCodexAccountUi()
-  return electron.exposed.get('dshHalluCodex') as ExposedBridge
+  installNovaFlowAccountUi()
+  return electron.exposed.get('dshNovaFlow') as ExposedBridge
 }
 
-describe('HalluCodex account page bridge', () => {
+describe('NovaFlow account page bridge', () => {
   it('keeps one open request for the first listener and forwards later ones', async () => {
     const requests = createAccountOpenRequests()
     requests.request()
@@ -88,9 +88,9 @@ describe('HalluCodex account page bridge', () => {
     document.body.append(head, content)
     document.documentElement.lang = 'en'
     const unmount = bridge.mount(head, content)
-    await vi.waitFor(() => { expect(head.querySelector('h1')?.textContent).toBe('HalluCodex account') })
+    await vi.waitFor(() => { expect(head.querySelector('h1')?.textContent).toBe('NovaFlow account') })
     document.documentElement.lang = 'zh-CN'
-    await vi.waitFor(() => { expect(head.querySelector('h1')?.textContent).toBe('HalluCodex 账号') })
+    await vi.waitFor(() => { expect(head.querySelector('h1')?.textContent).toBe('NovaFlow 账号') })
     expect(document.head.querySelectorAll('style')).toHaveLength(1)
     unmount()
     document.documentElement.lang = 'en'

@@ -24,12 +24,12 @@ const SIGNED = {
 
 let root: string
 let resources: string
-const appPath = (): string => join(root, 'HalluCodex.app')
+const appPath = (): string => join(root, 'NovaFlow.app')
 
 function context() {
   return {
     electronPlatformName: 'darwin', appOutDir: root,
-    packager: { getResourcesDir: () => resources, appInfo: { productFilename: 'HalluCodex', updaterCacheDirName: 'hallucodex-updater' } },
+    packager: { getResourcesDir: () => resources, appInfo: { productFilename: 'NovaFlow', updaterCacheDirName: 'hallucodex-updater' } },
   }
 }
 
@@ -47,7 +47,7 @@ describe('macOS afterPack', () => {
     const config = createElectronBuilderConfig(UNSIGNED, 'darwin', 'arm64')
     execute.mockImplementationOnce(async () => {
       // Signing seals Contents/Resources, so the configuration must already exist.
-      expect(await readFile(join(resources, 'app-update.yml'), 'utf8')).toContain('owner: AkumaRealLabs')
+      expect(await readFile(join(resources, 'app-update.yml'), 'utf8')).toContain('owner: Prokint')
       return { stdout: '', stderr: '' }
     })
     await config.afterPack(context() as never)
@@ -58,7 +58,7 @@ describe('macOS afterPack', () => {
   })
 
   it('keeps the configuration electron-builder already wrote for DMG and ZIP targets', async () => {
-    const written = 'owner: AkumaRealLabs\nrepo: hallucodex-desktop\nprovider: github\nreleaseType: release\nupdaterCacheDirName: hallucodex-updater\n'
+    const written = 'owner: Prokint\nrepo: NavaFlow\nprovider: github\nreleaseType: release\nupdaterCacheDirName: hallucodex-updater\n'
     await writeFile(join(resources, 'app-update.yml'), written)
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     await createElectronBuilderConfig(UNSIGNED, 'darwin', 'arm64').afterPack(context() as never)

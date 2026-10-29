@@ -14,5 +14,5 @@ export function desktopDeviceName(hostname: string, platform: NodeJS.Platform, a
   // Truncate by grapheme so a host name never ends in half of a character.
   let name = Array.from(new Intl.Segmenter().segment(hostname.replace(/[\u0000-\u001f\u007f]/gu, '').trim()), part => part.segment)
   while (name.length > 0 && Buffer.byteLength(name.join('') + suffix) > 128) name = name.slice(0, -1)
-  return `${name.length > 0 ? name.join('').trim() : 'HalluCodex'}${suffix}`
+  return `${name.length > 0 ? name.join('').trim() : 'NovaFlow'}${suffix}`
 }

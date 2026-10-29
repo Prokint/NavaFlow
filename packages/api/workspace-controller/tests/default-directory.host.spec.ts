@@ -22,10 +22,10 @@ describe('system Documents directory', () => {
   })
 
   it('places the Workspace under a configured product folder', async () => {
-    await expect(defaultWorkspaceDirectory('/documents', new AbortController().signal, { platform: 'linux' }, 'HalluCodex'))
-      .resolves.toBe('/documents/HalluCodex/default-workspace')
-    await expect(defaultWorkspaceDirectory('D:\\Docs', new AbortController().signal, { platform: 'win32' }, 'HalluCodex'))
-      .resolves.toBe('D:\\Docs\\HalluCodex\\default-workspace')
+    await expect(defaultWorkspaceDirectory('/documents', new AbortController().signal, { platform: 'linux' }, 'NovaFlow'))
+      .resolves.toBe('/documents/NovaFlow/default-workspace')
+    await expect(defaultWorkspaceDirectory('D:\\Docs', new AbortController().signal, { platform: 'win32' }, 'NovaFlow'))
+      .resolves.toBe('D:\\Docs\\NovaFlow\\default-workspace')
   })
 
   it.each(['', '.', '..', 'a/b', 'a\\b'])('rejects a product folder that is not one path segment: %j', (name) => {

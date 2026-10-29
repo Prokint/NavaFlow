@@ -10,8 +10,8 @@ import type {} from '@deepseek-ai/dsh-deepseek-account'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import {
-  halluCodexDefaultSelection, installHalluCodexIdentity, installHalluCodexProvider, parseHalluCodexHostConfiguration,
-  type HalluCodexCapacityRequest, type HalluCodexHostConfiguration,
+  halluCodexDefaultSelection, installNovaFlowIdentity, installNovaFlowProvider, parseNovaFlowHostConfiguration,
+  type NovaFlowCapacityRequest, type NovaFlowHostConfiguration,
 } from './hallucodex.ts'
 import * as desktopOffice from './office.ts'
 
@@ -24,10 +24,10 @@ async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
   const branded = process.env.DSH_HALLUCODEX_DESKTOP === '1'
   if (branded) process.env.NO_PROXY = ['127.0.0.1', 'localhost', process.env.NO_PROXY ?? ''].join(',')
-  let nativeConfiguration: HalluCodexHostConfiguration | undefined
-  let updateNativeConfiguration: ((configuration: HalluCodexHostConfiguration) => void) | undefined
+  let nativeConfiguration: NovaFlowHostConfiguration | undefined
+  let updateNativeConfiguration: ((configuration: NovaFlowHostConfiguration) => void) | undefined
   if (branded) {
-    nativeConfiguration = await new Promise<HalluCodexHostConfiguration | undefined>((resolve, reject) => {
+    nativeConfiguration = await new Promise<NovaFlowHostConfiguration | undefined>((resolve, reject) => {
       let waiting = true
       process.once('disconnect', () => { if (waiting) { waiting = false; clearTimeout(timer); resolve(undefined) } })
       const timer = setTimeout(() => { waiting = false; reject(new Error('hallucodex Host: native configuration timed out')) }, 30_000)
@@ -44,7 +44,7 @@ async function main(): Promise<void> {
         }
         if (message.type !== 'hallucodex-config') return
         try {
-          const configuration = parseHalluCodexHostConfiguration(message)
+          const configuration = parseNovaFlowHostConfiguration(message)
           if (updateNativeConfiguration) updateNativeConfiguration(configuration)
           else nativeConfiguration = configuration
           waiting = false; clearTimeout(timer)
@@ -94,7 +94,7 @@ async function main(): Promise<void> {
   const saveCapacity = async (model: string, contextWindow: number | null, maxOutputTokens: number | null) => {
     if (stopping !== undefined || !process.connected) throw new Error('hallucodex Host: the desktop shell is unavailable')
     const requestId = nextCapacityRequest++
-    const request: HalluCodexCapacityRequest = { type: 'hallucodex-set-capacity', requestId, model, contextWindow, maxOutputTokens }
+    const request: NovaFlowCapacityRequest = { type: 'hallucodex-set-capacity', requestId, model, contextWindow, maxOutputTokens }
     try {
       await new Promise<void>((resolve, reject) => {
         capacityRequests.set(requestId, { resolve, reject })
@@ -155,10 +155,10 @@ async function main(): Promise<void> {
   })
   const { ctx } = await application
   if (nativeConfiguration) {
-    installHalluCodexIdentity(ctx)
-    const updateProvider = installHalluCodexProvider(ctx, nativeConfiguration, saveCapacity)
+    installNovaFlowIdentity(ctx)
+    const updateProvider = installNovaFlowProvider(ctx, nativeConfiguration, saveCapacity)
     const modelSelection = ctx.get('agentDefaultModel')
-    const alignDefaultModel = async (configuration: HalluCodexHostConfiguration) => {
+    const alignDefaultModel = async (configuration: NovaFlowHostConfiguration) => {
       if (modelSelection === undefined) return
       const next = halluCodexDefaultSelection(configuration, modelSelection.currentSelection())
       if (next !== undefined) await modelSelection.saveSelection(next)

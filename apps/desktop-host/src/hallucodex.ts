@@ -12,10 +12,10 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 import type { ModelCapacity, ModelCapacityRequest, ModelCapacitySource } from '@deepseek-ai/dsh-api-session-controller/types'
 
 /** Capacity fields of a relayed model. */
-export type HalluCodexCapacityField = 'contextWindow' | 'maxOutputTokens'
+export type NovaFlowCapacityField = 'contextWindow' | 'maxOutputTokens'
 
 /** Native authenticated catalog entry with the user's own capacities for it. */
-export interface HalluCodexHostModel {
+export interface NovaFlowHostModel {
   readonly id: string
   readonly endpoints: readonly string[]
   /** Server-published context window; absent when the server publishes none. */
@@ -23,7 +23,7 @@ export interface HalluCodexHostModel {
   /** Server-published output limit; absent when the server publishes none. */
   readonly maxOutputTokens?: number
   /** Server-published capacities that are server defaults rather than model metadata. */
-  readonly capacityDefaults?: readonly HalluCodexCapacityField[]
+  readonly capacityDefaults?: readonly NovaFlowCapacityField[]
   /** Context window the user set for this model on this server. */
   readonly userContextWindow?: number
   /** Output limit the user set for this model on this server. */
@@ -35,7 +35,7 @@ export interface HalluCodexHostModel {
  * automatic value. The main process answers with the same type and request id, and an error when it refuses or cannot
  * save, after it has sent the configuration that applies the change.
  */
-export interface HalluCodexCapacityRequest {
+export interface NovaFlowCapacityRequest {
   readonly type: 'hallucodex-set-capacity'
   readonly requestId: number
   readonly model: string
@@ -50,24 +50,24 @@ export interface HalluCodexCapacityRequest {
  * @param maxOutputTokens - positive output limit, or null for the automatic value.
  * @returns settles after the configuration that applies the change has been delivered; rejects when it is refused.
  */
-export type HalluCodexCapacitySaver = (model: string, contextWindow: number | null, maxOutputTokens: number | null) => Promise<void>
+export type NovaFlowCapacitySaver = (model: string, contextWindow: number | null, maxOutputTokens: number | null) => Promise<void>
 
 /** Main-to-Host private message. localCapability grants only access to this process's limited loopback relay. */
-export interface HalluCodexHostConfiguration {
+export interface NovaFlowHostConfiguration {
   readonly type: 'hallucodex-config'
   readonly baseURL: string
   readonly localCapability: string
   readonly revision: number
-  readonly models: readonly HalluCodexHostModel[]
+  readonly models: readonly NovaFlowHostModel[]
 }
 
 const routes = [
-  { id: 'hallucodex-chat', name: 'HalluCodex Chat', endpoint: '/v1/chat/completions', api: 'openai-completions' },
-  { id: 'hallucodex-responses', name: 'HalluCodex Responses', endpoint: '/v1/responses', api: 'openai-responses' },
-  { id: 'hallucodex-anthropic', name: 'HalluCodex Messages', endpoint: '/v1/messages', api: 'anthropic-messages' },
+  { id: 'hallucodex-chat', name: 'NovaFlow Chat', endpoint: '/v1/chat/completions', api: 'openai-completions' },
+  { id: 'hallucodex-responses', name: 'NovaFlow Responses', endpoint: '/v1/responses', api: 'openai-responses' },
+  { id: 'hallucodex-anthropic', name: 'NovaFlow Messages', endpoint: '/v1/messages', api: 'anthropic-messages' },
 ] as const
 
-const isCapacityField = (value: unknown): value is HalluCodexCapacityField => value === 'contextWindow' || value === 'maxOutputTokens'
+const isCapacityField = (value: unknown): value is NovaFlowCapacityField => value === 'contextWindow' || value === 'maxOutputTokens'
 
 /**
  * Read one optional token count of an untrusted model entry.
@@ -87,7 +87,7 @@ function capacityField(model: object, field: string): number | undefined {
  * @param value - untrusted process message.
  * @returns a detached configuration with bounded local credentials and model data.
  */
-export function parseHalluCodexHostConfiguration(value: unknown): HalluCodexHostConfiguration {
+export function parseNovaFlowHostConfiguration(value: unknown): NovaFlowHostConfiguration {
   if (typeof value !== 'object' || value === null || !('type' in value) || value.type !== 'hallucodex-config'
     || !('baseURL' in value) || typeof value.baseURL !== 'string'
     || !('localCapability' in value) || typeof value.localCapability !== 'string'
@@ -101,7 +101,7 @@ export function parseHalluCodexHostConfiguration(value: unknown): HalluCodexHost
     || url.pathname !== '/' || url.search || url.hash || url.origin !== value.baseURL) {
     throw new Error('hallucodex Host: relay must use exact numeric loopback')
   }
-  const models: HalluCodexHostModel[] = []
+  const models: NovaFlowHostModel[] = []
   const seen = new Set<string>()
   for (const raw of value.models) {
     const model: unknown = raw
@@ -289,7 +289,7 @@ function withVendorReasoning(model: Model<Api>): Model<Api> {
  * @param model - authenticated catalog entry.
  * @returns the route, or undefined when the model advertises no relay endpoint.
  */
-function modelRoute(model: HalluCodexHostModel): (typeof routes)[number] | undefined {
+function modelRoute(model: NovaFlowHostModel): (typeof routes)[number] | undefined {
   const advertised = routes.filter(route => model.endpoints.includes(route.endpoint))
   const family = modelFamily(model.id)
   const familyProtocols = family === undefined ? undefined : vendorCatalogIndex().families.get(family)
@@ -311,7 +311,7 @@ interface ResolvedCapacity {
 }
 
 /** Vendor catalog entry with the model's id and the protocol of its route. */
-function vendorEntry(model: HalluCodexHostModel): Model<Api> | undefined {
+function vendorEntry(model: NovaFlowHostModel): Model<Api> | undefined {
   const route = modelRoute(model)
   return route === undefined ? undefined : vendorCatalogModel(route.api, model.id)
 }
@@ -319,7 +319,7 @@ function vendorEntry(model: HalluCodexHostModel): Model<Api> | undefined {
 const CAPACITY_PRECEDENCE: Readonly<Record<ModelCapacitySource, number>> = { user: 3, provider: 2, catalog: 1, default: 0 }
 
 function capacityValue(
-  model: HalluCodexHostModel, field: HalluCodexCapacityField, vendor: Model<Api> | undefined, withUser: boolean,
+  model: NovaFlowHostModel, field: NovaFlowCapacityField, vendor: Model<Api> | undefined, withUser: boolean,
 ): CapacityValue | undefined {
   const user = field === 'contextWindow' ? model.userContextWindow : model.userMaxOutputTokens
   if (withUser && user !== undefined) return { value: user, source: 'user' }
@@ -337,7 +337,7 @@ function capacityValue(
  * @param withUser - whether the user's own values take part.
  * @returns both capacities, or undefined when a source is missing for either.
  */
-function resolveCapacity(model: HalluCodexHostModel, withUser: boolean): ResolvedCapacity | undefined {
+function resolveCapacity(model: NovaFlowHostModel, withUser: boolean): ResolvedCapacity | undefined {
   const vendor = vendorEntry(model)
   const context = capacityValue(model, 'contextWindow', vendor, withUser)
   const output = capacityValue(model, 'maxOutputTokens', vendor, withUser)
@@ -353,7 +353,7 @@ function resolveCapacity(model: HalluCodexHostModel, withUser: boolean): Resolve
  * @param model - parsed catalog entry.
  * @returns the effective values when sources supply both, and the automatic values that apply without the user's own.
  */
-function describeCapacity(model: HalluCodexHostModel): ModelCapacity {
+function describeCapacity(model: NovaFlowHostModel): ModelCapacity {
   const effective = resolveCapacity(model, true)
   const vendor = vendorEntry(model)
   const automatic = resolveCapacity(model, false)
@@ -370,14 +370,14 @@ function describeCapacity(model: HalluCodexHostModel): ModelCapacity {
 }
 
 /**
- * Correct a saved default model selection for a configuration. A selection outside HalluCodex becomes the unselected
+ * Correct a saved default model selection for a configuration. A selection outside NovaFlow becomes the unselected
  * placeholder, and a selection of a model the configuration lists on another route moves to that route without its
  * reasoning effort, whose levels belong to the route.
  * @param configuration - applied native configuration.
  * @param saved - current default selection.
  * @returns the selection to save, or undefined when the saved one stands.
  */
-export function halluCodexDefaultSelection(configuration: HalluCodexHostConfiguration, saved: ModelSelection): ModelSelection | undefined {
+export function halluCodexDefaultSelection(configuration: NovaFlowHostConfiguration, saved: ModelSelection): ModelSelection | undefined {
   if (!routes.some(route => route.id === saved.provider)) return { provider: 'hallucodex-responses', model: 'select-a-model' }
   const model = configuration.models.find(entry => entry.id === saved.model)
   const route = model === undefined || resolveCapacity(model, true) === undefined ? undefined : modelRoute(model)
@@ -393,15 +393,15 @@ export function halluCodexDefaultSelection(configuration: HalluCodexHostConfigur
  * @param saveCapacity - saves a capacity change through the main process.
  * @returns a model publication updater; registration and service disposal belong to ctx.
  */
-export function installHalluCodexProvider(
-  ctx: Context, initial: HalluCodexHostConfiguration, saveCapacity: HalluCodexCapacitySaver,
+export function installNovaFlowProvider(
+  ctx: Context, initial: NovaFlowHostConfiguration, saveCapacity: NovaFlowCapacitySaver,
 ): (value: unknown) => void {
-  let current = parseHalluCodexHostConfiguration(initial)
+  let current = parseNovaFlowHostConfiguration(initial)
   const routed = (provider: string, id: string) => {
     const model = current.models.find(entry => entry.id === id)
     return model !== undefined && modelRoute(model)?.id === provider ? model : undefined
   }
-  const profiles = (configuration: HalluCodexHostConfiguration) => {
+  const profiles = (configuration: NovaFlowHostConfiguration) => {
     const capacities = new Map(configuration.models.map(model => [model.id, resolveCapacity(model, true)]))
     const providers: Record<string, PiAiProviderProfile> = {}
     for (const route of routes) {
@@ -465,7 +465,7 @@ export function installHalluCodexProvider(
     },
   })
   return (value: unknown) => {
-    const next = parseHalluCodexHostConfiguration(value)
+    const next = parseNovaFlowHostConfiguration(value)
     if (next.baseURL !== current.baseURL || next.localCapability !== current.localCapability) {
       throw new Error('hallucodex Host: relay identity cannot change during a Host lifetime')
     }
@@ -478,14 +478,14 @@ export function installHalluCodexProvider(
 }
 
 /** Opening line that names the product; the branded profile turns the upstream harness identity off. */
-export const HALLUCODEX_IDENTITY = 'You are an AI agent powered by HalluCodex.'
+export const HALLUCODEX_IDENTITY = 'You are an AI agent powered by NovaFlow.'
 
 /**
- * Lead every agent's system prompt with the HalluCodex identity, at the placement of the harness opener.
+ * Lead every agent's system prompt with the NovaFlow identity, at the placement of the harness opener.
  * Agent-preset personas shadow only the deployment persona sections, so this line reaches every preset.
  * @param ctx - Host root context; the section follows the systemPrompt service across reloads.
  */
-export function installHalluCodexIdentity(ctx: Context): void {
+export function installNovaFlowIdentity(ctx: Context): void {
   ctx.inject(['systemPrompt'], (promptCtx) => {
     promptCtx.systemPrompt.section({
       name: 'hallucodex:identity',

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { IconUserOutlineRegular, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime, Translate } from '@deepseek-ai/dsh-client-ui-slots'
-import type { HalluCodexKey } from './locales.ts'
+import type { NovaFlowKey } from './locales.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { DesktopAccountBridge, DesktopAccountState } from './bridge.ts'
 import { ACCOUNT_PANEL_ID } from './AccountPage.tsx'
@@ -26,7 +26,7 @@ export interface AccountActionViewProps {
   active: boolean
   bridge: DesktopAccountBridge
   openPage: () => void
-  t: Translate<HalluCodexKey>
+  t: Translate<NovaFlowKey>
 }
 
 /**

@@ -19,7 +19,7 @@ const hallucodexTest = vi.hoisted(() => ({
   restore: vi.fn(async () => {}), dispose: vi.fn(async () => {}), closeRelay: vi.fn(async () => {}),
   refreshAccount: vi.fn(async () => {}), refreshCatalog: vi.fn(async () => {}), refreshWallet: vi.fn(async () => {}),
 }))
-vi.mock('../src/hallucodex/runtime.ts', () => ({ HalluCodexDesktopRuntime: class {
+vi.mock('../src/hallucodex/runtime.ts', () => ({ NovaFlowDesktopRuntime: class {
   getSnapshot() { return hallucodexTest.snapshot }
   getRelayRevision() { return 1 }
   readonly restore = hallucodexTest.restore
@@ -29,7 +29,7 @@ vi.mock('../src/hallucodex/runtime.ts', () => ({ HalluCodexDesktopRuntime: class
   readonly refreshWallet = hallucodexTest.refreshWallet
 } }))
 vi.mock('../src/hallucodex/secure-storage.ts', () => ({ SafeStorageRefreshStore: vi.fn() }))
-vi.mock('../src/hallucodex/loopback-relay.ts', () => ({ startHalluCodexLoopbackRelay: async () => ({
+vi.mock('../src/hallucodex/loopback-relay.ts', () => ({ startNovaFlowLoopbackRelay: async () => ({
   baseURL: 'http://127.0.0.1:43210', localCapability: 't'.repeat(43), close: hallucodexTest.closeRelay,
 }) }))
 
@@ -501,7 +501,7 @@ describe('desktop main startup', () => {
     await vi.advanceTimersByTimeAsync(0)
     const zh = locale === 'zh-CN'
     expect(harness.dialog.showMessageBox).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: 'info', title: zh ? '关于 HalluCodex' : 'About HalluCodex', message: 'HalluCodex',
+      type: 'info', title: zh ? '关于 NovaFlow' : 'About NovaFlow', message: 'NovaFlow',
       detail: zh ? '版本 V1.0.0' : 'Version V1.0.0', buttons: [zh ? '确定' : 'OK'], cancelId: 0,
     }))
     // A dialog that cannot open is logged, not surfaced as an unhandled rejection.
@@ -719,7 +719,7 @@ describe('desktop main startup', () => {
     const application = handler(event, 'application', 48, 34)
     // Linux installs no dsh command, so it offers no command management.
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 HalluCodex', 'separator', 'HalluCodex 账号', '检查更新…', ...platform === 'win32' ? ['管理 dsh 命令…'] : [], 'separator', '退出',
+      '关于 NovaFlow', 'separator', 'NovaFlow 账号', '检查更新…', ...platform === 'win32' ? ['管理 dsh 命令…'] : [], 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -754,7 +754,7 @@ describe('desktop main startup', () => {
     expect(template.map(describeItem)).toEqual(['Desktop test', en.fileMenu, 'editMenu', 'windowMenu'])
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(
-      ['about', 'separator', 'HalluCodex account', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit'])
+      ['about', 'separator', 'NovaFlow account', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
 
@@ -909,7 +909,7 @@ describe('desktop main startup', () => {
   /** Give the packaged build an in-app update source, as a Windows or AppImage release carries. */
   function withInAppUpdateSource(): void {
     const resources = mkdtempSync(join(tmpdir(), 'hallucodex-update-source-'))
-    writeFileSync(join(resources, 'app-update.yml'), 'provider: github\nowner: AkumaRealLabs\nrepo: hallucodex-desktop\n')
+    writeFileSync(join(resources, 'app-update.yml'), 'provider: github\nowner: Prokint\nrepo: NavaFlow\n')
     onTestFinished(() => { rmSync(resources, { recursive: true, force: true }) })
     vi.stubGlobal('process', { ...process, resourcesPath: resources })
   }
@@ -937,7 +937,7 @@ describe('desktop main startup', () => {
     await vi.waitFor(() => { expect(window.webContents.send).toHaveBeenCalledWith('hallucodex:open') })
   })
 
-  it('keeps Linux data separate and starts the HalluCodex runtime', async () => {
+  it('keeps Linux data separate and starts the NovaFlow runtime', async () => {
     vi.stubEnv('DSH_HOME', undefined)
     vi.stubGlobal('process', { ...process, platform: 'linux' })
     const request = vi.fn<typeof fetch>()
@@ -1356,7 +1356,7 @@ describe('desktop main startup', () => {
     const fetchRelease = harness.netFetch
     await readyForUpdate()
     const check = applicationMenuItems().find(item => item.label === en.checkUpdatesMenu)?.click as () => void
-    const page = 'https://github.com/AkumaRealLabs/hallucodex-desktop/releases/tag/hallucodex-v99.0.0'
+    const page = 'https://github.com/Prokint/NavaFlow/releases/tag/hallucodex-v99.0.0'
     fetchRelease.mockResolvedValueOnce(Response.json({ tag_name: 'hallucodex-v99.0.0', html_url: page,
       body: '## 99.0.0\n- 新功能\n<!-- hallucodex:install-notes -->\n安装说明' }))
     harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 0 })
@@ -1364,7 +1364,7 @@ describe('desktop main startup', () => {
     await vi.waitFor(() => { expect(harness.openExternal).toHaveBeenCalledWith(page) })
     expect(harness.dialog.showMessageBox).toHaveBeenLastCalledWith(expect.objectContaining({
       message: en.updateAvailable.replace('{version}', '99.0.0'), buttons: [en.updateOpenDownloadPage], releaseNotes: '99.0.0\n• 新功能' }))
-    expect(fetchRelease).toHaveBeenLastCalledWith('https://api.github.com/repos/AkumaRealLabs/hallucodex-desktop/releases/latest', expect.anything())
+    expect(fetchRelease).toHaveBeenLastCalledWith('https://api.github.com/repos/Prokint/NavaFlow/releases/latest', expect.anything())
     expect(harness.updateDownload).not.toHaveBeenCalled()
 
     fetchRelease.mockResolvedValueOnce(new Response('Not Found', { status: 404 }))
@@ -1434,11 +1434,11 @@ describe('desktop main startup', () => {
     await readyForUpdate()
     harness.updateState = { phase: 'available', version: '1.0.1' }
     harness.netFetch.mockResolvedValueOnce(Response.json({
-      tag_name: 'hallucodex-v1.0.1', html_url: 'https://github.com/AkumaRealLabs/hallucodex-desktop/releases/tag/hallucodex-v1.0.1',
+      tag_name: 'hallucodex-v1.0.1', html_url: 'https://github.com/Prokint/NavaFlow/releases/tag/hallucodex-v1.0.1',
       body: '## 1.0.1\n- **修复**登录问题\n<!-- hallucodex:install-notes -->\n安装说明' }))
     harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 1 })
     await invoke(DESKTOP_IPC.updatesOpen, 'app')
-    expect(harness.netFetch).toHaveBeenCalledWith('https://api.github.com/repos/AkumaRealLabs/hallucodex-desktop/releases/tags/hallucodex-v1.0.1', expect.anything())
+    expect(harness.netFetch).toHaveBeenCalledWith('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/hallucodex-v1.0.1', expect.anything())
     expect(harness.dialog.showMessageBox.mock.calls.at(-1)?.at(-1)).toMatchObject({ releaseNotes: '1.0.1\n• 修复登录问题' })
     expect(harness.updateDownload).not.toHaveBeenCalled()
   })

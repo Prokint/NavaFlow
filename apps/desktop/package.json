@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-desktop",
-  "description": "HalluCodex desktop coding agent that signs in with a New API account",
+  "description": "NovaFlow desktop coding agent that signs in with a New API account",
   "version": "0.2.1-rc.3",
   "private": true,
   "license": "MIT",

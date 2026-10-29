@@ -10,19 +10,19 @@ export type AuthErrorCode = 'cancelled' | 'expired' | 'network_error' | 'invalid
   | 'access_denied' | 'secure_storage_unavailable' | 'storage_error' | 'group_invalid' | 'group_unavailable' | 'signed_out'
 
 /** Sanitized failure; neither server messages nor transport exceptions are retained. */
-export class HalluCodexAuthError extends Error {
+export class NovaFlowAuthError extends Error {
   /** Stable category safe for renderer status and diagnostics. */
   readonly code: AuthErrorCode
 
   constructor(code: AuthErrorCode) {
     super(code)
-    this.name = 'HalluCodexAuthError'
+    this.name = 'NovaFlowAuthError'
     this.code = code
   }
 }
 
 /** Minimal account display fields; contains no credentials or privileged claims. */
-export interface HalluCodexProfile {
+export interface NovaFlowProfile {
   id: string
   displayName: string
 }
@@ -32,7 +32,7 @@ export interface RefreshGrant {
   refreshToken: string
   refreshExpiresAt: number
   deviceSessionId: string
-  profile: HalluCodexProfile
+  profile: NovaFlowProfile
   /** Concrete group or `auto`. */
   group: string
 }
@@ -67,7 +67,7 @@ export interface CodeExchange {
 }
 
 /** Main-process network seam. Implementations must not log arguments or return secrets to a renderer. */
-export interface HalluCodexAuthTransport {
+export interface NovaFlowAuthTransport {
   /**
    * Register a browser approval request.
    * @param request - Main-process-generated PKCE and callback fields.
@@ -122,7 +122,7 @@ const requiredScopes = ['relay:invoke', 'profile:read', 'balance:read', 'models:
  */
 export function concreteGroup(value: unknown): string {
   try { return validateConcreteGroup(value) }
-  catch (_error) { throw new HalluCodexAuthError('group_invalid') }
+  catch (_error) { throw new NovaFlowAuthError('group_invalid') }
 }
 
 /**
@@ -132,17 +132,17 @@ export function concreteGroup(value: unknown): string {
  */
 export function routingGroup(value: unknown): string {
   try { return validateRoutingGroup(value) }
-  catch (_error) { throw new HalluCodexAuthError('group_invalid') }
+  catch (_error) { throw new NovaFlowAuthError('group_invalid') }
 }
 
 function record(value: unknown): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new HalluCodexAuthError('invalid_response')
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new NovaFlowAuthError('invalid_response')
   return value as Record<string, unknown>
 }
 
 function text(value: unknown, max = 8192, allowEmpty = false): string {
   if (typeof value !== 'string' || (!allowEmpty && value.length === 0) || value.length > max || /[\u0000-\u001f\u007f]/u.test(value)) {
-    throw new HalluCodexAuthError('invalid_response')
+    throw new NovaFlowAuthError('invalid_response')
   }
   return value
 }
@@ -150,7 +150,7 @@ function text(value: unknown, max = 8192, allowEmpty = false): string {
 function credential(value: unknown, prefix: string, max = 8192): string {
   const result = text(value, max)
   if (!result.startsWith(prefix) || result.length <= prefix.length || !/^[A-Za-z0-9._~-]+$/u.test(result)) {
-    throw new HalluCodexAuthError('invalid_response')
+    throw new NovaFlowAuthError('invalid_response')
   }
   return result
 }
@@ -165,7 +165,7 @@ export function parseRefreshRecord(value: unknown, origin: string): RefreshGrant
   const data = record(value)
   const profile = record(data.profile)
   if (data.version !== 1 || data.origin !== origin || typeof data.refreshExpiresAt !== 'number'
-    || !Number.isSafeInteger(data.refreshExpiresAt) || data.refreshExpiresAt <= 0) throw new HalluCodexAuthError('invalid_response')
+    || !Number.isSafeInteger(data.refreshExpiresAt) || data.refreshExpiresAt <= 0) throw new NovaFlowAuthError('invalid_response')
   return {
     refreshToken: credential(data.refreshToken, 'dsr.'), refreshExpiresAt: data.refreshExpiresAt,
     deviceSessionId: text(data.deviceSessionId, 256), group: routingGroup(data.group),
@@ -188,19 +188,19 @@ export function parseAccessGrant(value: unknown, now: number): AccessGrant {
   if (data.token_type !== 'Bearer' || typeof data.expires_in !== 'number' || !Number.isSafeInteger(data.expires_in)
     || data.expires_in <= 0 || data.expires_in > 900 || typeof data.refresh_expires_at !== 'number'
     || !Number.isSafeInteger(data.refresh_expires_at) || data.refresh_expires_at * 1000 <= now
-    || data.refresh_expires_at * 1000 > now + 30 * 24 * 60 * 60 * 1000 + CLOCK_SKEW_MS) throw new HalluCodexAuthError('invalid_response')
+    || data.refresh_expires_at * 1000 > now + 30 * 24 * 60 * 60 * 1000 + CLOCK_SKEW_MS) throw new NovaFlowAuthError('invalid_response')
   const scope = text(data.scope, 256).split(' ')
-  if (scope.some(item => !allowedScopes.has(item)) || requiredScopes.some(item => !scope.includes(item))) throw new HalluCodexAuthError('invalid_response')
-  if (!Array.isArray(data.allowed_groups) || data.allowed_groups.length > 1024) throw new HalluCodexAuthError('group_invalid')
+  if (scope.some(item => !allowedScopes.has(item)) || requiredScopes.some(item => !scope.includes(item))) throw new NovaFlowAuthError('invalid_response')
+  if (!Array.isArray(data.allowed_groups) || data.allowed_groups.length > 1024) throw new NovaFlowAuthError('group_invalid')
   const allowedGroups = data.allowed_groups.map(concreteGroup)
   const group = routingGroup(data.group)
   // Servers that predate automatic routing send neither field.
   const crossGroupRetry = data.cross_group_retry ?? false
   let autoGroups: string[] | null
   try { autoGroups = data.auto_groups === undefined || data.auto_groups === null ? null : [...groupOrder(data.auto_groups)] }
-  catch (_error) { throw new HalluCodexAuthError('group_invalid') }
+  catch (_error) { throw new NovaFlowAuthError('group_invalid') }
   if (typeof crossGroupRetry !== 'boolean' || (group === AUTO_GROUP ? autoGroups?.length === 0
-    : !allowedGroups.includes(group) || autoGroups !== null || crossGroupRetry)) throw new HalluCodexAuthError('group_invalid')
+    : !allowedGroups.includes(group) || autoGroups !== null || crossGroupRetry)) throw new NovaFlowAuthError('group_invalid')
   return {
     accessToken: credential(data.access_token, 'dsk.', 16384), accessExpiresAt: now + data.expires_in * 1000,
     refreshToken: credential(data.refresh_token, 'dsr.'), refreshExpiresAt: data.refresh_expires_at * 1000,
@@ -219,15 +219,15 @@ export function parseAccessGrant(value: unknown, now: number): AccessGrant {
 export function authorizationUrl(value: unknown, origin: string): string {
   let url: URL
   try { url = new URL(text(value, 4096)) }
-  catch (_error) { throw new HalluCodexAuthError('invalid_response') }
+  catch (_error) { throw new NovaFlowAuthError('invalid_response') }
   if (url.origin !== origin || url.username || url.password || url.hash || url.pathname !== '/desktop/authorize') {
-    throw new HalluCodexAuthError('invalid_response')
+    throw new NovaFlowAuthError('invalid_response')
   }
   return url.href
 }
 
 /** HTTP(S) implementation with fixed endpoints on the selected origin, no cookies, redirects, or retries. */
-export class HalluCodexHttpAuthTransport implements HalluCodexAuthTransport {
+export class NovaFlowHttpAuthTransport implements NovaFlowAuthTransport {
   /**
    * @param origin - Reads the currently selected server origin for every request.
    * @param fetcher - Network implementation.
@@ -288,11 +288,11 @@ export class HalluCodexHttpAuthTransport implements HalluCodexAuthTransport {
       })
       if (response.status >= 500 || response.status === 429 || response.status === 408) {
         await response.body?.cancel()
-        throw new HalluCodexAuthError('network_error')
+        throw new NovaFlowAuthError('network_error')
       }
       if (response.status === 204 && response.ok) return null
       if (!(response.headers.get('content-type') ?? '').toLowerCase().includes('application/json') || !response.body) {
-        throw new HalluCodexAuthError('invalid_response')
+        throw new NovaFlowAuthError('invalid_response')
       }
       const reader = response.body.getReader()
       const chunks: Uint8Array[] = []
@@ -302,7 +302,7 @@ export class HalluCodexHttpAuthTransport implements HalluCodexAuthTransport {
           const next = await reader.read()
           if (next.done) break
           length += next.value.byteLength
-          if (length > 262_144) throw new HalluCodexAuthError('invalid_response')
+          if (length > 262_144) throw new NovaFlowAuthError('invalid_response')
           chunks.push(next.value)
         }
       } finally {
@@ -310,22 +310,22 @@ export class HalluCodexHttpAuthTransport implements HalluCodexAuthTransport {
       }
       let value: unknown
       try { value = JSON.parse(Buffer.concat(chunks).toString('utf8')) }
-      catch (_error) { throw new HalluCodexAuthError('invalid_response') }
+      catch (_error) { throw new NovaFlowAuthError('invalid_response') }
       if (!response.ok) {
         const data = record(value)
         const error = typeof data.error === 'object' && data.error !== null ? record(data.error).code : data.error
         const code = error ?? data.code
-        if (code === 'invalid_grant') throw new HalluCodexAuthError(code)
+        if (code === 'invalid_grant') throw new NovaFlowAuthError(code)
         // The requested group is not available to the account; the refresh credential was not spent.
-        if (code === 'group_unavailable') throw new HalluCodexAuthError(code)
+        if (code === 'group_unavailable') throw new NovaFlowAuthError(code)
         // An unavailable server, including one that predates desktop authorization, must not erase a saved login.
-        if (code === 'temporarily_unavailable') throw new HalluCodexAuthError('network_error')
-        throw new HalluCodexAuthError('invalid_response')
+        if (code === 'temporarily_unavailable') throw new NovaFlowAuthError('network_error')
+        throw new NovaFlowAuthError('invalid_response')
       }
       return value
     } catch (error) {
-      if (error instanceof HalluCodexAuthError) throw error
-      throw new HalluCodexAuthError(signal?.aborted ? 'cancelled' : 'network_error')
+      if (error instanceof NovaFlowAuthError) throw error
+      throw new NovaFlowAuthError(signal?.aborted ? 'cancelled' : 'network_error')
     }
   }
 }

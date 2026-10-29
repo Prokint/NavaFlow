@@ -48,3 +48,11 @@ worktrees/
 .typert-*/
 native/system/test/bin/
 apps/desktop/.env.linux
+
+# NovaFlow local packaging outputs and private runtime data.
+/customizations/novaflow/local-output/
+/novaflow-local/
+/hallucodex-trial/
+/NovaFlow.app/
+/NavaFlow.app/
+/customizations/novaflow/__pycache__/

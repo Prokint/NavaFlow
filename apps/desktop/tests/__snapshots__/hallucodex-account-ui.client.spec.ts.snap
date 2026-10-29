@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`native HalluCodex account UI > shows stale balance and operation-specific recovery in en 1`] = `
+exports[`native NovaFlow account UI > shows stale balance and operation-specific recovery in en 1`] = `
 {
   "balance": "900",
   "messages": [
@@ -14,7 +14,7 @@ exports[`native HalluCodex account UI > shows stale balance and operation-specif
 }
 `;
 
-exports[`native HalluCodex account UI > shows stale balance and operation-specific recovery in zh-CN 1`] = `
+exports[`native NovaFlow account UI > shows stale balance and operation-specific recovery in zh-CN 1`] = `
 {
   "balance": "900",
   "messages": [

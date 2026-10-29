@@ -6,11 +6,11 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Socket } from 'node:net'
 import { finished } from 'node:stream/promises'
 import type { DesktopEndpoint } from './catalog.ts'
-import type { HalluCodexDesktopRuntime } from './runtime.ts'
+import type { NovaFlowDesktopRuntime } from './runtime.ts'
 
 /** Explicit native limits; the runtime is never exposed through renderer IPC. */
-export interface HalluCodexLoopbackRelayOptions {
-  readonly runtime: Pick<HalluCodexDesktopRuntime, 'invoke' | 'getRelayRevision'>
+export interface NovaFlowLoopbackRelayOptions {
+  readonly runtime: Pick<NovaFlowDesktopRuntime, 'invoke' | 'getRelayRevision'>
   readonly maxRequestBytes: number
   readonly maxConcurrentRequests: number
   /** Bounds receipt of local headers/body, without timing out upstream inference streams. */
@@ -18,7 +18,7 @@ export interface HalluCodexLoopbackRelayOptions {
 }
 
 /** Transfer only through trusted subprocess IPC; neither field belongs in renderer state or logs. */
-export interface HalluCodexLoopbackRelay {
+export interface NovaFlowLoopbackRelay {
   readonly baseURL: string
   readonly localCapability: string
   /** Stop admission, abort streams, and wait for all owned work and sockets to stop. */
@@ -170,7 +170,7 @@ async function streamResponse(upstream: Response, response: ServerResponse, sign
  * @param options - private invocation dependency and explicit resource limits.
  * @returns listener coordinates and idempotent asynchronous shutdown; baseURL has no protocol-path suffix.
  */
-export async function startHalluCodexLoopbackRelay(options: HalluCodexLoopbackRelayOptions): Promise<HalluCodexLoopbackRelay> {
+export async function startNovaFlowLoopbackRelay(options: NovaFlowLoopbackRelayOptions): Promise<NovaFlowLoopbackRelay> {
   for (const limit of [options.maxRequestBytes, options.maxConcurrentRequests, options.requestTimeoutMs]) {
     if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('hallucodex: invalid local relay limit')
   }

@@ -1,4 +1,4 @@
-/** Server-authorized routing groups for the HalluCodex desktop account. */
+/** Server-authorized routing groups for the NovaFlow desktop account. */
 
 /** Routing group that sends each request through an ordered list of concrete groups. */
 export const AUTO_GROUP = 'auto'

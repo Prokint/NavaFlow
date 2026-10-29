@@ -1,4 +1,8 @@
-# DeepSeek Harness
+# NovaFlow
+
+NovaFlow is a desktop agent project maintained for ecommerce customization. This repository is named NavaFlow and is based on HalluCodex 0.1.10 and DeepSeek Harness. Existing artwork, licenses, and compatible data directories are retained.
+
+Start with the [NovaFlow maintenance guide](NOVAFLOW.md). Model access still uses the existing service configuration; a custom relay is not connected yet. The npm command below runs the upstream CLI; use the source instructions for this repository.
 
 English | [中文](README.zh.md)
 
@@ -31,8 +35,8 @@ The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it
 To run from a repository checkout:
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
+git clone https://github.com/Prokint/NavaFlow.git
+cd NavaFlow
 pnpm install
 pnpm run build
 pnpm dsh web

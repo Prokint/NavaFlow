@@ -1,4 +1,4 @@
-HalluCodex is unavailable
+NovaFlow is unavailable
 The application could not start or stopped unexpectedly.
 Desktop Host failed
 Plugin initialization failed

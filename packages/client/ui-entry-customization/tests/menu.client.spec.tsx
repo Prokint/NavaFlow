@@ -147,12 +147,12 @@ describe('More menu registrations', () => {
   })
 
   it.each([
-    ['en', 'sidebar.panellist.actions', 'Create a HalluCodex plugin with a left sidebar entry.'],
-    ['en', 'conversation.session.header.views.actions', 'Create a HalluCodex conversation view plugin.'],
-    ['en', 'sidebar.right.tab.guide.actions', 'Create a HalluCodex plugin with a right sidebar entry.'],
-    ['zh', 'sidebar.panellist.actions', '创建一个带左侧栏入口的 HalluCodex 插件。'],
-    ['zh', 'conversation.session.header.views.actions', '创建一个 HalluCodex 会话视图插件。'],
-    ['zh', 'sidebar.right.tab.guide.actions', '创建一个带右侧栏入口的 HalluCodex 插件。'],
+    ['en', 'sidebar.panellist.actions', 'Create a NovaFlow plugin with a left sidebar entry.'],
+    ['en', 'conversation.session.header.views.actions', 'Create a NovaFlow conversation view plugin.'],
+    ['en', 'sidebar.right.tab.guide.actions', 'Create a NovaFlow plugin with a right sidebar entry.'],
+    ['zh', 'sidebar.panellist.actions', '创建一个带左侧栏入口的 NovaFlow 插件。'],
+    ['zh', 'conversation.session.header.views.actions', '创建一个 NovaFlow 会话视图插件。'],
+    ['zh', 'sidebar.right.tab.guide.actions', '创建一个带右侧栏入口的 NovaFlow 插件。'],
   ] as const)('starts an unsent %s Creator draft from %s', async (language, seat, prompt) => {
     const b = await bench(language)
     fireEvent.click(within(b.view.getByRole('menu', { name: seat }))

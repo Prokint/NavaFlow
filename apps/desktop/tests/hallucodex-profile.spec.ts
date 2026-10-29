@@ -1,4 +1,4 @@
-/** DeepSeek-hosted services in the shipped HalluCodex Desktop composition. */
+/** DeepSeek-hosted services in the shipped NovaFlow Desktop composition. */
 
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -10,7 +10,7 @@ import { createPluginProfile } from '../src/project-manager.ts'
 
 interface Row { id?: string; name?: string; disabled?: boolean | null; group?: boolean; config?: unknown }
 
-/** Packages that talk to DeepSeek or only serve its disabled routes; none may mount in HalluCodex. */
+/** Packages that talk to DeepSeek or only serve its disabled routes; none may mount in NovaFlow. */
 const DEEPSEEK_SERVICES = [
   '@deepseek-ai/dsh-deepseek-account-platform', '@deepseek-ai/dsh-llm-deepseek-api-key', '@deepseek-ai/dsh-llm-deepseek-account',
   '@deepseek-ai/dsh-session-telemetry-otel', '@deepseek-ai/dsh-host-product-telemetry-otel', '@deepseek-ai/dsh-client-product-analytics',
@@ -51,7 +51,7 @@ it('mounts no DeepSeek-hosted service, keeps web search off DeepSeek and drops t
     // The upstream Web-surface sections name DeepSeek Harness and describe `dsh web` development.
     expect(rows.find(row => row.id === 'web-runtime')?.config).toMatchObject({ surfaceContext: false, printUrl: true })
     expect(rows.find(row => row.id === 'harness-dev-context')?.disabled).toBe(true)
-    expect(rows.find(row => row.id === 'workspace-controller')?.config).toEqual({ productDirectory: 'HalluCodex' })
+    expect(rows.find(row => row.id === 'workspace-controller')?.config).toEqual({ productDirectory: 'NovaFlow' })
   } finally {
     rmSync(home, { recursive: true, force: true })
   }

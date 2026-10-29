@@ -2,7 +2,7 @@
 
 import { timingSafeEqual } from 'node:crypto'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { HalluCodexAuthError } from './auth-protocol.ts'
+import { NovaFlowAuthError } from './auth-protocol.ts'
 import { CALLBACK_PAGE_CSP, callbackLanguage, callbackPage, type CallbackOutcome } from './callback-page.ts'
 
 /** HTTP status of each callback page; a denial is still a well-formed callback. */
@@ -34,8 +34,8 @@ export interface LoopbackLogin {
  */
 export async function createLoopbackLogin(state: string, options: LoopbackLoginOptions): Promise<LoopbackLogin> {
   const now = options.now ?? Date.now
-  if (options.signal.aborted) throw new HalluCodexAuthError('cancelled')
-  if (options.expiresAt <= now()) throw new HalluCodexAuthError('expired')
+  if (options.signal.aborted) throw new NovaFlowAuthError('cancelled')
+  if (options.expiresAt <= now()) throw new NovaFlowAuthError('expired')
   const result = Promise.withResolvers<string>()
   // A callback may fail while registration or browser opening is still awaiting another operation.
   void result.promise.catch(() => {})
@@ -80,7 +80,7 @@ export async function createLoopbackLogin(state: string, options: LoopbackLoginO
     consumed = true
     answer(request, response, code === null ? 'denied' : 'approved')
     if (code !== null) result.resolve(code)
-    else result.reject(new HalluCodexAuthError('access_denied'))
+    else result.reject(new NovaFlowAuthError('access_denied'))
     void close()
   })
   server.headersTimeout = 5000
@@ -94,7 +94,7 @@ export async function createLoopbackLogin(state: string, options: LoopbackLoginO
     options.signal.removeEventListener('abort', abort)
     if (!consumed) {
       consumed = true
-      result.reject(new HalluCodexAuthError('cancelled'))
+      result.reject(new NovaFlowAuthError('cancelled'))
     }
     closing = new Promise<void>((resolve) => {
       server.close(() => { resolve() })
@@ -106,7 +106,7 @@ export async function createLoopbackLogin(state: string, options: LoopbackLoginO
   function fail(code: 'expired' | 'cancelled' | 'network_error'): void {
     if (!consumed) {
       consumed = true
-      result.reject(new HalluCodexAuthError(code))
+      result.reject(new NovaFlowAuthError(code))
     }
     void close()
   }
@@ -120,13 +120,13 @@ export async function createLoopbackLogin(state: string, options: LoopbackLoginO
     })
   } catch (_error) {
     await close()
-    throw new HalluCodexAuthError('network_error')
+    throw new NovaFlowAuthError('network_error')
   }
   server.on('error', () => { fail('network_error') })
   const address = server.address()
   if (address === null || typeof address === 'string') {
     await close()
-    throw new HalluCodexAuthError('network_error')
+    throw new NovaFlowAuthError('network_error')
   }
   host = `127.0.0.1:${address.port}`
   options.signal.addEventListener('abort', abort, { once: true })

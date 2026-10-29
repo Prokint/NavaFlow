@@ -1,14 +1,14 @@
-import { HalluCodexDesktopRuntime, type HalluCodexDesktopSnapshot } from './hallucodex/runtime.ts'
-import { HalluCodexHttpAuthTransport } from './hallucodex/auth-protocol.ts'
+import { NovaFlowDesktopRuntime, type NovaFlowDesktopSnapshot } from './hallucodex/runtime.ts'
+import { NovaFlowHttpAuthTransport } from './hallucodex/auth-protocol.ts'
 import { SafeStorageRefreshStore } from './hallucodex/secure-storage.ts'
-import { startHalluCodexLoopbackRelay } from './hallucodex/loopback-relay.ts'
-import type { HalluCodexLoopbackRelay } from './hallucodex/loopback-relay.ts'
+import { startNovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
+import type { NovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
 import { halluCodexAccountCopy } from './hallucodex/locale.ts'
 import { ServerOriginSetting } from './hallucodex/server-origin.ts'
 import { ModelCapacitySettings, type ModelCapacityOverride } from './hallucodex/model-capacity.ts'
 import { desktopDeviceName } from './hallucodex/device-name.ts'
-import { checkHalluCodexRelease, fetchHalluCodexReleaseNotes, ReleaseNoticeState } from './hallucodex/release-check.ts'
-import type { HalluCodexHostConfiguration } from '@deepseek-ai/dsh-desktop-host/hallucodex'
+import { checkNovaFlowRelease, fetchNovaFlowReleaseNotes, ReleaseNoticeState } from './hallucodex/release-check.ts'
+import type { NovaFlowHostConfiguration } from '@deepseek-ai/dsh-desktop-host/hallucodex'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
@@ -101,7 +101,7 @@ let backendReady = false
 /** Error-level console output of the primary window, attached to crash reports. */
 const rendererConsole = new RendererConsoleTail()
 
-// Packaged HalluCodex builds use a separate data home from the upstream CLI.
+// Packaged NovaFlow builds use a separate data home from the upstream CLI.
 if (app.isPackaged) process.env.DSH_HOME ??= join(app.getPath('home'), '.hallucodex')
 
 // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
@@ -435,7 +435,7 @@ async function main(): Promise<void> {
   const checkForRelease = (manual: boolean): Promise<void> => {
     releaseCheck ??= (async () => {
       try {
-        const result = await checkHalluCodexRelease(app.getVersion(), (input, init) => net.fetch(input, init), AbortSignal.timeout(15_000))
+        const result = await checkNovaFlowRelease(app.getVersion(), (input, init) => net.fetch(input, init), AbortSignal.timeout(15_000))
         const detail = formatDesktopMessage(locale.messages.updateCurrentDetail, { version: app.getVersion() })
         if (result.status === 'current') {
           if (manual) await ordinaryMessageBox({ type: 'info', title: locale.messages.updateCheckTitle, message: locale.messages.updateCurrent, detail })
@@ -503,7 +503,7 @@ async function main(): Promise<void> {
   }
   let hallucodexHost: DesktopHostProcess | undefined
   // The relay starts before the account restores, so every published configuration has it.
-  const nativeConfiguration = (): HalluCodexHostConfiguration => {
+  const nativeConfiguration = (): NovaFlowHostConfiguration => {
     const snapshot = hallucodex.getSnapshot()
     const own = modelCapacity.get(snapshot.serverOrigin)
     const models = snapshot.catalogStatus === 'ready' ? snapshot.catalog?.models ?? [] : []
@@ -527,19 +527,19 @@ async function main(): Promise<void> {
       throw new Error('hallucodex: unknown model')
     }
     await modelCapacity.set(snapshot.serverOrigin, model, capacity)
-    hallucodexHost?.publishHalluCodex(nativeConfiguration())
+    hallucodexHost?.publishNovaFlow(nativeConfiguration())
   }
   // The browser callback finishes sign-in; bring the window back so the user does not have to switch apps.
-  let lastAccountStatus: HalluCodexDesktopSnapshot['account']['status'] | undefined
-  const hallucodex = new HalluCodexDesktopRuntime({
+  let lastAccountStatus: NovaFlowDesktopSnapshot['account']['status'] | undefined
+  const hallucodex = new NovaFlowDesktopRuntime({
     server,
-    transport: new HalluCodexHttpAuthTransport(() => server.get()),
+    transport: new NovaFlowHttpAuthTransport(() => server.get()),
     store: new SafeStorageRefreshStore(join(app.getPath('userData'), 'hallucodex-account'), safeStorage, () => server.get()),
     fetch: globalThis.fetch, maxRequestBytes: 20 * 1024 * 1024,
     deviceName: desktopDeviceName(hostname(), process.platform, process.arch),
     openExternal: url => shell.openExternal(url),
     onChange(snapshot) {
-      hallucodexHost?.publishHalluCodex(nativeConfiguration())
+      hallucodexHost?.publishNovaFlow(nativeConfiguration())
       const finishedBrowserStep = lastAccountStatus === 'signing-in' && snapshot.account.status !== 'signing-in'
       lastAccountStatus = snapshot.account.status
       if (!mainWindow || mainWindow.isDestroyed()) return
@@ -552,10 +552,10 @@ async function main(): Promise<void> {
       }
     },
   })
-  const hallucodexRelay: HalluCodexLoopbackRelay = await startHalluCodexLoopbackRelay({ runtime: hallucodex,
+  const hallucodexRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: hallucodex,
     maxRequestBytes: 20 * 1024 * 1024, maxConcurrentRequests: 16, requestTimeoutMs: 30_000 })
   await hallucodex.restore()
-  const closeHalluCodex = async (): Promise<void> => {
+  const closeNovaFlow = async (): Promise<void> => {
     await hallucodexRelay.close()
     await hallucodex.dispose()
   }
@@ -679,7 +679,7 @@ async function main(): Promise<void> {
     return state
   }
 
-  stopForRecovery = async () => { await closeHalluCodex(); await backend.close() }
+  stopForRecovery = async () => { await closeNovaFlow(); await backend.close() }
 
   const reconcileBackend = (): Promise<void> => {
     startup ??= (async () => {
@@ -870,7 +870,7 @@ async function main(): Promise<void> {
   })
   ipcMain.handle(DESKTOP_IPC.onboardingApiKey, (event) => {
     assertProductSender(event)
-    // Model access comes from the HalluCodex account, never a pasted provider key.
+    // Model access comes from the NovaFlow account, never a pasted provider key.
     return false
   })
   ipcMain.on(DESKTOP_IPC.onboardingActive, (event, active: unknown) => {
@@ -924,7 +924,7 @@ async function main(): Promise<void> {
         if (state.version !== undefined) {
           // The changelog accompanies every download confirmation; a failed read only omits it.
           const fetchNotes = (input: string, init: RequestInit): Promise<Response> => net.fetch(input, init)
-          const releaseNotes = await fetchHalluCodexReleaseNotes(state.version, fetchNotes, AbortSignal.timeout(10_000))
+          const releaseNotes = await fetchNovaFlowReleaseNotes(state.version, fetchNotes, AbortSignal.timeout(10_000))
             .catch((_notesError: unknown) => '')
           const result = await ordinaryMessageBox({ title: locale.messages.updateCheckTitle,
             message: formatDesktopMessage(locale.messages.updateAvailable, { version: state.version }),
@@ -957,7 +957,7 @@ async function main(): Promise<void> {
   })
 
   app.setAboutPanelOptions({
-    applicationName: 'HalluCodex',
+    applicationName: 'NovaFlow',
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',
@@ -1215,7 +1215,7 @@ async function main(): Promise<void> {
     if (mainWindow !== undefined && !mainWindow.isDestroyed()) mainWindow.hide()
     updateSchedule.dispose()
     updateDialog.dispose()
-    void Promise.all([backend.close(), closeHalluCodex()])
+    void Promise.all([backend.close(), closeNovaFlow()])
       .catch((error: unknown) => { console.error(error) }).finally(() => { app.quit() })
   }
   app.on('before-quit', (event) => {

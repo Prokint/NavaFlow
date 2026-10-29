@@ -75,7 +75,7 @@ describe('model capacities set by the user', () => {
     await writeFile(file, '{"servers":[1]}')
     expect(readModelCapacities(file).size).toBe(0)
     await writeFile(file, JSON.stringify({ version: 1, servers: {
-      'HTTPS://API.HalluCodex.com/': { 'gpt-5.1': { contextWindow: 300_000 }, 'bad': { contextWindow: 0 }, 'empty': {} },
+      'HTTPS://API.NovaFlow.com/': { 'gpt-5.1': { contextWindow: 300_000 }, 'bad': { contextWindow: 0 }, 'empty': {} },
       'https://example.com/v1': { 'gpt-5.1': { contextWindow: 300_000 } },
       'http://localhost:3000': 'x',
       'http://localhost:4000': { only: { maxOutputTokens: 9, contextWindow: 8 } },

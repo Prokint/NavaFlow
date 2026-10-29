@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-brand-official/README.md
 /:
-  en: 026cf95f549368b3
-  zh: 34f62b153b75110c
+  en: d38a3341f33599ce
+  zh: 7054b1d5f13a2053
 /deepseek-ai-dsh-client-ui-brand-official:
   en: 7cee1be833cea807
   zh: 9953e1b38cb23d34
 /deepseek-ai-dsh-client-ui-brand-official/summary:
-  en: da1286cc9668728d
-  zh: e6467ca5da7135d5
+  en: 6de3995bc8e726d4
+  zh: 172db0221202cb01
 /deepseek-ai-dsh-client-ui-brand-official/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,8 +18,8 @@
   en: 006f2bf593bbac5e
   zh: 0e46f35317cab296
 /deepseek-ai-dsh-client-ui-brand-official/use-this-package/the-desktop-account-entry:
-  en: ac3947e2551967c0
-  zh: 2f167908b5874156
+  en: 6d59ac848247d3f3
+  zh: c7234d7e6096eb34
 /deepseek-ai-dsh-client-ui-brand-official/use-this-package/replacing-the-brand:
   en: bdb9acd559eb34bb
   zh: 042932f35cedba9a

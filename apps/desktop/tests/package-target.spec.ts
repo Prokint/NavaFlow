@@ -97,16 +97,16 @@ describe('desktop package target', () => {
   it('locates the unpacked application each target leaves beside its installers', () => {
     const root = join('out', 'artifacts')
     expect(desktopPackagedApplication(resolveDesktopPackageTarget('mac-arm64', 'darwin', 'arm64'), root)).toEqual({
-      application: join(root, 'mac-arm64', 'HalluCodex.app', 'Contents'),
-      resources: join(root, 'mac-arm64', 'HalluCodex.app', 'Contents', 'Resources'),
-      executable: join(root, 'mac-arm64', 'HalluCodex.app', 'Contents', 'MacOS', 'HalluCodex'),
+      application: join(root, 'mac-arm64', 'NovaFlow.app', 'Contents'),
+      resources: join(root, 'mac-arm64', 'NovaFlow.app', 'Contents', 'Resources'),
+      executable: join(root, 'mac-arm64', 'NovaFlow.app', 'Contents', 'MacOS', 'NovaFlow'),
     })
     expect(desktopPackagedApplication(resolveDesktopPackageTarget('mac-x64', 'darwin', 'x64'), root).resources)
-      .toBe(join(root, 'mac', 'HalluCodex.app', 'Contents', 'Resources'))
+      .toBe(join(root, 'mac', 'NovaFlow.app', 'Contents', 'Resources'))
     expect(desktopPackagedApplication(resolveDesktopPackageTarget('win-x64', 'win32', 'x64'), root)).toEqual({
       application: join(root, 'win-unpacked'),
       resources: join(root, 'win-unpacked', 'resources'),
-      executable: join(root, 'win-unpacked', 'HalluCodex.exe'),
+      executable: join(root, 'win-unpacked', 'NovaFlow.exe'),
     })
     expect(desktopPackagedApplication(resolveDesktopPackageTarget('linux-x64', 'linux', 'x64'), root).executable)
       .toBe(join(root, 'linux-unpacked', 'hallucodex'))

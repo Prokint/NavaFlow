@@ -2,21 +2,21 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/hallucodex/README.md
-/hallucodex-desktop-account-modules:
-  en: 106af5791fac7c3d
-  zh: 6d152ffc21a765b0
-/hallucodex-desktop-account-modules/native-ownership:
-  en: 680d035c804ff248
-  zh: 38bb07fdef7e017c
-/hallucodex-desktop-account-modules/authorization-and-storage:
+/novaflow-desktop-account-modules:
+  en: 1e99b54c5a64e7de
+  zh: 5c9f8aead215ebbc
+/novaflow-desktop-account-modules/native-ownership:
+  en: 6e1ccc61ed1d824a
+  zh: 6947934331d15989
+/novaflow-desktop-account-modules/authorization-and-storage:
   en: 38b0e30b8b4c9ec9
   zh: ccb3b2769a4b9fe1
-/hallucodex-desktop-account-modules/models-and-relay:
+/novaflow-desktop-account-modules/models-and-relay:
   en: 9a07e9bf1a1500d7
   zh: 7a19184cf0c99c0b
-/hallucodex-desktop-account-modules/updates-and-release-notes:
+/novaflow-desktop-account-modules/updates-and-release-notes:
   en: 6f0db99d1cf516e8
   zh: dba22f94c3df5b47
-/hallucodex-desktop-account-modules/verification-and-activation-requirements:
+/novaflow-desktop-account-modules/verification-and-activation-requirements:
   en: d0e531c4a8bf02e5
   zh: 399b9538527ffaf2

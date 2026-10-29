@@ -1,4 +1,4 @@
-/** Tag prefix of HalluCodex desktop releases; upstream `dsh-v*` tags are not releases of this application. */
+/** Tag prefix of NovaFlow desktop releases; upstream `dsh-v*` tags are not releases of this application. */
 export const DESKTOP_RELEASE_TAG_PREFIX: 'hallucodex-v'
 
 /** Line separating the release notes the application shows from the installation instructions. */

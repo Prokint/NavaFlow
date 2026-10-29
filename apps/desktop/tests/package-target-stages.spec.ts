@@ -93,7 +93,7 @@ it.each([
   expect(writeFileSync).toHaveBeenCalledOnce()
   expect(JSON.parse(vi.mocked(writeFileSync).mock.calls[0]![1] as string)).toEqual({
     schemaVersion: 1, target: name, version: productVersion,
-    updates: { provider: 'github', owner: 'AkumaRealLabs', repo: 'hallucodex-desktop', releaseType: 'release', files: [metadata, 'installer'] } })
+    updates: { provider: 'github', owner: 'Prokint', repo: 'NavaFlow', releaseType: 'release', files: [metadata, 'installer'] } })
 })
 
 it('records no release when the update files do not match the installers', async () => {
@@ -162,7 +162,7 @@ it.each([['mac-arm64', 'arm64'], ['mac-x64', 'x64']] as const)(
     expect(verifyDesktopUpdateMetadata).toHaveBeenCalledExactlyOnceWith({
       directory: unsignedArtifacts, filename: 'latest-mac.yml', version: '0.1.0', platform: 'darwin' })
     expect(vi.mocked(verifyDesktopAppUpdateConfig).mock.calls[0]![0])
-      .toBe(join(unsignedArtifacts, arch === 'arm64' ? 'mac-arm64' : 'mac', 'HalluCodex.app', 'Contents', 'Resources'))
+      .toBe(join(unsignedArtifacts, arch === 'arm64' ? 'mac-arm64' : 'mac', 'NovaFlow.app', 'Contents', 'Resources'))
     expect(writeFileSync).not.toHaveBeenCalled()
   })
 

@@ -1,43 +1,43 @@
-/** Main-process composition for HalluCodex account, authenticated discovery, and scoped relay. */
-import { HalluCodexUnauthorizedError, readHalluCodexQuotaDisplay, readHalluCodexWalletQuota, type HalluCodexWalletQuota } from './account-info.ts'
+/** Main-process composition for NovaFlow account, authenticated discovery, and scoped relay. */
+import { NovaFlowUnauthorizedError, readNovaFlowQuotaDisplay, readNovaFlowWalletQuota, type NovaFlowWalletQuota } from './account-info.ts'
 import { accountFailure, type AccountFailure } from './account-errors.ts'
-import type { HalluCodexQuotaDisplay } from './quota-display.ts'
-import { HalluCodexAuthBroker } from './auth-broker.ts'
-import { HalluCodexAuthError } from './auth-protocol.ts'
+import type { NovaFlowQuotaDisplay } from './quota-display.ts'
+import { NovaFlowAuthBroker } from './auth-broker.ts'
+import { NovaFlowAuthError } from './auth-protocol.ts'
 import { groupSelection, sameGroupSelection, type GroupSelection } from './group-policy.ts'
-import type { HalluCodexAccountSnapshot, HalluCodexAuthBrokerOptions } from './auth-broker.ts'
+import type { NovaFlowAccountSnapshot, NovaFlowAuthBrokerOptions } from './auth-broker.ts'
 import { normalizeServerOrigin, type ServerOriginSetting } from './server-origin.ts'
-import { HalluCodexCatalogController } from './catalog-controller.ts'
+import { NovaFlowCatalogController } from './catalog-controller.ts'
 import type { DesktopCatalogView } from './catalog-controller.ts'
-import { HalluCodexRelayBroker } from './relay-broker.ts'
+import { NovaFlowRelayBroker } from './relay-broker.ts'
 import type { DesktopRelayResult } from './relay-broker.ts'
 import type { DesktopEndpoint } from './catalog.ts'
 
 /** Safe native account view; no method returning credentials belongs in renderer IPC. */
-export interface HalluCodexDesktopSnapshot {
-  readonly account: HalluCodexAccountSnapshot
+export interface NovaFlowDesktopSnapshot {
+  readonly account: NovaFlowAccountSnapshot
   readonly serverOrigin: string
   readonly catalogStatus: 'unavailable' | 'loading' | 'ready'
   readonly catalog?: DesktopCatalogView
   readonly catalogError?: AccountFailure
   readonly accountRefreshStatus?: 'loading' | 'ready' | 'failed'
   readonly accountRefreshError?: AccountFailure
-  readonly wallet?: HalluCodexWalletQuota
+  readonly wallet?: NovaFlowWalletQuota
   readonly walletStatus?: 'unavailable' | 'loading' | 'ready' | 'failed'
   readonly walletError?: AccountFailure
   /** Time of the last accepted balance response, not the last attempted request. */
   readonly walletUpdatedAt?: number
   /** How the selected site shows quota; absent until its public status has been read. */
-  readonly quotaDisplay?: HalluCodexQuotaDisplay
+  readonly quotaDisplay?: NovaFlowQuotaDisplay
 }
 
 /** Native dependencies, supplied only after Electron readiness and the application single-instance lock. */
-export interface HalluCodexDesktopOptions extends Omit<HalluCodexAuthBrokerOptions, 'onChange' | 'origin'> {
+export interface NovaFlowDesktopOptions extends Omit<NovaFlowAuthBrokerOptions, 'onChange' | 'origin'> {
   /** Selected server origin; the transport and store passed here must read the same setting. */
   readonly server: ServerOriginSetting
   readonly fetch: typeof globalThis.fetch
   readonly maxRequestBytes: number
-  readonly onChange?: (snapshot: HalluCodexDesktopSnapshot) => void
+  readonly onChange?: (snapshot: NovaFlowDesktopSnapshot) => void
 }
 
 /** Serializable outcome of an explicit group move, separate from subsequent discovery. */
@@ -47,22 +47,22 @@ export type GroupSelectionResult = 'selected' | AccountFailure
  * Account state owns relay admission. The desktop shell exposes only safe account methods to its owned UI.
  * The authenticated Host provider alone receives invoke; credentials remain in the native broker.
  */
-export class HalluCodexDesktopRuntime {
-  private readonly account: HalluCodexAuthBroker
-  private readonly catalog: HalluCodexCatalogController
-  private readonly relay: HalluCodexRelayBroker
+export class NovaFlowDesktopRuntime {
+  private readonly account: NovaFlowAuthBroker
+  private readonly catalog: NovaFlowCatalogController
+  private readonly relay: NovaFlowRelayBroker
   private accountKey: string | undefined
   private accountEpoch = 0
-  private wallet: HalluCodexWalletQuota | undefined
-  private walletStatus: NonNullable<HalluCodexDesktopSnapshot['walletStatus']> = 'unavailable'
+  private wallet: NovaFlowWalletQuota | undefined
+  private walletStatus: NonNullable<NovaFlowDesktopSnapshot['walletStatus']> = 'unavailable'
   private walletError: AccountFailure | undefined
   private walletUpdatedAt: number | undefined
-  private quotaDisplay: HalluCodexQuotaDisplay | undefined
+  private quotaDisplay: NovaFlowQuotaDisplay | undefined
   private balanceRequest = new AbortController()
   private generation = 0
-  private catalogStatus: HalluCodexDesktopSnapshot['catalogStatus'] = 'unavailable'
+  private catalogStatus: NovaFlowDesktopSnapshot['catalogStatus'] = 'unavailable'
   private catalogError: AccountFailure | undefined
-  private accountRefreshStatus: HalluCodexDesktopSnapshot['accountRefreshStatus']
+  private accountRefreshStatus: NovaFlowDesktopSnapshot['accountRefreshStatus']
   private accountRefreshError: AccountFailure | undefined
   private catalogTask: { generation: number; promise: Promise<void> } | undefined
   private walletTask: { generation: number; promise: Promise<void> } | undefined
@@ -71,19 +71,19 @@ export class HalluCodexDesktopRuntime {
   private disposed = false
   private readonly pending = new Set<Promise<void>>()
 
-  constructor(private readonly options: HalluCodexDesktopOptions) {
+  constructor(private readonly options: NovaFlowDesktopOptions) {
     const origin = () => options.server.get()
-    this.account = new HalluCodexAuthBroker({ ...options, origin, onChange: (snapshot) => { this.accountChanged(snapshot) } })
+    this.account = new NovaFlowAuthBroker({ ...options, origin, onChange: (snapshot) => { this.accountChanged(snapshot) } })
     const access = () => this.account.getRequestCredentials()
-    this.relay = new HalluCodexRelayBroker({ access, origin, fetch: options.fetch, maxRequestBytes: options.maxRequestBytes })
-    this.catalog = new HalluCodexCatalogController({ access, origin, fetch: options.fetch, relay: this.relay })
+    this.relay = new NovaFlowRelayBroker({ access, origin, fetch: options.fetch, maxRequestBytes: options.maxRequestBytes })
+    this.catalog = new NovaFlowCatalogController({ access, origin, fetch: options.fetch, relay: this.relay })
   }
 
   /** @returns the account/catalog admission revision for the private Host relay. */
   getRelayRevision(): number { return this.generation }
 
   /** @returns a fresh safe projection suitable for owned-window IPC. */
-  getSnapshot(): HalluCodexDesktopSnapshot {
+  getSnapshot(): NovaFlowDesktopSnapshot {
     const catalog = this.catalog.getSnapshot()
     return structuredClone({
       account: this.account.getSnapshot(), serverOrigin: this.options.server.get(),
@@ -100,19 +100,19 @@ export class HalluCodexDesktopRuntime {
   }
 
   /** @returns account state after opening the system-browser authorization page. */
-  async startSignIn(): Promise<HalluCodexDesktopSnapshot> {
+  async startSignIn(): Promise<NovaFlowDesktopSnapshot> {
     await this.account.startSignIn()
     return this.getSnapshot()
   }
 
   /** @returns account state after cancelling the current browser attempt. */
-  async cancelSignIn(): Promise<HalluCodexDesktopSnapshot> {
+  async cancelSignIn(): Promise<NovaFlowDesktopSnapshot> {
     await this.account.cancelSignIn()
     return this.getSnapshot()
   }
 
   /** @returns account state after secure restoration; network failure does not erase saved credentials. */
-  async restore(): Promise<HalluCodexDesktopSnapshot> {
+  async restore(): Promise<NovaFlowDesktopSnapshot> {
     await this.account.restore()
     return this.getSnapshot()
   }
@@ -156,7 +156,7 @@ export class HalluCodexDesktopRuntime {
   async selectGroup(selection: unknown): Promise<GroupSelectionResult> {
     let target: GroupSelection
     try { target = groupSelection(selection) }
-    catch (_error) { throw new HalluCodexAuthError('group_invalid') }
+    catch (_error) { throw new NovaFlowAuthError('group_invalid') }
     const epoch = this.accountEpoch
     const operation = this.mutationTail.then(async (): Promise<GroupSelectionResult> => {
       if (epoch !== this.accountEpoch || this.disposed) return 'cancelled'
@@ -194,7 +194,7 @@ export class HalluCodexDesktopRuntime {
    * @param value - User-entered server address.
    * @returns The safe projection after the change.
    */
-  async setServerOrigin(value: unknown): Promise<HalluCodexDesktopSnapshot> {
+  async setServerOrigin(value: unknown): Promise<NovaFlowDesktopSnapshot> {
     const origin = normalizeServerOrigin(value)
     if (this.account.getSnapshot().status !== 'signed-out') throw new Error('hallucodex: sign out before changing the server')
     if (origin !== this.options.server.get()) {
@@ -236,7 +236,7 @@ export class HalluCodexDesktopRuntime {
     const wallet = this.loadWallet()
     try {
       await this.catalog.refresh().catch((error: unknown) => {
-        if (!(error instanceof HalluCodexUnauthorizedError) || generation !== this.generation) throw error
+        if (!(error instanceof NovaFlowUnauthorizedError) || generation !== this.generation) throw error
         this.account.expireAccessToken()
         return this.catalog.refresh()
       })
@@ -282,13 +282,13 @@ export class HalluCodexDesktopRuntime {
       ? this.readQuotaDisplay(generation, signal) : Promise.resolve()
     try {
       let access = await this.account.getRequestCredentials()
-      let wallet: HalluCodexWalletQuota
-      try { wallet = await readHalluCodexWalletQuota(this.options.fetch, this.options.server.get(), access, signal) }
+      let wallet: NovaFlowWalletQuota
+      try { wallet = await readNovaFlowWalletQuota(this.options.fetch, this.options.server.get(), access, signal) }
       catch (error) {
-        if (!(error instanceof HalluCodexUnauthorizedError) || generation !== this.generation || signal.aborted) throw error
+        if (!(error instanceof NovaFlowUnauthorizedError) || generation !== this.generation || signal.aborted) throw error
         this.account.expireAccessToken()
         access = await this.account.getRequestCredentials()
-        wallet = await readHalluCodexWalletQuota(this.options.fetch, this.options.server.get(), access, signal)
+        wallet = await readNovaFlowWalletQuota(this.options.fetch, this.options.server.get(), access, signal)
       }
       if (generation === this.generation && !signal.aborted) {
         this.wallet = wallet
@@ -338,7 +338,7 @@ export class HalluCodexDesktopRuntime {
 
   private async readQuotaDisplay(generation: number, signal: AbortSignal): Promise<void> {
     try {
-      const display = await readHalluCodexQuotaDisplay(this.options.fetch, this.options.server.get(), signal)
+      const display = await readNovaFlowQuotaDisplay(this.options.fetch, this.options.server.get(), signal)
       if (generation === this.generation && !signal.aborted) this.quotaDisplay = display
     } catch (_displayError) { /* Cosmetic settings do not change quota or account authorization. */ }
   }
@@ -353,7 +353,7 @@ export class HalluCodexDesktopRuntime {
     this.walletStatus = this.walletError !== undefined ? 'failed' : this.wallet === undefined ? 'unavailable' : 'ready'
   }
 
-  private accountChanged(snapshot: HalluCodexAccountSnapshot): void {
+  private accountChanged(snapshot: NovaFlowAccountSnapshot): void {
     // The automatic order decides the catalog; the retry choice rides along so every routing change rereads.
     const key = snapshot.status === 'signed-in'
       ? JSON.stringify([snapshot.profile.id, snapshot.group, snapshot.autoGroups, snapshot.crossGroupRetry]) : undefined

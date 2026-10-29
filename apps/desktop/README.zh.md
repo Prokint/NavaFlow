@@ -1,20 +1,20 @@
-# HalluCodex 桌面端
+# NovaFlow 桌面端
 
 [English](README.md) | 中文
 
-Desktop 不发送产品埋点。HalluCodex profile 禁用埋点与遥测插件以及其他由 DeepSeek 托管的服务（[HalluCodex 账号模块](hallucodex/README.zh.md)），壳在启动 Host 时设置 `DSH_TELEMETRY_DISABLED=1`。
+Desktop 不发送产品埋点。NovaFlow profile 禁用埋点与遥测插件以及其他由 DeepSeek 托管的服务（[NovaFlow 账号模块](hallucodex/README.zh.md)），壳在启动 Host 时设置 `DSH_TELEMETRY_DISABLED=1`。
 
 桌面应用是完整 dsh Web 应用外的一层 Electron 壳。Electron RunAsNode 子进程启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 将应用 HTTP 请求转发给已认证的 Web Host，转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。
 
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
-应用菜单第一项“**关于 HalluCodex**”在 macOS 和 Linux 上打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本；Windows 没有系统关于面板，由壳自己的对话框显示产品名称和版本。下一项“**HalluCodex 账号**”在主窗口中显示[账号页面](hallucodex/README.zh.md)。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 HalluCodex 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Linux 使用随包分发的 `resources/icon-windows.png` 副本。
+应用菜单第一项“**关于 NovaFlow**”在 macOS 和 Linux 上打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本；Windows 没有系统关于面板，由壳自己的对话框显示产品名称和版本。下一项“**NovaFlow 账号**”在主窗口中显示[账号页面](hallucodex/README.zh.md)。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 NovaFlow 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Linux 使用随包分发的 `resources/icon-windows.png` 副本。
 
 Desktop 的本地原生目录流程打开绑定应用窗口的 Electron 文件夹对话框，并先恢复、显示和聚焦该窗口。并发请求共用一个对话框；取消不返回路径，失败后可以重试。普通 Web 使用 Host 选择器。浏览模式列出 Host 目录。Linux 缺少 zenity 或 kdialog 时，自动选择使用浏览模式，不使用 Electron 对话框。
 
 Desktop 在 `resources/runtime/primary-runtime/dependencies/pnpm` 中携带一份 pnpm 分发包。构建时的生产依赖安装、安装版 `dsh` CLI、Creator 和 Web 插件管理器通过 Electron Node 模式执行其中的 `bin/pnpm.mjs`；包操作不要求 PATH 上存在 pnpm。私有 Node 启动器环境仅用于包操作。agent（智能体）的工作区依赖将同一份完整 primary-runtime 复制到 Harness 主目录，并使用其中的独立 Node 执行 pnpm。
 
-Host 就绪后，启动流程显示带工作区的主窗口；在此之前再次启动应用不会显示窗口。此时若 HalluCodex 账号未登录，主窗口会显示[HalluCodex 账号页面](hallucodex/README.zh.md)；浏览器登录、退出登录和服务器地址设置见该文档。
+Host 就绪后，启动流程显示带工作区的主窗口；在此之前再次启动应用不会显示窗口。此时若 NovaFlow 账号未登录，主窗口会显示[NovaFlow 账号页面](hallucodex/README.zh.md)；浏览器登录、退出登录和服务器地址设置见该文档。
 
 桌面麦克风访问仅允许主 `dsh-app://app` 页面发起的音频请求。macOS 使用系统麦克风授权、随包用途说明，以及主应用与 Helper 签名中的 `com.apple.security.device.audio-input` 权限。
 
@@ -32,19 +32,19 @@ macOS 安装会创建 `/usr/local/bin/dsh`；目录权限需要时，系统会�
 
 关闭主窗口（macOS 的关闭按钮和 ⌘W；Windows 与 Linux 的 ×、Alt+F4 和任务栏"关闭窗口"）不会退出应用：macOS 与 Windows 隐藏窗口；Linux 在会话能显示托盘图标时隐藏窗口，否则将窗口最小化到任务栏。Windows 与 Linux 首次关闭前需要确认。页面和 Host 继续运行，任务不受影响，下次显示时仍是原来的文档，会话、草稿和滚动位置都保留；macOS 全屏窗口先退出全屏再隐藏。macOS 通过 Dock 图标或再次启动找回窗口；Windows 和能显示托盘图标的 Linux 通过托盘或再次启动找回；其他 Linux 会话通过任务栏或再次启动找回。Wayland 不允许应用自行取消最小化或把窗口提到前面，因此 Linux 上再次启动时会重新映射不在前台的窗口。最小化行为不变。
 
-Windows 与 Linux 在整个运行期间创建托盘图标。悬停提示为产品名，单击显示并聚焦窗口，右键菜单提供壳语言下的"打开 HalluCodex"和"退出 HalluCodex"。Linux 只有在面板承载 StatusNotifierItem 时才显示图标，例如 KDE Plasma 或装有 AppIndicator 扩展的 GNOME；否则 Electron 会退回 GTK 状态图标，GNOME 和 Wayland 会话不会显示它，Electron 也不报告这次退回。因此 Desktop 创建图标后做与 Electron 相同的两项检查：`org.kde.StatusNotifierWatcher` 有所有者，并且报告已注册宿主。检查通过 `gdbus` 进行；`gdbus` 无法查询会话总线时改用 `busctl`。Electron 只在创建图标时检查，所以结果在本次运行内不变；面板之后才有宿主时，重启应用后才会显示图标。没有宿主或两个命令都无法查询总线时，关闭窗口改为最小化到任务栏。首次关闭前复用更新弹窗，说明正在运行的任务不会中断以及窗口去向：系统托盘；没有托盘的 Linux 上是任务栏，并说明要退出请选择“应用”菜单中的“退出”。弹窗只有一个“确认”按钮。确认后隐藏或最小化窗口，并在 Electron userData 下记录确认：Windows 托盘和 Linux 任务栏写入 `background-close-confirmed`，Linux 托盘写入 `background-tray-confirmed`，因此确认过任务栏说明的 Linux 用户会再看到一次托盘说明。Esc、关闭弹窗或加载失败均保持主窗口可见，不记录确认。重复关闭请求会聚焦已有壳弹窗。覆盖更新保留标记，卸载删除标记。旧的 `background-notice-shown` 标记不会跳过此确认。关闭窗口不发送系统通知。Windows 托盘位图是 `resources/tray-windows.ico`，由 `pnpm --dir apps/desktop run render:tray-icon` 从 `resources/icon-windows.svg` 按 16、20、24、32、40、48、64 像素分别渲染，打包为 `resources/tray.ico`。同一命令还渲染 64 像素的 `resources/tray-linux.png`，打包为 `resources/tray.png`，由面板缩放显示。macOS 不提供菜单栏图标。
+Windows 与 Linux 在整个运行期间创建托盘图标。悬停提示为产品名，单击显示并聚焦窗口，右键菜单提供壳语言下的"打开 NovaFlow"和"退出 NovaFlow"。Linux 只有在面板承载 StatusNotifierItem 时才显示图标，例如 KDE Plasma 或装有 AppIndicator 扩展的 GNOME；否则 Electron 会退回 GTK 状态图标，GNOME 和 Wayland 会话不会显示它，Electron 也不报告这次退回。因此 Desktop 创建图标后做与 Electron 相同的两项检查：`org.kde.StatusNotifierWatcher` 有所有者，并且报告已注册宿主。检查通过 `gdbus` 进行；`gdbus` 无法查询会话总线时改用 `busctl`。Electron 只在创建图标时检查，所以结果在本次运行内不变；面板之后才有宿主时，重启应用后才会显示图标。没有宿主或两个命令都无法查询总线时，关闭窗口改为最小化到任务栏。首次关闭前复用更新弹窗，说明正在运行的任务不会中断以及窗口去向：系统托盘；没有托盘的 Linux 上是任务栏，并说明要退出请选择“应用”菜单中的“退出”。弹窗只有一个“确认”按钮。确认后隐藏或最小化窗口，并在 Electron userData 下记录确认：Windows 托盘和 Linux 任务栏写入 `background-close-confirmed`，Linux 托盘写入 `background-tray-confirmed`，因此确认过任务栏说明的 Linux 用户会再看到一次托盘说明。Esc、关闭弹窗或加载失败均保持主窗口可见，不记录确认。重复关闭请求会聚焦已有壳弹窗。覆盖更新保留标记，卸载删除标记。旧的 `background-notice-shown` 标记不会跳过此确认。关闭窗口不发送系统通知。Windows 托盘位图是 `resources/tray-windows.ico`，由 `pnpm --dir apps/desktop run render:tray-icon` 从 `resources/icon-windows.svg` 按 16、20、24、32、40、48、64 像素分别渲染，打包为 `resources/tray.ico`。同一命令还渲染 64 像素的 `resources/tray-linux.png`，打包为 `resources/tray.png`，由面板缩放显示。macOS 不提供菜单栏图标。
 
-所有普通退出入口——⌘Q、应用菜单、Dock 菜单、Windows 与 Linux 的托盘和标题栏"应用程序"菜单——都先向 Host 查询退出会中断什么。Host 通过私有 IPC 通道回答两项事实：与更新重启检查同一口径的运行中任务（运行中的 agent，包括子代理和等待审批的回合、排队消息、运行中或停止中的后台任务），以及本次运行中已加载会话里由 `workspace/session-activity` 的 `schedule` family 报告的已挂定时器的提醒。两项都没有时直接退出，不弹框。否则弹出一个没有父窗口的原生消息框——隐藏的窗口保持隐藏——标题为**退出 HalluCodex？**，正文为三种本地化说明之一：正在运行的任务将会中断、应用关闭期间定时任务不会运行，或两者兼有。"退出"是默认按钮，Esc 等同"取消"；macOS 上"取消"在"退出"左侧，Windows 上"退出"在"取消"左侧，Windows 任务对话框显示应用图标且不跟随应用主题、始终为浅色。Host 尚未就绪或已失败时不可能有任务在跑，直接退出。查询失败或 Host 超过两秒截止时间未答复，按运行中任务处理。弹框打开期间，再次请求退出只会并入同一弹框而不叠加新弹框（macOS 上还会把它提到前面；Electron 不暴露 Windows 任务对话框的句柄）；任务开始或结束不会改变文案；点"退出"不再重新查询即停止应用；点"取消"不发生任何变化。在进入工作区前取消退出时，启动流程照常继续，Host 就绪后打开工作区。
+所有普通退出入口——⌘Q、应用菜单、Dock 菜单、Windows 与 Linux 的托盘和标题栏"应用程序"菜单——都先向 Host 查询退出会中断什么。Host 通过私有 IPC 通道回答两项事实：与更新重启检查同一口径的运行中任务（运行中的 agent，包括子代理和等待审批的回合、排队消息、运行中或停止中的后台任务），以及本次运行中已加载会话里由 `workspace/session-activity` 的 `schedule` family 报告的已挂定时器的提醒。两项都没有时直接退出，不弹框。否则弹出一个没有父窗口的原生消息框——隐藏的窗口保持隐藏——标题为**退出 NovaFlow？**，正文为三种本地化说明之一：正在运行的任务将会中断、应用关闭期间定时任务不会运行，或两者兼有。"退出"是默认按钮，Esc 等同"取消"；macOS 上"取消"在"退出"左侧，Windows 上"退出"在"取消"左侧，Windows 任务对话框显示应用图标且不跟随应用主题、始终为浅色。Host 尚未就绪或已失败时不可能有任务在跑，直接退出。查询失败或 Host 超过两秒截止时间未答复，按运行中任务处理。弹框打开期间，再次请求退出只会并入同一弹框而不叠加新弹框（macOS 上还会把它提到前面；Electron 不暴露 Windows 任务对话框的句柄）；任务开始或结束不会改变文案；点"退出"不再重新查询即停止应用；点"取消"不发生任何变化。在进入工作区前取消退出时，启动流程照常继续，Host 就绪后打开工作区。
 
 更新的重启确认在 Windows 上额外显示等待提示，macOS 只显示简短的重启说明。
 
 以下情况跳过确认：安装更新的重启已确认过任务中断、致命错误恢复对话框中的退出或重启、开发版"重启应用与 Host"命令，以及操作系统关机、重启或注销：Windows 在确定性的会话结束消息上设置该状态；macOS 在关机通知上设置，而其他应用仍可能取消这次关机，因此主窗口下一次获得焦点或显示时会清除它。安装器接管退出时会取消尚未结束的普通退出决策；晚到的查询结果和弹框答复不会再次打开确认框或重复清理。窗口隐藏期间完成的用户主动发起的更新下载，把"安装并重启"确认推迟到窗口再次显示时。Windows 安装程序和卸载程序在应用仍在运行时提示用户先在系统托盘中退出。Desktop 默认未开启定时任务，定时任务的说明只在该功能开启后出现；提醒只在已加载的会话中触发，未加载的会话既不计入，也要等到打开后才会继续。
 
-托盘渲染器以画布中心为基准放大 HalluCodex 标志圆盘，使其几乎铺满位图；应用和安装器图标保留原有留白。
+托盘渲染器以画布中心为基准放大 NovaFlow 标志圆盘，使其几乎铺满位图；应用和安装器图标保留原有留白。
 
 ## 关键技术决策
 
-`resources/icon-windows.*` 和 `resources/icon-macos.*` 内嵌未经改动的 HalluCodex 标志原图，即黑色圆盘上的白色 X：Windows 让圆盘占 1024 像素中的 960 像素，macOS 按 824 像素的图标网格放置并加投影；Linux 包使用 Windows 的图标。平台 SVG 导出为 1024×1024 的透明 PNG。Linux 菜单通过 hicolor 主题查找图标，而该主题只搜索其索引列出的尺寸，因此修改 `icon-windows.svg` 后，运行 `pnpm --dir apps/desktop run render:linux-icons` 重新生成 `resources/linux-icons/` 下 16 至 512 像素的图标集，electron-builder 会把每个文件装到对应尺寸的 hicolor 目录。Linux 窗口还带上随包的 `resources/icon.png`，没有桌面条目匹配的 AppImage 也显示 HalluCodex 图标。修改 `icon-windows.svg` 后，还要运行 `pnpm --dir apps/desktop run render:tray-icon` 重新生成 `resources/tray-windows.ico` 和 `resources/tray-linux.png`。electron-builder 为 Windows 应用、安装程序和卸载程序生成多尺寸 ICO（[Windows 图标要求](https://learn.microsoft.com/en-us/windows/apps/design/iconography/app-icon-construction)）。安装页面使用浅色和深色两套 `installer/assets/brand*.png`；卸载程序的欢迎和完成页共用 `installer/assets/uninstaller-sidebar.png`，准备阶段将其转换为 164×314 BMP。这些安装器图片使用 HalluCodex 标志。
+`resources/icon-windows.*` 和 `resources/icon-macos.*` 内嵌未经改动的 NovaFlow 标志原图，即黑色圆盘上的白色 X：Windows 让圆盘占 1024 像素中的 960 像素，macOS 按 824 像素的图标网格放置并加投影；Linux 包使用 Windows 的图标。平台 SVG 导出为 1024×1024 的透明 PNG。Linux 菜单通过 hicolor 主题查找图标，而该主题只搜索其索引列出的尺寸，因此修改 `icon-windows.svg` 后，运行 `pnpm --dir apps/desktop run render:linux-icons` 重新生成 `resources/linux-icons/` 下 16 至 512 像素的图标集，electron-builder 会把每个文件装到对应尺寸的 hicolor 目录。Linux 窗口还带上随包的 `resources/icon.png`，没有桌面条目匹配的 AppImage 也显示 NovaFlow 图标。修改 `icon-windows.svg` 后，还要运行 `pnpm --dir apps/desktop run render:tray-icon` 重新生成 `resources/tray-windows.ico` 和 `resources/tray-linux.png`。electron-builder 为 Windows 应用、安装程序和卸载程序生成多尺寸 ICO（[Windows 图标要求](https://learn.microsoft.com/en-us/windows/apps/design/iconography/app-icon-construction)）。安装页面使用浅色和深色两套 `installer/assets/brand*.png`；卸载程序的欢迎和完成页共用 `installer/assets/uninstaller-sidebar.png`，准备阶段将其转换为 164×314 BMP。这些安装器图片使用 NovaFlow 标志。
 
 快捷键覆盖保存在 `app.getPath('userData')/keybindings.json`，与 `DSH_HOME` 分离。主进程校验并串行保存修改后才发布已接受键位。读取失败保留上次接受的键位并阻止编辑，包括全部恢复；不可读和未来版本的文件保持不变。开发时可通过 `DSH_DESKTOP_USER_DATA_DIR` 隔离这些偏好，启动器会输出解析后的路径。格式和冲突语义见[快捷键服务](../../packages/client/shortcuts/README.zh.md)。
 
@@ -112,7 +112,7 @@ Electron 选择类型化的英文或中文 shell 文案：启动时取系统首�
 
 macOS、Windows 和 Linux 会在原生全屏切换及每次页面加载后向渲染器同步全屏状态，让浮层调整顶栏避让距离。
 
-Windows 与 Linux 用 40 DIP 顶栏取代原生标题栏和菜单栏：窗口按钮由 Electron 绘制在顶栏上，颜色随应用调色板同步。页面内容盖不住这些按钮，因此模态对话框打开期间，顶栏会叠上对话框遮罩的颜色；下文所述的 Linux 更新浮层也是如此。侧栏开关旁的本地化“应用”和“编辑”入口打开原生弹出菜单。仅当应用框架发布 shell overlay 席位后才挂载菜单，启动加载期间不显示。“应用”提供关于、HalluCodex 账号、检查更新、管理命令（仅 Windows）和退出；只有 macOS 有系统“关于”面板，其他平台的“关于”打开壳自己的弹窗；“编辑”向当前编辑器发送对应按键，提供撤销、重做、剪切、复制、粘贴、删除和全选，不受自定义快捷键绑定影响。插件管理使用主应用的“插件”页面。按 Alt 不会出现额外的原生菜单行。macOS 保留原生菜单。可编辑区域保留快捷键和不带快捷键标注的右键菜单；命令可用状态由 Chromium 提供，选中的只读文本提供“复制”命令。
+Windows 与 Linux 用 40 DIP 顶栏取代原生标题栏和菜单栏：窗口按钮由 Electron 绘制在顶栏上，颜色随应用调色板同步。页面内容盖不住这些按钮，因此模态对话框打开期间，顶栏会叠上对话框遮罩的颜色；下文所述的 Linux 更新浮层也是如此。侧栏开关旁的本地化“应用”和“编辑”入口打开原生弹出菜单。仅当应用框架发布 shell overlay 席位后才挂载菜单，启动加载期间不显示。“应用”提供关于、NovaFlow 账号、检查更新、管理命令（仅 Windows）和退出；只有 macOS 有系统“关于”面板，其他平台的“关于”打开壳自己的弹窗；“编辑”向当前编辑器发送对应按键，提供撤销、重做、剪切、复制、粘贴、删除和全选，不受自定义快捷键绑定影响。插件管理使用主应用的“插件”页面。按 Alt 不会出现额外的原生菜单行。macOS 保留原生菜单。可编辑区域保留快捷键和不带快捷键标注的右键菜单；命令可用状态由 Chromium 提供，选中的只读文本提供“复制”命令。
 
 macOS 上自定义菜单保留 Electron 的标准 Window 菜单及应用隐藏命令，包括 Minimize（⌘M）和 Hide（⌘H）。Linux 保留应用菜单和 Edit 菜单。
 
@@ -128,7 +128,7 @@ macOS 上自定义菜单保留 Electron 的标准 Window 菜单及应用隐藏�
 
 [Web 插件 UI](../../packages/client/ui-plugin-manager/README.zh.md)负责管理界面。Desktop profile 初始化和恢复保留已安装插件文件。
 
-主窗口创建、主文档加载、preload、渲染器、Web 初始化或后端的致命失败，会在每个应用进程中打开一次原生恢复对话框。对话框显示首次错误末尾的限长摘要，标明截断情况，并提供退出、重启、禁用第三方插件、备份 profile patch 并重启。启动失败保留 Web 加载页和动画；运行中失败保留当前页面。预期关闭、取消导航和普通请求错误不会触发恢复。共享 Web 插件管理器报告包操作错误；插件变更后的 Host 启动失败会进入原生恢复。不通过启动超时推断故障。 包含 `listen EADDRINUSE` 的监听失败以退出其他正在运行的 HalluCodex 实例的提示替代诊断和重装建议，仅提供退出和重启。
+主窗口创建、主文档加载、preload、渲染器、Web 初始化或后端的致命失败，会在每个应用进程中打开一次原生恢复对话框。对话框显示首次错误末尾的限长摘要，标明截断情况，并提供退出、重启、禁用第三方插件、备份 profile patch 并重启。启动失败保留 Web 加载页和动画；运行中失败保留当前页面。预期关闭、取消导航和普通请求错误不会触发恢复。共享 Web 插件管理器报告包操作错误；插件变更后的 Host 启动失败会进入原生恢复。不通过启动超时推断故障。 包含 `listen EADDRINUSE` 的监听失败以退出其他正在运行的 NovaFlow 实例的提示替代诊断和重装建议，仅提供退出和重启。
 
 原生弹窗详情最多包含 1,200 个 UTF-16 代码单元和八行诊断，若已写入下述崩溃报告则附上其路径。Host 错误诊断仅保留 stderr 输出的最后 64 Ki 个字符。更早的输出会被丢弃，避免长期运行的 Host 使壳的诊断缓冲区无限增长。
 
@@ -160,7 +160,7 @@ pnpm run start:desktop
 
 Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开发指南](../../docs/development.zh.md)。Workspace 开发使用 Electron RunAsNode 运行当前 CLI 与私有 Desktop Host 包，插件管理和恢复使用 `$DSH_HOME/profiles/desktop`，与一次性工作区运行时分离。Host 在开发与打包构建中都使用 runtime 模块解析，不创建官方包的 fallback 链接；开发者安装的包（包括链接）保留原生优先级。需要验证 Electron RunAsNode、内置 pnpm、内置 dsh 资源、插件安装和修复时，应运行未封装安装器的应用目录。
 
-在 macOS 上，`dev:desktop` 和 `start:desktop` 通过 `.desktop-build/development` 下经临时签名、已注册到 Launch Services 的 `HalluCodex Dev.app` 启动 Electron；它加载当前工作区，并记录选定的开发 home、浏览器数据路径和调试设置，以供冷启动使用。它和打包后的应用一样不声明任何 URL 协议，因此不会占用上游的 `dsh` 协议。生成的应用包不包含账号 token，依赖工作区和已准备的运行环境继续存在。
+在 macOS 上，`dev:desktop` 和 `start:desktop` 通过 `.desktop-build/development` 下经临时签名、已注册到 Launch Services 的 `NovaFlow Dev.app` 启动 Electron；它加载当前工作区，并记录选定的开发 home、浏览器数据路径和调试设置，以供冷启动使用。它和打包后的应用一样不声明任何 URL 协议，因此不会占用上游的 `dsh` 协议。生成的应用包不包含账号 token，依赖工作区和已准备的运行环境继续存在。
 
 [原生输入与渲染进程键盘测试](tests/keyboard.spec.ts)直接纳入仓库 Client 类型检查。它只导入不依赖 Cordis 的 Desktop 输入、持久化、IPC、浏览器 guest 和蒙层模块。
 
@@ -172,9 +172,9 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 ### 发布版本
 
-HalluCodex 发布使用独立的版本线。每次发布对应标签 `hallucodex-v<版本>`，其中 `<版本>` 是不含构建元数据的 SemVer 版本，例如 `hallucodex-v0.1.0` 或预发布版本 `hallucodex-v0.1.0-beta.1`。[发布工作流](#upload-updates)把 `<版本>` 作为 `--build-version` 传给打包，该值同时决定产物文件名、更新元数据与已安装应用的版本。清单保留内置 dsh 运行时的产品版本，因此发布不改写任何受版本控制的文件。上游的 `dsh-v*` 标签不会启动桌面端发布。
+NovaFlow 发布使用独立的版本线。每次发布对应标签 `hallucodex-v<版本>`，其中 `<版本>` 是不含构建元数据的 SemVer 版本，例如 `hallucodex-v0.1.0` 或预发布版本 `hallucodex-v0.1.0-beta.1`。[发布工作流](#upload-updates)把 `<版本>` 作为 `--build-version` 传给打包，该值同时决定产物文件名、更新元数据与已安装应用的版本。清单保留内置 dsh 运行时的产品版本，因此发布不改写任何受版本控制的文件。上游的 `dsh-v*` 标签不会启动桌面端发布。
 
-本地测试构建可以传入任意这类版本，也可以使用 `--build-version auto`：它根据本目标本地输出目录中的 HalluCodex 及更早 DeepSeek Harness 产物，按 `<产品版本>.<日期>.<序号>`（稳定产品版本使用 `-test.<日期>.<序号>`）给出下一个版本。run script 会自行透传 `--`，打包入口两种写法都接受：
+本地测试构建可以传入任意这类版本，也可以使用 `--build-version auto`：它根据本目标本地输出目录中的 NovaFlow 及更早 DeepSeek Harness 产物，按 `<产品版本>.<日期>.<序号>`（稳定产品版本使用 `-test.<日期>.<序号>`）给出下一个版本。run script 会自行透传 `--`，打包入口两种写法都接受：
 
 ```sh
 pnpm --dir apps/desktop run package:linux:x64 --build-version 0.1.0-test.1
@@ -268,7 +268,7 @@ Release 正文依次为对应的 CHANGELOG 小节、一行 `<!-- hallucodex:inst
 在具备签名证书前，发布提供以下未签名安装包：
 
 - Windows：`hallucodex-<版本>-win-x64-unsigned.exe` 不带 Authenticode 签名。首次运行时 SmartScreen 会提示，点击“更多信息”再点击“仍要运行”。
-- macOS：`--unsigned` 跳过 Developer ID 签名、使用身份的运行时签名和公证，随后对完成的 App 施加 ad-hoc 签名（`codesign --force --deep --sign -`），使其能在 Apple Silicon 上启动。Gatekeeper 会拦截下载 App 的首次启动：按住 Control 点按 App 并选择“打开”（macOS 15 及以上在“系统设置 → 隐私与安全性”中点按“仍要打开”），或执行 `xattr -dr com.apple.quarantine /Applications/HalluCodex.app`。这类 App 无法替换自身，因此更新弹窗会打开 Release 页面。
+- macOS：`--unsigned` 跳过 Developer ID 签名、使用身份的运行时签名和公证，随后对完成的 App 施加 ad-hoc 签名（`codesign --force --deep --sign -`），使其能在 Apple Silicon 上启动。Gatekeeper 会拦截下载 App 的首次启动：按住 Control 点按 App 并选择“打开”（macOS 15 及以上在“系统设置 → 隐私与安全性”中点按“仍要打开”），或执行 `xattr -dr com.apple.quarantine /Applications/NovaFlow.app`。这类 App 无法替换自身，因此更新弹窗会打开 Release 页面。
 - Linux：AppImage 和 deb 不带签名；`latest-linux.yml` 记录它们的 SHA-512。
 
 未签名命令写入 `.desktop-build/targets/<目标>/unsigned-artifacts/`，产物名带有更新元数据所引用的 `-unsigned` 后缀，从子进程中清除签名凭据，运行已打包运行时冒烟检查，且不创建发布完成记录。它们要求设置 `DSH_DESKTOP_APP_ID` 并具备常规构建依赖，包括 Python，以及 Windows 上编译原生模块所需的 Visual C++ 构建工具；Python 不在 `PATH` 中时设置 `PYTHON`。
@@ -395,7 +395,7 @@ electron-builder 只为 DMG 和 ZIP 目标写入 `app-update.yml`，因此 macOS
 
 ## 更新
 
-HalluCodex 从本仓库公开的 GitHub Releases 检查更新，每次提示都会显示更新日志，即对应的 CHANGELOG 小节；未经用户确认不会下载或安装任何内容，也不存在强制更新策略。在 Windows 和 AppImage 中，用户先确认下载，再确认安装与重启。没有 Developer ID 签名的 macOS 构建和 deb 安装无法替换自身，弹窗会显示更新日志并打开 Release 页面；签名的 macOS 构建可以原地安装。[账号模块参考](hallucodex/README.zh.md)负责检查时机与弹窗；以下段落说明共用的更新器机制。
+NovaFlow 从本仓库公开的 GitHub Releases 检查更新，每次提示都会显示更新日志，即对应的 CHANGELOG 小节；未经用户确认不会下载或安装任何内容，也不存在强制更新策略。在 Windows 和 AppImage 中，用户先确认下载，再确认安装与重启。没有 Developer ID 签名的 macOS 构建和 deb 安装无法替换自身，弹窗会显示更新日志并打开 Release 页面；签名的 macOS 构建可以原地安装。[账号模块参考](hallucodex/README.zh.md)负责检查时机与弹窗；以下段落说明共用的更新器机制。
 
 Windows 下载完成后的更新确认说明应用会在安装期间关闭、完成后自动打开，并提示期间不要重复启动。安装器携带 `--updated` 启动应用并打开工作区时，壳会将主窗口前置并聚焦一次，不启用永久置顶。普通启动和其他平台不执行此前置步骤。
 
@@ -436,7 +436,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 - 已打包的 Desktop 及其安装的 `dsh` 命令默认把 `DSH_HOME` 设为 `~/.hallucodex`；npm 安装的 dsh 只有使用相同的 `DSH_HOME` 时才与 Desktop 共享会话、设置、凭据、工作区和存储，而可执行包、插件激活和锁文件始终彼此隔离。
 - 在 Electron win32-arm64 宿主上，未打包启动现在可以成功，但载荷仍为 x64：`packages/skill/tool-workspace-dependencies/src/index.ts` 的架构校验会把载荷记录的架构与宿主 `process.arch` 比较，因此 `load_workspace_dependencies` 工具仍可能拒绝 primary runtime。
 
-仅向应用提供的 `dshOnboarding.hasApiKey()` preload 方法始终返回 `false`，因为模型访问来自 HalluCodex 账号，而不是提供方 API Key。`dshOnboarding.setActive(active)` 在激活期间把主窗口最小宽度从 520 像素提高到 960 像素，并加宽更窄的窗口。只有受管理的应用主 frame 可以调用它们。
+仅向应用提供的 `dshOnboarding.hasApiKey()` preload 方法始终返回 `false`，因为模型访问来自 NovaFlow 账号，而不是提供方 API Key。`dshOnboarding.setActive(active)` 在激活期间把主窗口最小宽度从 520 像素提高到 960 像素，并加宽更窄的窗口。只有受管理的应用主 frame 可以调用它们。
 
 ## 开发备注
 
@@ -448,7 +448,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 Linux x64 安装包为 AppImage 和 deb。`package:linux:x64`、`package:linux:x64:dir` 和 `check:package:linux:x64` 选择原生 x64 主机及按目标隔离的资源；发布工作流在 `ubuntu-24.04` 上构建它们。Linux arm64 选择器和载荷路径已经提供，但没有记录 arm64 桌面运行时验收。
 
-Linux 通道读取 `.env.linux`（复制[模板](.env.linux.example)），或在设置 `DSH_DESKTOP_PACKAGE_SETTINGS=environment` 时从自身环境读取同一组字段：应用标识、`Name <email>` 形式的公开维护者联系方式和 HTTPS 项目页面。发布工作流使用 `com.hallucodex.desktop`、`AkumaRealLabs <AkumaRealLabs@users.noreply.github.com>` 和本仓库页面。HalluCodex 是产品名称，`hallucodex` 是其包名和可执行文件名。Linux 使用独立的可执行文件、包名和桌面条目；与其他打包平台一样，默认数据目录为 `~/.hallucodex`，显式设置 `DSH_HOME` 仍是操作者覆盖项。与其他平台相同，它不注册 URL scheme。
+Linux 通道读取 `.env.linux`（复制[模板](.env.linux.example)），或在设置 `DSH_DESKTOP_PACKAGE_SETTINGS=environment` 时从自身环境读取同一组字段：应用标识、`Name <email>` 形式的公开维护者联系方式和 HTTPS 项目页面。发布工作流使用 `com.hallucodex.desktop`、`AkumaRealLabs <AkumaRealLabs@users.noreply.github.com>` 和本仓库页面。NovaFlow 是产品名称，`hallucodex` 是其包名和可执行文件名。Linux 使用独立的可执行文件、包名和桌面条目；与其他打包平台一样，默认数据目录为 `~/.hallucodex`，显式设置 `DSH_HOME` 仍是操作者覆盖项。与其他平台相同，它不注册 URL scheme。
 
 AppImage 和 deb 启动时不添加禁用沙箱的参数。AppImage 使用应用自有 AppRun，组装后验证其解包字节，且启动器拒绝以 root 运行。应用以普通用户身份运行。主机没有可用 Chromium 沙箱支持时，验收应当失败；不要通过以 root 运行应用或禁用沙箱绕过问题。构建产物时，现有打包冒烟序列检查原生 Node/Python 载荷、可执行位、ASAR 解包库和 Host。
 
@@ -458,7 +458,7 @@ Linux 安装包通过 `latest-linux.yml` 从同一 GitHub Releases 更新源读�
 
 发行验收仍需实际构建 AppImage/deb，在干净目标发行版和用户机器上验证：glibc 基线和系统库、FUSE 与解包启动、X11/Wayland、GPU/字体/对话框、沙箱、安全密钥库及锁定状态、登录回调、任务执行、休眠恢复、N-1 升级、更新中断或磁盘耗尽、篡改和错误签名、数据保留及卸载范围。确定性配置测试和记录的 Linux 桌面条目不能代替这些证据。
 
-独立的 [HalluCodex 账号模块](hallucodex/README.zh.md)说明原生授权、模型路由及剩余集成工作。
+独立的 [NovaFlow 账号模块](hallucodex/README.zh.md)说明原生授权、模型路由及剩余集成工作。
 
 若要在没有 deb 发布者元数据时构建本地未签名 AppImage，使用 `pnpm run package:linux:x64:dev`。其显式 `--development-appimage` 模式仅在 `unsigned-artifacts` 中生成 AppImage，为文件名添加 `-dev-unsigned`，且不写入发行记录、更新元数据或 `app-update.yml`。普通 AppImage/deb 打包仍要求完整的 Linux 包元数据。
 

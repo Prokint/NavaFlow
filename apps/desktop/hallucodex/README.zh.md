@@ -1,12 +1,12 @@
-# HalluCodex 桌面账号模块
+# NovaFlow 桌面账号模块
 
 [English](README.md) | 中文
 
-本参考文档说明 [src/hallucodex](../src/hallucodex) 中的原生模块。它们组合安全账号恢复、鉴权模型发现和连接所选 New API 服务器的请求代理。Windows、macOS 和 Linux 的安装包与开发启动都以 HalluCodex 运行，没有开关。服务器默认为 `https://api.hallucodex.com`；未登录时，账号页面上的小字链接可改用其他 New API 站点（例如测试站），已保存的凭证只对签发它的服务器加载。品牌 profile 禁用上游账号、手动 key 和可配置 provider 入口，以及所有 DeepSeek 托管服务：反馈时上传会话日志、DeepSeek 联网搜索与 DeepSeek 搜索、抓取 API、产品遥测，以及只服务 DeepSeek 路由的会话日志、wire 扩展、插件包清单和模型名称标记插件。其系统提示词以 HalluCodex 称呼 Agent，不包含上游 Web GUI 与 harness 开发上下文。应用菜单和侧栏「设置」上方的入口都会在主区域显示原生账号页面，操作仅限自有主框架。桌面授权端点是独立的 New API 接入，不能把管理台 JWT、PAT 或普通 API key 当作桌面授权。
+本参考文档说明 [src/hallucodex](../src/hallucodex) 中的原生模块。它们组合安全账号恢复、鉴权模型发现和连接所选 New API 服务器的请求代理。Windows、macOS 和 Linux 的安装包与开发启动都以 NovaFlow 运行，没有开关。服务器默认为 `https://api.hallucodex.com`；未登录时，账号页面上的小字链接可改用其他 New API 站点（例如测试站），已保存的凭证只对签发它的服务器加载。品牌 profile 禁用上游账号、手动 key 和可配置 provider 入口，以及所有 DeepSeek 托管服务：反馈时上传会话日志、DeepSeek 联网搜索与 DeepSeek 搜索、抓取 API、产品遥测，以及只服务 DeepSeek 路由的会话日志、wire 扩展、插件包清单和模型名称标记插件。其系统提示词以 NovaFlow 称呼 Agent，不包含上游 Web GUI 与 harness 开发上下文。应用菜单和侧栏「设置」上方的入口都会在主区域显示原生账号页面，操作仅限自有主框架。桌面授权端点是独立的 New API 接入，不能把管理台 JWT、PAT 或普通 API key 当作桌面授权。
 
 ## 原生进程所有权
 
-在 Electron 主进程完成 `app.whenReady()` 并取得应用单实例锁后构造 `HalluCodexDesktopRuntime`。使用应用可信用户数据目录中的独立目录创建 `SafeStorageRefreshStore`，传入 `HalluCodexHttpAuthTransport`、原生 `fetch` 和 `shell.openExternal`。账号界面可以使用 `getSnapshot`、`startSignIn`、`cancelSignIn`、`restore`、`refreshAccount`、`refreshCatalog`、`refreshWallet`、`selectGroup` 和 `signOut`。桌面外壳会对每次账号 IPC 验证自有窗口和主框架来源。Preload 在其隔离环境中，只把安全快照和本地化文案渲染进客户端账号页面框架的标题区和内容区，不暴露原始 IPC 或凭证读取方法。离开页面不会中断进行中的登录，可在页面上点「取消登录」停止。它向页面只暴露 `window.dshHalluCodex`：带显示名的登录状态、外壳要求显示账号页面的请求（客户端开始监听前发出的一个请求会保留给它），以及一个挂载操作：接收两个已接入文档的宿主元素，返回卸载函数。页面占满框架而不滚动：宽框架把钱包与账号放在分组卡片旁边，窄框架把它们合成一列紧凑排列，矮框架只让 Auto 顺序列表滚动；只有挤到最小窗口以下的框架（例如窄窗口中手动展开侧栏）才会滚动。
+在 Electron 主进程完成 `app.whenReady()` 并取得应用单实例锁后构造 `NovaFlowDesktopRuntime`。使用应用可信用户数据目录中的独立目录创建 `SafeStorageRefreshStore`，传入 `NovaFlowHttpAuthTransport`、原生 `fetch` 和 `shell.openExternal`。账号界面可以使用 `getSnapshot`、`startSignIn`、`cancelSignIn`、`restore`、`refreshAccount`、`refreshCatalog`、`refreshWallet`、`selectGroup` 和 `signOut`。桌面外壳会对每次账号 IPC 验证自有窗口和主框架来源。Preload 在其隔离环境中，只把安全快照和本地化文案渲染进客户端账号页面框架的标题区和内容区，不暴露原始 IPC 或凭证读取方法。离开页面不会中断进行中的登录，可在页面上点「取消登录」停止。它向页面只暴露 `window.dshNovaFlow`：带显示名的登录状态、外壳要求显示账号页面的请求（客户端开始监听前发出的一个请求会保留给它），以及一个挂载操作：接收两个已接入文档的宿主元素，返回卸载函数。页面占满框架而不滚动：宽框架把钱包与账号放在分组卡片旁边，窄框架把它们合成一列紧凑排列，矮框架只让 Auto 顺序列表滚动；只有挤到最小窗口以下的框架（例如窄窗口中手动展开侧栏）才会滚动。
 
 已登录时显示页面会重新读取钱包与本设备用量，同代际的重复请求合并。页面显示刷新中和上次成功更新时间；失败时保留旧数字与时间并标注旧数据，首次失败显示不可用而非零。退出、换账号、换服务器或切组会清除旧身份的数据。金额按站点公开的 `/api/status` 中的显示设置换算：美元、人民币或自定义单位按设定的汇率换算，或显示原始额度，格式与 New API 网页控制台一致。读取到该设置之前，页面显示原始额度。
 

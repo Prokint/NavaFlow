@@ -181,7 +181,7 @@ describe('desktop host process', () => {
     const save = vi.fn(async (model: string) => {
       await Promise.resolve()
       if (model === 'unknown') throw new Error('hallucodex: unknown model')
-      host.publishHalluCodex({ ...configuration, revision: 2 })
+      host.publishNovaFlow({ ...configuration, revision: 2 })
     })
     const host = new DesktopHostProcess(process.execPath, project, project, undefined, process.env, undefined, undefined, undefined,
       configuration, save)

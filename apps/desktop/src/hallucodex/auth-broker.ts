@@ -1,18 +1,18 @@
 /** Main-process account lifecycle. Renderer projections contain no tokens, PKCE material, or callback URLs. */
 
 import { createHash, randomBytes } from 'node:crypto'
-import { authorizationUrl, HalluCodexAuthError, type AccessGrant, type AuthErrorCode, type HalluCodexAuthTransport, type HalluCodexProfile, type RefreshGrant } from './auth-protocol.ts'
+import { authorizationUrl, NovaFlowAuthError, type AccessGrant, type AuthErrorCode, type NovaFlowAuthTransport, type NovaFlowProfile, type RefreshGrant } from './auth-protocol.ts'
 import { groupSelection, sameGroupSelection, type GroupSelection } from './group-policy.ts'
 import { createLoopbackLogin, type LoopbackLogin } from './loopback-login.ts'
 import type { RefreshStore } from './secure-storage.ts'
 
 /** The complete renderer-visible account state. */
-export type HalluCodexAccountSnapshot =
+export type NovaFlowAccountSnapshot =
   | { status: 'signed-out'; errorCode?: AuthErrorCode }
   | { status: 'signing-in'; expiresAt: number }
   | {
     status: 'signed-in'
-    profile: HalluCodexProfile
+    profile: NovaFlowProfile
     group: string
     allowedGroups: string[]
     /** Order of the `auto` group; null follows the site's order. */
@@ -22,14 +22,14 @@ export type HalluCodexAccountSnapshot =
   }
 
 /** Trusted main-process composition; do not construct this broker in preload or renderer code. */
-export interface HalluCodexAuthBrokerOptions {
-  transport: HalluCodexAuthTransport
+export interface NovaFlowAuthBrokerOptions {
+  transport: NovaFlowAuthTransport
   store: RefreshStore
   /** Reads the selected server origin; the browser page and its callback must come from it. */
   origin(): string
   /**
    * Open the validated authorization page in the system browser, never a BrowserWindow.
-   * @param url - Pinned HalluCodex browser authorization URL.
+   * @param url - Pinned NovaFlow browser authorization URL.
    */
   openExternal(url: string): Promise<void>
   deviceName: string
@@ -38,7 +38,7 @@ export interface HalluCodexAuthBrokerOptions {
    * Receives only renderer-safe state; observer failures cannot disrupt the account lifecycle.
    * @param snapshot - Fresh account projection without credentials or callback parameters.
    */
-  onChange?(snapshot: HalluCodexAccountSnapshot): void
+  onChange?(snapshot: NovaFlowAccountSnapshot): void
 }
 
 interface Attempt {
@@ -49,8 +49,8 @@ interface Attempt {
   callback?: LoopbackLogin
 }
 
-function safeError(error: unknown): HalluCodexAuthError {
-  return error instanceof HalluCodexAuthError ? error : new HalluCodexAuthError('network_error')
+function safeError(error: unknown): NovaFlowAuthError {
+  return error instanceof NovaFlowAuthError ? error : new NovaFlowAuthError('network_error')
 }
 
 function refreshOnly(grant: RefreshGrant): RefreshGrant {
@@ -61,27 +61,27 @@ function refreshOnly(grant: RefreshGrant): RefreshGrant {
 }
 
 /** Single-instance account owner with serialized refresh rotation and generation-checked persistence. */
-export class HalluCodexAuthBroker {
-  readonly #options: HalluCodexAuthBrokerOptions
+export class NovaFlowAuthBroker {
+  readonly #options: NovaFlowAuthBrokerOptions
   readonly #now: () => number
   #generation = 0
   #controller = new AbortController()
   #attempt: Attempt | undefined
   #grant: AccessGrant | undefined
-  #snapshot: HalluCodexAccountSnapshot = { status: 'signed-out' }
+  #snapshot: NovaFlowAccountSnapshot = { status: 'signed-out' }
   #storageTail: Promise<void> = Promise.resolve()
   #refreshing: { generation: number; promise: Promise<string> } | undefined
-  #restoring: Promise<HalluCodexAccountSnapshot> | undefined
+  #restoring: Promise<NovaFlowAccountSnapshot> | undefined
   #tasks = new Set<Promise<void>>()
   #disposed = false
 
-  constructor(options: HalluCodexAuthBrokerOptions) {
+  constructor(options: NovaFlowAuthBrokerOptions) {
     this.#options = options
     this.#now = options.now ?? Date.now
   }
 
   /** @returns A fresh renderer-safe projection; mutating it cannot change the account. */
-  getSnapshot(): HalluCodexAccountSnapshot {
+  getSnapshot(): NovaFlowAccountSnapshot {
     return structuredClone(this.#snapshot)
   }
 
@@ -90,14 +90,14 @@ export class HalluCodexAuthBroker {
    * Resolves once the system browser has opened; completion is delivered through onChange/getSnapshot.
    * @returns The current renderer-safe state.
    */
-  startSignIn(): Promise<HalluCodexAccountSnapshot> {
+  startSignIn(): Promise<NovaFlowAccountSnapshot> {
     const operation = this.startSignInAttempt()
     this.track(operation.then(() => {}, () => {}))
     return operation
   }
 
-  private async startSignInAttempt(): Promise<HalluCodexAccountSnapshot> {
-    if (this.#disposed) throw new HalluCodexAuthError('cancelled')
+  private async startSignInAttempt(): Promise<NovaFlowAccountSnapshot> {
+    if (this.#disposed) throw new NovaFlowAuthError('cancelled')
     const previous = this.#grant
     const generation = this.invalidate()
     this.#grant = undefined
@@ -137,7 +137,7 @@ export class HalluCodexAuthBroker {
    * Cancel the active browser attempt and prevent any late storage result from restoring it.
    * @returns The current renderer-safe state after local cleanup.
    */
-  async cancelSignIn(): Promise<HalluCodexAccountSnapshot> {
+  async cancelSignIn(): Promise<NovaFlowAccountSnapshot> {
     if (!this.#attempt) return this.getSnapshot()
     this.invalidate()
     this.#grant = undefined
@@ -150,8 +150,8 @@ export class HalluCodexAuthBroker {
    * Restore by rotating the encrypted refresh credential; stored access tokens are never read.
    * @returns The safe account state, preserving saved credentials on transient failures.
    */
-  async restore(): Promise<HalluCodexAccountSnapshot> {
-    if (this.#disposed) throw new HalluCodexAuthError('cancelled')
+  async restore(): Promise<NovaFlowAccountSnapshot> {
+    if (this.#disposed) throw new NovaFlowAuthError('cancelled')
     if (this.#grant || this.#attempt) return this.getSnapshot()
     if (this.#restoring) return this.#restoring
     const operation = this.restoreSaved()
@@ -165,7 +165,7 @@ export class HalluCodexAuthBroker {
    * Refresh server-granted capabilities even while the access token is still valid.
    * @returns The safe account projection after the shared credential rotation.
    */
-  async refreshAccount(): Promise<HalluCodexAccountSnapshot> {
+  async refreshAccount(): Promise<NovaFlowAccountSnapshot> {
     const generation = this.#generation
     await this.getAccessToken(true)
     this.assertCurrent(generation)
@@ -180,7 +180,7 @@ export class HalluCodexAuthBroker {
    */
   async getAccessToken(force = false): Promise<string> {
     const grant = this.#grant
-    if (!grant || this.#disposed) throw new HalluCodexAuthError('signed_out')
+    if (!grant || this.#disposed) throw new NovaFlowAuthError('signed_out')
     // A group move rotates the credentials while the old access token is still fresh; wait for its successor.
     if (this.#refreshing?.generation === this.#generation) return this.#refreshing.promise
     if (!force && grant.accessExpiresAt > this.#now() + 30_000) return grant.accessToken
@@ -201,11 +201,11 @@ export class HalluCodexAuthBroker {
    * @param selection - Concrete group, or `auto` with its order and retry choice; the server decides whether the account may use it.
    * @returns The renderer-safe state; `group_unavailable` keeps the current login and routing.
    */
-  async selectGroup(selection: unknown): Promise<HalluCodexAccountSnapshot> {
+  async selectGroup(selection: unknown): Promise<NovaFlowAccountSnapshot> {
     let target: GroupSelection
     try { target = groupSelection(selection) }
-    catch (_error) { throw new HalluCodexAuthError('group_invalid') }
-    if (!this.#grant || this.#disposed) throw new HalluCodexAuthError('signed_out')
+    catch (_error) { throw new NovaFlowAuthError('group_invalid') }
+    if (!this.#grant || this.#disposed) throw new NovaFlowAuthError('signed_out')
     const generation = this.#generation
     // A refresh already in flight produces the credential the move has to rotate.
     const pending = this.#refreshing
@@ -213,8 +213,8 @@ export class HalluCodexAuthBroker {
     this.assertCurrent(generation)
     const current = this.#grant
     // oxlint-disable-next-line typescript/no-unnecessary-condition -- A failed refresh may clear this field during await.
-    if (!current) throw new HalluCodexAuthError('signed_out')
-    if (!current.canSelectGroup) throw new HalluCodexAuthError('access_denied')
+    if (!current) throw new NovaFlowAuthError('signed_out')
+    if (!current.canSelectGroup) throw new NovaFlowAuthError('access_denied')
     if (sameGroupSelection(current, target)) return this.getSnapshot()
     const promise = this.rotate(current, generation, this.#controller.signal, target)
     this.#refreshing = { generation, promise }
@@ -243,7 +243,7 @@ export class HalluCodexAuthBroker {
     const generation = this.#generation
     const accessToken = await this.getAccessToken()
     this.assertCurrent(generation)
-    if (!this.#grant || this.#grant.accessToken !== accessToken) throw new HalluCodexAuthError('cancelled')
+    if (!this.#grant || this.#grant.accessToken !== accessToken) throw new NovaFlowAuthError('cancelled')
     return { accessToken, deviceSessionId: this.#grant.deviceSessionId, group: this.#grant.group }
   }
 
@@ -281,7 +281,7 @@ export class HalluCodexAuthBroker {
       try { await this.#options.transport.revoke(grant.refreshToken) }
       catch (_error) { remoteRevoked = false }
     }
-    if (localFailure) throw new HalluCodexAuthError('storage_error')
+    if (localFailure) throw new NovaFlowAuthError('storage_error')
     return { remoteRevoked }
   }
 
@@ -302,7 +302,7 @@ export class HalluCodexAuthBroker {
     let received: AccessGrant | undefined
     try {
       const callback = attempt.callback
-      if (!callback) throw new HalluCodexAuthError('cancelled')
+      if (!callback) throw new NovaFlowAuthError('cancelled')
       const code = await callback.code
       this.assertCurrent(attempt.generation, attempt.expiresAt)
       received = await this.#options.transport.exchange({ code, codeVerifier: attempt.verifier, redirectUri: callback.redirectUri }, signal)
@@ -326,7 +326,7 @@ export class HalluCodexAuthBroker {
     } finally { await this.closeAttempt(attempt) }
   }
 
-  private async restoreSaved(): Promise<HalluCodexAccountSnapshot> {
+  private async restoreSaved(): Promise<NovaFlowAccountSnapshot> {
     const generation = this.#generation
     const signal = this.#controller.signal
     try {
@@ -351,7 +351,7 @@ export class HalluCodexAuthBroker {
       : transport.selectGroup(refreshOnly(previous), selection, signal)
     try {
       this.assertCurrent(generation)
-      if (previous.refreshExpiresAt <= this.#now()) throw new HalluCodexAuthError('expired')
+      if (previous.refreshExpiresAt <= this.#now()) throw new NovaFlowAuthError('expired')
       try { received = await request() }
       catch (firstError) {
         // A lost response may hide a committed rotation. The server repeats the same successor
@@ -362,7 +362,7 @@ export class HalluCodexAuthBroker {
       if ((selection === undefined ? received.group !== previous.group : !sameGroupSelection(received, selection))
         || received.deviceSessionId !== previous.deviceSessionId
         || received.profile.id !== previous.profile.id || received.refreshExpiresAt > previous.refreshExpiresAt
-        || received.refreshToken === previous.refreshToken) throw new HalluCodexAuthError('invalid_response')
+        || received.refreshToken === previous.refreshToken) throw new NovaFlowAuthError('invalid_response')
       await this.install(received, generation)
       return received.accessToken
     } catch (error) {
@@ -405,8 +405,8 @@ export class HalluCodexAuthBroker {
   }
 
   private assertCurrent(generation: number, expiresAt?: number): void {
-    if (generation !== this.#generation || this.#disposed || this.#controller.signal.aborted) throw new HalluCodexAuthError('cancelled')
-    if (expiresAt !== undefined && this.#now() >= expiresAt) throw new HalluCodexAuthError('expired')
+    if (generation !== this.#generation || this.#disposed || this.#controller.signal.aborted) throw new NovaFlowAuthError('cancelled')
+    if (expiresAt !== undefined && this.#now() >= expiresAt) throw new NovaFlowAuthError('expired')
   }
 
   private invalidate(): number {
@@ -443,7 +443,7 @@ export class HalluCodexAuthBroker {
     this.track(Promise.resolve().then(operation).catch(() => { /* Local invalidation has already taken effect. */ }))
   }
 
-  private publish(snapshot: HalluCodexAccountSnapshot): void {
+  private publish(snapshot: NovaFlowAccountSnapshot): void {
     this.#snapshot = snapshot
     try { this.#options.onChange?.(this.getSnapshot()) }
     catch (_error) { /* A renderer observer cannot interrupt credential cleanup or grant installation. */ }

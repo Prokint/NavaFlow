@@ -1,6 +1,6 @@
 /**
  * Return the application-owned AppRun program, without automatic sandbox-disabling arguments.
- * @returns POSIX shell launcher for the fixed HalluCodex executable.
+ * @returns POSIX shell launcher for the fixed NovaFlow executable.
  */
 export function desktopLinuxAppRun(): string
 /**

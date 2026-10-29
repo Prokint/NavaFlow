@@ -93,7 +93,7 @@ describe('master-only platform scheduling', () => {
     const master = workflow('ci-master.yml')
     expect(master.on.push).toEqual({ branches: ['master'] })
     expect(Object.keys(master.on).sort()).toEqual(['push', 'workflow_dispatch'])
-    // HalluCodex ships no Python SDK; the builder stays callable by hand.
+    // NovaFlow ships no Python SDK; the builder stays callable by hand.
     expect(master.jobs['python-runtime']).toBeUndefined()
     expect(Object.values(master.jobs).some(job => job.uses === runtimeBuilder)).toBe(false)
     const builder = workflow('build-exe-for-python-sdk.yml')

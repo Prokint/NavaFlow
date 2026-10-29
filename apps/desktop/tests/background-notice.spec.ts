@@ -31,7 +31,7 @@ it('keeps the window visible until confirmation and remembers acknowledgement ac
   f.notice.close(f.hide)
   expect(f.hide).not.toHaveBeenCalled()
   expect(existsSync(f.markerPath)).toBe(false)
-  expect(f.show).toHaveBeenCalledExactlyOnceWith({ type: 'info', title: 'HalluCodex',
+  expect(f.show).toHaveBeenCalledExactlyOnceWith({ type: 'info', title: 'NovaFlow',
     message: '正在运行的任务不会中断，可在系统托盘中重新打开窗口', buttons: ['确认'], defaultId: 0, cancelId: -1 })
   expect(f.focus).toHaveBeenCalledOnce()
   f.response.resolve({ response: 0, checkboxChecked: false })
@@ -98,7 +98,7 @@ it('explains the Linux taskbar destination instead of the tray', async () => {
   const f = setup()
   new DesktopBackgroundNotice({ ...f.options, destination: 'taskbar' }).close(f.hide)
   expect(f.show).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-    message: '关闭窗口会将其最小化到任务栏，正在运行的任务不会中断。要退出 HalluCodex，请选择“应用”菜单中的“退出”' }))
+    message: '关闭窗口会将其最小化到任务栏，正在运行的任务不会中断。要退出 NovaFlow，请选择“应用”菜单中的“退出”' }))
   f.response.resolve({ response: 0, checkboxChecked: false })
   await vi.waitFor(() => { expect(f.hide).toHaveBeenCalledOnce() })
 })

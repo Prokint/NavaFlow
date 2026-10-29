@@ -3,10 +3,10 @@ import { AUTO_GROUP, parseDesktopGroups, allowedGroup, routingGroup } from './gr
 import type { DesktopAutoGroup, DesktopGroup } from './group-policy.ts'
 import { parseDesktopModels } from './catalog.ts'
 import type { DesktopModel } from './catalog.ts'
-import { HalluCodexRelayBroker } from './relay-broker.ts'
+import { NovaFlowRelayBroker } from './relay-broker.ts'
 import type { RelayAccess } from './relay-broker.ts'
-import { accountFailure, HalluCodexReadError, HalluCodexUnauthorizedError, readAccountJson } from './account-errors.ts'
-import { HalluCodexAuthError } from './auth-protocol.ts'
+import { accountFailure, NovaFlowReadError, NovaFlowUnauthorizedError, readAccountJson } from './account-errors.ts'
+import { NovaFlowAuthError } from './auth-protocol.ts'
 
 const MAX_CATALOG_BYTES = 2 * 1024 * 1024
 
@@ -27,11 +27,11 @@ export interface CatalogControllerOptions {
   /** Reads the selected server origin for every request. */
   readonly origin: () => string
   readonly fetch: typeof globalThis.fetch
-  readonly relay: HalluCodexRelayBroker
+  readonly relay: NovaFlowRelayBroker
 }
 
 /** Owns one generation of account-bound discovery; stale and interrupted reads never reopen relay admission. */
-export class HalluCodexCatalogController {
+export class NovaFlowCatalogController {
   private generation = 0
   private active: AbortController | undefined
   private view: DesktopCatalogView | undefined
@@ -53,7 +53,7 @@ export class HalluCodexCatalogController {
   /**
    * Retrieve groups and models using one device grant, then recheck the current account before publication.
    * @returns the complete renderer-safe catalog committed to the relay broker.
-   * @throws {HalluCodexUnauthorizedError} When the server rejects the access token.
+   * @throws {NovaFlowUnauthorizedError} When the server rejects the access token.
    */
   async refresh(): Promise<DesktopCatalogView> {
     this.clear()
@@ -93,9 +93,9 @@ export class HalluCodexCatalogController {
       return view
     } catch (refreshError) {
       controller.abort()
-      if (refreshError instanceof HalluCodexUnauthorizedError || refreshError instanceof HalluCodexAuthError) throw refreshError
+      if (refreshError instanceof NovaFlowUnauthorizedError || refreshError instanceof NovaFlowAuthError) throw refreshError
       // The public error excludes bearer-bearing Request and provider diagnostics.
-      throw new HalluCodexReadError(accountFailure(refreshError, 'catalog_unavailable'), 'hallucodex: account catalog unavailable')
+      throw new NovaFlowReadError(accountFailure(refreshError, 'catalog_unavailable'), 'hallucodex: account catalog unavailable')
     } finally {
       if (this.active === controller) this.active = undefined
     }

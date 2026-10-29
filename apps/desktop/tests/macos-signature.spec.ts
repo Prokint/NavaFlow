@@ -28,7 +28,7 @@ const RELEASE_ENVIRONMENT = {
   APPLE_API_KEY_ID: 'TEST123456',
   APPLE_API_ISSUER: '11111111-2222-3333-4444-555555555555',
 }
-const GITHUB_RELEASES = [{ provider: 'github', owner: 'AkumaRealLabs', repo: 'hallucodex-desktop', releaseType: 'release' }]
+const GITHUB_RELEASES = [{ provider: 'github', owner: 'Prokint', repo: 'NavaFlow', releaseType: 'release' }]
 
 function portablePath(value: string): string {
   return value.replaceAll('\\', '/')
@@ -49,7 +49,7 @@ describe('desktop macOS release signature', () => {
     expect(config.protocols).toEqual([])
     expect(portablePath(config.directories.output)).toContain('/.desktop-build/targets/mac-arm64/artifacts')
     expect(config.mac.extendInfo).toMatchObject({ CFBundleLocalizations: ['en', 'zh_CN'] })
-    expect(config.mac.extendInfo.NSMicrophoneUsageDescription).toContain('HalluCodex uses your microphone')
+    expect(config.mac.extendInfo.NSMicrophoneUsageDescription).toContain('NovaFlow uses your microphone')
     expect(config.mac.entitlementsInherit).toBe(config.mac.entitlements)
     const entitlements = readFileSync(config.mac.entitlements, 'utf8')
     for (const key of ['com.apple.security.cs.allow-jit', 'com.apple.security.cs.allow-unsigned-executable-memory',

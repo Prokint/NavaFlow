@@ -15,15 +15,15 @@ vi.mock('node:child_process', async (importOriginal) => {
 })
 
 describe('installer preparation preserves application dependencies', () => {
-  it.each(['win32', 'darwin', 'linux'] as const)('brands %s packages as HalluCodex with its own feed and no URL scheme', async (platform) => {
+  it.each(['win32', 'darwin', 'linux'] as const)('brands %s packages as NovaFlow with its own feed and no URL scheme', async (platform) => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     const config = createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.example.installer', DSH_DESKTOP_UNSIGNED: platform === 'win32' ? '1' : '0',
       DSH_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)', DSH_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234', APPLE_KEYCHAIN_PROFILE: 'installer-test',
       DSH_DESKTOP_LINUX_DEVELOPMENT_APPIMAGE: '1', DSH_DESKTOP_TARGET_PLATFORM: platform }, platform, 'x64')
-    expect(config).toMatchObject({ productName: 'HalluCodex', protocols: [], extraMetadata: { name: 'hallucodex' } })
+    expect(config).toMatchObject({ productName: 'NovaFlow', protocols: [], extraMetadata: { name: 'hallucodex' } })
     // Development AppImages stay out of the feed; installers read this repository's GitHub Releases.
     expect(config.publish).toEqual(platform === 'linux' ? null
-      : [{ provider: 'github', owner: 'AkumaRealLabs', repo: 'hallucodex-desktop', releaseType: 'release' }])
+      : [{ provider: 'github', owner: 'Prokint', repo: 'NavaFlow', releaseType: 'release' }])
     expect(config.artifactName.startsWith('hallucodex-')).toBe(true)
     expect(() => createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.deepseek.harness', DSH_DESKTOP_TARGET_PLATFORM: platform }, platform, 'x64'))
       .toThrow('separate application identifier')
@@ -86,7 +86,7 @@ describe('installer preparation preserves application dependencies', () => {
       rmSync(outDir, { recursive: true, force: true })
     }
     // fpm writes the synopsis as the deb Description line; without it the line is empty.
-    expect(config.linux.synopsis).toBe('HalluCodex desktop coding agent')
+    expect(config.linux.synopsis).toBe('NovaFlow desktop coding agent')
     // The rounded About icon and the status-notifier tray bitmap ship beside the runtime.
     const resources = new Map(config.extraResources.map(resource => [resource.to, resource.from]))
     expect(readFileSync(resources.get('icon.png')!)).toEqual(readFileSync(new URL('../resources/icon-windows.png', import.meta.url)))

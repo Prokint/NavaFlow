@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=HalluCodex
+Name=NovaFlow
 Exec=AppRun %U
 Terminal=false
 Type=Application
 Icon=hallucodex
 StartupWMClass=hallucodex
 X-AppImage-Version=1.2.3
-Comment=HalluCodex desktop
+Comment=NovaFlow desktop
 Categories=Development;

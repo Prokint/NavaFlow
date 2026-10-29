@@ -1,7 +1,7 @@
 /** Quota display settings from New API's public site status, applied the way its web console shows balances. */
 
 /** How the site shows quota: US dollars, yuan, a custom unit, or raw quota. */
-export interface HalluCodexQuotaDisplay {
+export interface NovaFlowQuotaDisplay {
   readonly type: 'USD' | 'CNY' | 'CUSTOM' | 'TOKENS'
   /** Quota units per US dollar. */
   readonly quotaPerUnit: number
@@ -23,7 +23,7 @@ function positive(value: unknown): number | undefined {
  * @returns The settings, with the web console's fallbacks for unset rates and symbols.
  * @throws When the response is not a successful status or has no usable quota unit.
  */
-export function parseQuotaDisplay(value: unknown): HalluCodexQuotaDisplay {
+export function parseQuotaDisplay(value: unknown): NovaFlowQuotaDisplay {
   if (typeof value !== 'object' || value === null || !('success' in value) || value.success !== true
     || !('data' in value) || typeof value.data !== 'object' || value.data === null) {
     throw new Error('hallucodex: invalid site status')
@@ -53,7 +53,7 @@ function trimZeros(value: string): string {
  * @param locale - Number formatting locale of the dialog.
  * @returns The amount in the site's unit, or the raw counter without settings.
  */
-export function formatQuota(quota: string, display: HalluCodexQuotaDisplay | undefined, locale: string): string {
+export function formatQuota(quota: string, display: NovaFlowQuotaDisplay | undefined, locale: string): string {
   const raw = Number(quota)
   if (display === undefined || !Number.isFinite(raw)) return quota
   if (display.type === 'TOKENS') {

@@ -39,7 +39,7 @@ export interface DesktopRelayResult {
  * Refuse request-level routing overrides, redirects, stale selection, and unauthorized protocol/model pairs.
  * This module never retries requests; streams already admitted retain their original server grant.
  */
-export class HalluCodexRelayBroker {
+export class NovaFlowRelayBroker {
   private selection: RelaySelection | undefined
   private generation = 0
 

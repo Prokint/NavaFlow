@@ -81,7 +81,7 @@ describe('desktop build version discovery', () => {
   })
 })
 
-it('numbers HalluCodex artifacts from every platform in the local output directory', async () => {
+it('numbers NovaFlow artifacts from every platform in the local output directory', async () => {
   const artifactsRoot = await artifactsWith([
     `hallucodex-${PRERELEASE}.${DATE}.2-linux-x64.AppImage`,
     `hallucodex-${PRERELEASE}.${DATE}.3-linux-amd64.deb`,

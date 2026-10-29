@@ -1,29 +1,29 @@
-/** HalluCodex brand and desktop-account dictionaries. */
+/** NovaFlow brand and desktop-account dictionaries. */
 
 export const NS = 'hallucodex'
 
-/** Simplified Chinese HalluCodex messages. */
+/** Simplified Chinese NovaFlow messages. */
 export const zh = {
-  'brand.name': 'HalluCodex',
-  'account.signIn': '登录 HalluCodex',
+  'brand.name': 'NovaFlow',
+  'account.signIn': '登录 NovaFlow',
   'account.signingIn': '正在登录…',
-  'account.open': 'HalluCodex 账号',
+  'account.open': 'NovaFlow 账号',
 } satisfies Record<string, string>
 
-/** Translation keys owned by the HalluCodex namespace. */
-export type HalluCodexKey = keyof typeof zh
+/** Translation keys owned by the NovaFlow namespace. */
+export type NovaFlowKey = keyof typeof zh
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
-    /** HalluCodex brand and desktop-account copy. */
-    hallucodex: HalluCodexKey
+    /** NovaFlow brand and desktop-account copy. */
+    hallucodex: NovaFlowKey
   }
 }
 
-/** English HalluCodex messages. */
+/** English NovaFlow messages. */
 export const en = {
-  'brand.name': 'HalluCodex',
-  'account.signIn': 'Sign in to HalluCodex',
+  'brand.name': 'NovaFlow',
+  'account.signIn': 'Sign in to NovaFlow',
   'account.signingIn': 'Signing in…',
-  'account.open': 'HalluCodex account',
-} satisfies Record<HalluCodexKey, string>
+  'account.open': 'NovaFlow account',
+} satisfies Record<NovaFlowKey, string>

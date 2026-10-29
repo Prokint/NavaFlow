@@ -1,12 +1,12 @@
-/** Read the latest public HalluCodex desktop release; the app only points users at it and never installs anything. */
+/** Read the latest public NovaFlow desktop release; the app only points users at it and never installs anything. */
 
 import { readFileSync, writeFileSync } from 'node:fs'
 
 /** Public release page users download installers from. */
-export const HALLUCODEX_RELEASES_URL = 'https://github.com/AkumaRealLabs/hallucodex-desktop/releases'
+export const HALLUCODEX_RELEASES_URL = 'https://github.com/Prokint/NavaFlow/releases'
 
 /** GitHub API endpoint for the latest stable (non-prerelease, non-draft) release. */
-export const HALLUCODEX_LATEST_RELEASE_API = 'https://api.github.com/repos/AkumaRealLabs/hallucodex-desktop/releases/latest'
+export const HALLUCODEX_LATEST_RELEASE_API = 'https://api.github.com/repos/Prokint/NavaFlow/releases/latest'
 
 /** Release-body marker before the installation instructions the release workflow appends for the download page. */
 export const RELEASE_INSTALL_NOTES_MARKER = '<!-- hallucodex:install-notes -->'
@@ -18,7 +18,7 @@ const TAG_PREFIX = 'hallucodex-v'
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z.-]+)?$/u
 
 /** Outcome of comparing the running version with the latest public release. */
-export type HalluCodexReleaseCheck =
+export type NovaFlowReleaseCheck =
   | { readonly status: 'newer'; readonly version: string; readonly url: string; readonly notes: string }
   | { readonly status: 'current'; readonly version: string }
 
@@ -109,7 +109,7 @@ export function parseRelease(value: unknown): { version: string; url: string; no
   return { version: tag.slice(TAG_PREFIX.length), url: page, notes: typeof body === 'string' ? releaseNotesText(body) : '' }
 }
 
-const GITHUB_HEADERS = { accept: 'application/vnd.github+json', 'user-agent': 'HalluCodex-Desktop', 'x-github-api-version': '2022-11-28' }
+const GITHUB_HEADERS = { accept: 'application/vnd.github+json', 'user-agent': 'NovaFlow-Desktop', 'x-github-api-version': '2022-11-28' }
 
 /**
  * Ask GitHub for the latest stable release and compare it with the running version.
@@ -118,11 +118,11 @@ const GITHUB_HEADERS = { accept: 'application/vnd.github+json', 'user-agent': 'H
  * @param signal - Cancellation and timeout.
  * @returns Whether a newer public release exists, with its notes.
  */
-export async function checkHalluCodexRelease(
+export async function checkNovaFlowRelease(
   currentVersion: string,
   fetcher: (url: string, init: RequestInit) => Promise<Response>,
   signal: AbortSignal,
-): Promise<HalluCodexReleaseCheck> {
+): Promise<NovaFlowReleaseCheck> {
   const response = await fetcher(HALLUCODEX_LATEST_RELEASE_API, { headers: GITHUB_HEADERS, redirect: 'error', signal })
   // No published stable release yet: the running build is the newest one available.
   if (response.status === 404) return { status: 'current', version: currentVersion }
@@ -141,13 +141,13 @@ export async function checkHalluCodexRelease(
  * @returns Plain-text notes; empty when the release has none.
  * @throws when the release cannot be read or does not belong to this repository.
  */
-export async function fetchHalluCodexReleaseNotes(
+export async function fetchNovaFlowReleaseNotes(
   version: string,
   fetcher: (url: string, init: RequestInit) => Promise<Response>,
   signal: AbortSignal,
 ): Promise<string> {
   if (parseVersion(version) === undefined) throw new Error(`hallucodex release: invalid version ${JSON.stringify(version)}`)
-  const url = `https://api.github.com/repos/AkumaRealLabs/hallucodex-desktop/releases/tags/${TAG_PREFIX}${version}`
+  const url = `https://api.github.com/repos/Prokint/NavaFlow/releases/tags/${TAG_PREFIX}${version}`
   const response = await fetcher(url, { headers: GITHUB_HEADERS, redirect: 'error', signal })
   if (!response.ok) throw new Error(`hallucodex release: GitHub answered ${String(response.status)}`)
   const release = parseRelease(await response.json())

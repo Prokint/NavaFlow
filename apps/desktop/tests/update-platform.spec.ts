@@ -4,7 +4,7 @@ import { desktopUpdateDelivery } from '../src/update-platform.ts'
 describe('desktop update delivery', () => {
   it('installs in-app only where the platform updater can replace this build', () => {
     expect(desktopUpdateDelivery('win32', {})).toBe('install')
-    expect(desktopUpdateDelivery('linux', { APPIMAGE: '/home/a/HalluCodex.AppImage' })).toBe('install')
+    expect(desktopUpdateDelivery('linux', { APPIMAGE: '/home/a/NovaFlow.AppImage' })).toBe('install')
     expect(desktopUpdateDelivery('linux', {})).toBe('download-page')
     expect(desktopUpdateDelivery('linux', { APPIMAGE: '' })).toBe('download-page')
     // Squirrel validates a Developer ID signature; only a signed build carries the packaged marker.

@@ -1,0 +1,7 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write customizations/novaflow/README.md
+/local-package-branding-tool:
+  en: 9e69935182ef52a4
+  zh: 7b010cd34924ea3b

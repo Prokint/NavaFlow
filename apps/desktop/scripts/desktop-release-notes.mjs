@@ -1,5 +1,5 @@
 /**
- * Derive a HalluCodex release from its tag and write its GitHub Release notes.
+ * Derive a NovaFlow release from its tag and write its GitHub Release notes.
  *
  * The notes are the matching `CHANGELOG.md` section, then the install-notes marker, then
  * instructions for unsigned installers. The application's update dialog shows the notes and
@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
-/** Tag prefix of HalluCodex desktop releases; upstream `dsh-v*` tags are not releases of this application. */
+/** Tag prefix of NovaFlow desktop releases; upstream `dsh-v*` tags are not releases of this application. */
 export const DESKTOP_RELEASE_TAG_PREFIX = 'hallucodex-v'
 
 /** Line separating the release notes the application shows from the installation instructions. */
@@ -25,14 +25,14 @@ const INSTALL_NOTES = `## 安装说明
 
 当前安装包尚未使用付费证书签名。
 
-- **macOS**：把 HalluCodex 拖入“应用程序”后，首次启动时在 Finder 中按住 Control 点按（或右键）HalluCodex 并选择“打开”；macOS 15 及以上若仍被拦截，前往“系统设置 → 隐私与安全性”点按“仍要打开”。也可以在终端执行 \`xattr -dr com.apple.quarantine /Applications/HalluCodex.app\`。
+- **macOS**：把 NovaFlow 拖入“应用程序”后，首次启动时在 Finder 中按住 Control 点按（或右键）NovaFlow 并选择“打开”；macOS 15 及以上若仍被拦截，前往“系统设置 → 隐私与安全性”点按“仍要打开”。也可以在终端执行 \`xattr -dr com.apple.quarantine /Applications/NovaFlow.app\`。
 - **Windows**：若 SmartScreen 提示“Windows 已保护你的电脑”，点击“更多信息”，再点击“仍要运行”。
 - **Linux**：AppImage 需先执行 \`chmod +x\` 再运行；deb 可用 \`sudo apt install ./<文件名>.deb\` 安装。
 - 下载后可在 Linux 上用 \`sha256sum -c SHA256SUMS --ignore-missing\` 核对 \`SHA256SUMS\`。
 
 ### Installing unsigned builds
 
-- **macOS**: Control-click (right-click) HalluCodex in Applications and choose Open. On macOS 15 or later, use System Settings → Privacy & Security → Open Anyway, or run \`xattr -dr com.apple.quarantine /Applications/HalluCodex.app\`.
+- **macOS**: Control-click (right-click) NovaFlow in Applications and choose Open. On macOS 15 or later, use System Settings → Privacy & Security → Open Anyway, or run \`xattr -dr com.apple.quarantine /Applications/NovaFlow.app\`.
 - **Windows**: when SmartScreen appears, click More info, then Run anyway.
 - **Linux**: run \`chmod +x\` on the AppImage before starting it, or install the deb with \`sudo apt install ./<file>.deb\`.
 `

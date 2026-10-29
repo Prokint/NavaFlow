@@ -1,31 +1,31 @@
 /** Owned-document account page; renders only safe snapshots and fixed localized copy into the hosts the client page supplies. */
 import { AUTO_GROUP, sameGroupSelection, type DesktopAutoGroup, type DesktopGroup, type GroupSelection } from './group-policy.ts'
 import { formatQuota } from './quota-display.ts'
-import type { HalluCodexDesktopSnapshot, GroupSelectionResult } from './runtime.ts'
+import type { NovaFlowDesktopSnapshot, GroupSelectionResult } from './runtime.ts'
 import type { AccountFailure } from './account-errors.ts'
 import { DEFAULT_HALLUCODEX_ORIGIN } from './server-default.ts'
 
 /** High-level native operations; the UI has no credential, URL, provider, or filesystem operations. */
-export interface HalluCodexAccountUiOperations {
-  state(): Promise<HalluCodexDesktopSnapshot | null>
-  start(): Promise<HalluCodexDesktopSnapshot>
-  cancel(): Promise<HalluCodexDesktopSnapshot>
+export interface NovaFlowAccountUiOperations {
+  state(): Promise<NovaFlowDesktopSnapshot | null>
+  start(): Promise<NovaFlowDesktopSnapshot>
+  cancel(): Promise<NovaFlowDesktopSnapshot>
   signOut(): Promise<{ remoteRevoked: boolean }>
   refresh(): Promise<void>
   refreshCatalog(): Promise<void>
-  restore(): Promise<HalluCodexDesktopSnapshot>
+  restore(): Promise<NovaFlowDesktopSnapshot>
   /** Move this device to another routing; the new state arrives through subscribe. */
   selectGroup(selection: GroupSelection): Promise<GroupSelectionResult>
   /** Re-read only the wallet and device usage; the snapshot change arrives through subscribe. */
   refreshWallet(): Promise<void>
   /** Select another server while signed out; rejects an invalid address. */
-  setServer(origin: string): Promise<HalluCodexDesktopSnapshot>
+  setServer(origin: string): Promise<NovaFlowDesktopSnapshot>
   openPage(page: 'wallet' | 'usage' | 'devices'): Promise<void>
-  subscribe(listener: (snapshot: HalluCodexDesktopSnapshot) => void): () => void
+  subscribe(listener: (snapshot: NovaFlowDesktopSnapshot) => void): () => void
 }
 
 /** The rendered account page: mounted into the client's page hosts while that page is shown. */
-export interface HalluCodexAccountPage {
+export interface NovaFlowAccountPage {
   /**
    * Render into the page head and content hosts, then re-read the account and, when signed in, the wallet.
    * @param head - Host inside the page's head row, beside the page mark.
@@ -39,7 +39,7 @@ export interface HalluCodexAccountPage {
   dispose(): void
 }
 
-import type { HalluCodexAccountCopy } from './locale.ts'
+import type { NovaFlowAccountCopy } from './locale.ts'
 export { halluCodexAccountCopy } from './locale.ts'
 
 /** Page styles built from the DSH settings-card and button tokens of the host document, with neutral fallbacks. */
@@ -254,9 +254,9 @@ const STYLES = `
  * @param copy - current native locale.
  * @returns explicit mount, unmount and teardown operations.
  */
-export function createHalluCodexAccountUi(
-  document: Document, operations: HalluCodexAccountUiOperations, copy: HalluCodexAccountCopy,
-): HalluCodexAccountPage {
+export function createNovaFlowAccountUi(
+  document: Document, operations: NovaFlowAccountUiOperations, copy: NovaFlowAccountCopy,
+): NovaFlowAccountPage {
   const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] => {
     const node = document.createElement(tag)
     node.className = className
@@ -417,7 +417,7 @@ export function createHalluCodexAccountUi(
   const privacy = element('p', 'hcx-privacy', copy.privacy)
   page.append(error, notice, body, signin, privacy)
 
-  let snapshot: HalluCodexDesktopSnapshot | null = null
+  let snapshot: NovaFlowDesktopSnapshot | null = null
   let shownOrigin = ''
   let busy: 'start' | 'cancel' | 'sign-out' | 'refresh' | 'server' | 'group' | 'wallet' | 'catalog' | 'restore' | undefined
   const lifetime = new AbortController()
@@ -537,7 +537,7 @@ export function createHalluCodexAccountUi(
     ;(controls.find(control => control.dataset.action === focus.action) ?? controls.at(-1))?.focus()
   }
   /** @returns whether the page offers a group switch. */
-  const renderGroups = (account: Extract<HalluCodexDesktopSnapshot['account'], { status: 'signed-in' }>): boolean => {
+  const renderGroups = (account: Extract<NovaFlowDesktopSnapshot['account'], { status: 'signed-in' }>): boolean => {
     const catalog = snapshot?.catalogStatus === 'ready' ? snapshot.catalog : undefined
     groups = (catalog?.groups ?? groups).filter(group => account.allowedGroups.includes(group.name))
     if (catalog !== undefined) autoOffer = catalog.auto

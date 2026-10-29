@@ -13,19 +13,19 @@ type CallbackCopy = Readonly<Record<CallbackOutcome, readonly [title: string, bo
 const COPY: Readonly<Record<'zh' | 'en', CallbackCopy>> = {
   zh: {
     lang: 'zh-CN',
-    product: 'HalluCodex 桌面端',
-    approved: ['授权完成', '请回到 HalluCodex 桌面端，登录会自动完成。此页面可以关闭。'],
-    denied: ['已拒绝授权', 'HalluCodex 桌面端没有获得你账号的访问权限。此页面可以关闭。'],
-    invalid: ['链接无效', '这个授权回调无法使用，请回到 HalluCodex 桌面端重新登录。'],
-    expired: ['登录已失效', '本次登录已过期或已取消，请回到 HalluCodex 桌面端重新登录。'],
+    product: 'NovaFlow 桌面端',
+    approved: ['授权完成', '请回到 NovaFlow 桌面端，登录会自动完成。此页面可以关闭。'],
+    denied: ['已拒绝授权', 'NovaFlow 桌面端没有获得你账号的访问权限。此页面可以关闭。'],
+    invalid: ['链接无效', '这个授权回调无法使用，请回到 NovaFlow 桌面端重新登录。'],
+    expired: ['登录已失效', '本次登录已过期或已取消，请回到 NovaFlow 桌面端重新登录。'],
   },
   en: {
     lang: 'en',
-    product: 'HalluCodex Desktop',
-    approved: ['Authorization complete', 'Return to HalluCodex Desktop; sign-in finishes there automatically. You can close this page.'],
-    denied: ['Authorization denied', 'HalluCodex Desktop did not get access to your account. You can close this page.'],
-    invalid: ['Invalid link', 'This authorization callback cannot be used. Return to HalluCodex Desktop and sign in again.'],
-    expired: ['Sign-in expired', 'This sign-in expired or was cancelled. Return to HalluCodex Desktop and sign in again.'],
+    product: 'NovaFlow Desktop',
+    approved: ['Authorization complete', 'Return to NovaFlow Desktop; sign-in finishes there automatically. You can close this page.'],
+    denied: ['Authorization denied', 'NovaFlow Desktop did not get access to your account. You can close this page.'],
+    invalid: ['Invalid link', 'This authorization callback cannot be used. Return to NovaFlow Desktop and sign in again.'],
+    expired: ['Sign-in expired', 'This sign-in expired or was cancelled. Return to NovaFlow Desktop and sign in again.'],
   },
 }
 
@@ -86,7 +86,7 @@ export function callbackPage(outcome: CallbackOutcome, language: 'zh' | 'en'): s
   const [title, body] = copy[outcome]
   return '<!doctype html>'
     + `<html lang="${copy.lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">`
-    + `<meta name="referrer" content="no-referrer"><title>${title} · HalluCodex</title><style>${STYLE}</style></head>`
+    + `<meta name="referrer" content="no-referrer"><title>${title} · NovaFlow</title><style>${STYLE}</style></head>`
     + `<body><main class="${outcome}"><div class="brand">${MARK}<span>${copy.product}</span></div>`
     + `<div class="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[outcome]}</svg></div>`
     + `<h1>${title}</h1><p>${body}</p></main></body></html>`

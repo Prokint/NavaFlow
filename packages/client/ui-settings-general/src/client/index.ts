@@ -185,9 +185,15 @@ export function apply(ctx: ClientContext): void {
       },
     },
   })
+  const shellHandle = createSettingsShellStore()
+  const shellInstance = shellHandle.create()
+  ctx.provide('settingsNavigation', {
+    open: (section?: string) => {
+      if (section === undefined) shellInstance.actions.open()
+      else shellInstance.actions.openSection(section)
+    },
+  })
   ctx.slots.inject('sidebar.settings', () => {
-    const shellHandle = createSettingsShellStore()
-    const shellInstance = shellHandle.create()
     const shellStore: typeof shellHandle = { ...shellHandle, create: () => shellInstance }
     const disposeCommand = ctx.shortcuts.register({
       id: 'settings.open' as ShortcutCommandId, label: () => t('shortcut.open'), aliases: ['settings', 'preferences'],

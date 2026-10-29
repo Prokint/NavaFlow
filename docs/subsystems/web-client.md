@@ -55,6 +55,8 @@ This pairing is not a second source of business truth. Host controllers decide d
 
 ## Conversation and presentation
 
+The settings base declares `SettingsNavigation`; the settings shell provides `ctx.settingsNavigation.open(section?)` over its shared viewing store. Product plugins inject this service to open an optional section without importing the shell's implementation. The selection is local viewing state.
+
 Web and desktop share the [Coding Tools preference](../../packages/client/ui-settings/README.md#use-this-package). It controls diagnostic Views, [available preset choices](../../packages/client/ui-agent-preset/README.md), changed-file cards, and the builtin HTML preview policy without changing Session records.
 
 `ui-session` installs the Session scope adapter and publishes `useSessions`, `useSessionStatus`, `useSessionRetainInfo`, `useSessionAccess`, `useSession`, `sessionId`, `useProjection`, and the Session-scope `useAccess` over the [remote-access](../../packages/api/remote-access/README.md) Client service. `SessionProvider` inherits an outer binding or binds an explicit `SessionReference`, so concurrent subtrees can target different Sessions. Domain adapters add further standard sources without putting React hooks on the model objects.

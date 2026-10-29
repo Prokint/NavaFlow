@@ -2,6 +2,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { createNovaFlowAccountUi, halluCodexAccountCopy, type NovaFlowAccountPage, type NovaFlowAccountUiOperations } from './hallucodex/account-ui.ts'
 import type { NovaFlowDesktopSnapshot } from './hallucodex/runtime.ts'
+import { NOVAFLOW_ACCESS_MODE } from './hallucodex/server-default.ts'
 
 /** Account summary the page's sidebar entry may read; it carries no credentials, group or wallet data. */
 export interface NovaFlowSidebarAccount {
@@ -97,6 +98,7 @@ export function installNovaFlowAccountUi(): void {
   const open = (): void => { opens.request() }
   ipcRenderer.on('hallucodex:open', open)
   contextBridge.exposeInMainWorld('dshNovaFlow', {
+    accessMode: NOVAFLOW_ACCESS_MODE,
     subscribe(listener: (state: NovaFlowSidebarAccount) => void): () => void {
       let active = true
       let changed = false

@@ -428,9 +428,11 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
           const namespace = state.namespaces.get(target.settingsNs)
           /* v8 ignore next -- the join marks a row configured only when its namespace resolved */
           if (namespace === undefined) return null
+          const configuredModels = schema.getPath(namespace.value, [...target.settingsPath, 'models'])
+          const needsModels = target.declared === true && Array.isArray(configuredModels) && configuredModels.length === 0
           const error = row.entry.error === undefined
             ? null
-            : <p role="alert" className={styles['error']}>{row.entry.error}</p>
+            : <p role="alert" className={styles['error']}>{needsModels ? t('modelsSetup') : row.entry.error}</p>
           if (needsSetup(row, anyUsable) && !dismissedSetup.has(row.entry.provider)) {
             // First-run posture: the provider exists but has no key — the
             // setup card IS its presence on the page, until the user closes it.

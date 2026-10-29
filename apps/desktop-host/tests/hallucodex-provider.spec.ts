@@ -26,6 +26,10 @@ function configuration(baseURL = 'http://127.0.0.1:43210') {
 }
 
 describe('native Host configuration', () => {
+  it('preserves standard API-key mode and refuses unknown access modes', () => {
+    expect(parseNovaFlowHostConfiguration({ ...configuration(), accessMode: 'api-key' }).accessMode).toBe('api-key')
+    expect(() => parseNovaFlowHostConfiguration({ ...configuration(), accessMode: 'password' })).toThrow('invalid access mode')
+  })
   it.each(['https://api.hallucodex.com', 'http://localhost:43210', 'http://127.0.0.1:43210/v1', 'http://user@127.0.0.1:43210', 'http://127.0.0.1:43210?x=1'])('rejects a non-exact loopback endpoint %s', (baseURL) => {
     expect(() => parseNovaFlowHostConfiguration(configuration(baseURL))).toThrow()
   })

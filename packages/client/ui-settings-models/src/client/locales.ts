@@ -6,6 +6,7 @@ export const en = {
   deepSeekAccount: 'DeepSeek Account',
   title: 'Models',
   intro: 'Enter your API keys to use models from the following providers.',
+  modelsSetup: 'Edit this provider, enter its API key, then fetch or add models before saving.',
   edit: 'Edit',
   editProvider: 'Edit {provider}',
   remove: 'Delete',
@@ -143,6 +144,7 @@ export type ModelsKey = keyof typeof en
 
 /** Chinese strings (same keys as {@link en}). */
 export const zh: { [Key in keyof typeof en]: string } = {
+  modelsSetup: '请编辑此提供方，填写 API 密钥，在自定义设置中获取或添加模型后保存。',
   nav: '模型',
   deepSeekAccount: 'DeepSeek 账号',
   title: '模型',

@@ -41,6 +41,8 @@ A page that edits a namespace another plugin owns registers through `ctx.configF
 
 ### Filling the settings slots
 
+`SettingsNavigation` declares `ctx.settingsNavigation.open(section?)`. The shell in `ui-settings-general` provides it; product plugins inject it to open settings at a section such as `models`. Omitting the section preserves the current selection. Navigation shares the shell's existing store and does not persist preferences.
+
 A settings surface registers into the slot types this package declares. The shell (`sidebar.settings` occupant, navigation, chrome) lives in ui-settings-general; feature pages register `settings.section` contributions; the Plugins section hosts `settings.plugins.tab` pages; onboarding steps register `settings.onboarding`. Cross-namespace surfaces (schema introspection, the served-namespace directory, `hasDocument`) read the same mirror through `ctx.configForms.describe()`.
 
 ### Observable success and failures

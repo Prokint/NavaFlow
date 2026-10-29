@@ -84,6 +84,13 @@ describe('ui-settings-general shell', () => {
     const c = await start()
     expect(c.ctx.slots.entries('sidebar.settings').map(entry => entry.component)).toEqual([SettingsRoot])
     for (const name of CHILD_NAMES) expect(c.ctx.slots.spec(name)).toEqual(CHILD_SPECS[name])
+    const declaration = c.ctx.slots.entries('sidebar.settings')[0]!.store!
+    const handle = typeof declaration === 'function' ? declaration() : declaration
+    const store = handle.create()
+    c.ctx.settingsNavigation.open('models')
+    expect(store.getSnapshot()).toMatchObject({ open: true, activeId: 'models' })
+    c.ctx.settingsNavigation.open()
+    expect(store.getSnapshot()).toMatchObject({ open: true, activeId: 'models' })
   }, COLD_BOOT_TIMEOUT_MS)
 
   it('projects the section ledger: product sections in order, defaults for bare rows, stable snapshots', async ({ start }) => {

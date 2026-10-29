@@ -5,6 +5,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { AccountAction, type AccountActionFace } from './AccountAction.tsx'
 import { ACCOUNT_PANEL_ID, AccountPage, type AccountPageFace } from './AccountPage.tsx'
 import { readDesktopAccountBridge } from './bridge.ts'
@@ -34,6 +35,12 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark' }, NovaFlowMark))
   const bridge = readDesktopAccountBridge(globalThis)
   if (bridge === undefined) return
+  if (bridge.accessMode === 'api-key') {
+    ctx.inject(['settingsNavigation'], (settings) => {
+      settings.effect(() => bridge.onOpen(() => { settings.settingsNavigation.open('models') }), 'novaflow: model settings')
+    })
+    return
+  }
   const openPage = (): void => { ctx.layout.selectPanel(ACCOUNT_PANEL_ID) }
   // The shell's open requests follow the page's registration, so a request kept before it selects a registered panel.
   ctx.slots.inject('main', function* () {

@@ -55,6 +55,7 @@ export type NovaFlowCapacitySaver = (model: string, contextWindow: number | null
 /** Main-to-Host private message. localCapability grants only access to this process's limited loopback relay. */
 export interface NovaFlowHostConfiguration {
   readonly type: 'hallucodex-config'
+  readonly accessMode?: 'api-key' | 'desktop-account'
   readonly baseURL: string
   readonly localCapability: string
   readonly revision: number
@@ -96,6 +97,10 @@ export function parseNovaFlowHostConfiguration(value: unknown): NovaFlowHostConf
     || !('models' in value) || !Array.isArray(value.models) || value.models.length > 10_000) {
     throw new Error('hallucodex Host: invalid native configuration')
   }
+  const accessMode: unknown = Reflect.get(value, 'accessMode')
+  if (accessMode !== undefined && accessMode !== 'api-key' && accessMode !== 'desktop-account') {
+    throw new Error('hallucodex Host: invalid access mode')
+  }
   const url = new URL(value.baseURL)
   if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !url.port || url.username || url.password
     || url.pathname !== '/' || url.search || url.hash || url.origin !== value.baseURL) {
@@ -133,7 +138,8 @@ export function parseNovaFlowHostConfiguration(value: unknown): NovaFlowHostConf
       ...userMaxOutputTokens === undefined ? {} : { userMaxOutputTokens },
     })
   }
-  return { type: 'hallucodex-config', baseURL: url.origin, localCapability: value.localCapability, revision: value.revision, models }
+  return { type: 'hallucodex-config', baseURL: url.origin, localCapability: value.localCapability, revision: value.revision, models,
+    ...accessMode === undefined ? {} : { accessMode } }
 }
 
 /**

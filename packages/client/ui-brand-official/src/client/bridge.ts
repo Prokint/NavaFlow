@@ -9,6 +9,8 @@ export interface DesktopAccountState {
 
 /** Desktop shell bridge exposed by the NovaFlow preload as `window.dshNovaFlow`. */
 export interface DesktopAccountBridge {
+  /** API-key deployments open model settings instead of the desktop OAuth page. */
+  readonly accessMode?: 'api-key' | 'desktop-account'
   /**
    * Receive the current state once known and every later change.
    * @param listener - State observer.

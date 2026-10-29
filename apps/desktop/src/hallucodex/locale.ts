@@ -2,6 +2,7 @@
 /** Localized account page copy. */
 export interface NovaFlowAccountCopy {
   title: string
+  modelSettings: string
   signIn: string
   cancel: string
   signOut: string
@@ -94,6 +95,7 @@ export interface NovaFlowAccountCopy {
  */
 export function halluCodexAccountCopy(language: string): NovaFlowAccountCopy {
   return language.toLowerCase().startsWith('zh') ? {
+    modelSettings: '模型与 API Key',
     devicePage: '安全与设备', walletPage: '钱包与充值', usagePage: '用量记录', wallet: '钱包剩余', walletQuota: '钱包剩余（额度）', numberLocale: 'zh-CN', accountUsage: '账号累计用量', quotaUnavailable: '暂不可用',
     title: 'NovaFlow 账号', signIn: '在浏览器中登录', cancel: '取消登录', signOut: '退出登录', refresh: '刷新账号', signedIn: '已登录', signingIn: '正在登录…',
     signedOut: '尚未登录', waiting: '请在系统浏览器中完成授权…', group: '分组', models: '可用模型', unavailable: '暂不可用',
@@ -120,6 +122,7 @@ export function halluCodexAccountCopy(language: string): NovaFlowAccountCopy {
     autoNoRoute: '顺序中的分组目前都不可用，请求会失败。请换一个分组或重新设置顺序。',
     moveUp: '上移', moveDown: '下移', saveRouting: '保存设置', routingSaved: '已保存分组设置',
   } : {
+    modelSettings: 'Models & API Key',
     devicePage: 'Security & devices', walletPage: 'Wallet & top-up', usagePage: 'Usage', wallet: 'Wallet balance', walletQuota: 'Wallet balance (quota)', numberLocale: 'en-US', accountUsage: 'Account usage', quotaUnavailable: 'Unavailable',
     title: 'NovaFlow account', signIn: 'Sign in using browser', cancel: 'Cancel sign-in', signOut: 'Sign out', refresh: 'Refresh account', signedIn: 'Signed in', signingIn: 'Signing in…',
     signedOut: 'Not signed in', waiting: 'Finish authorization in your browser…', group: 'Group', models: 'Available models',

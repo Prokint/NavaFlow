@@ -19,6 +19,7 @@ vi.mock('electron', () => ({
 const { createAccountOpenRequests, installNovaFlowAccountUi } = await import('../src/preload-hallucodex.ts')
 
 interface ExposedBridge {
+  accessMode: string
   subscribe(listener: (state: unknown) => void): () => void
   onOpen(listener: () => void): () => void
   mount(head: unknown, content: unknown): () => void
@@ -63,6 +64,7 @@ describe('NovaFlow account page bridge', () => {
 
   it('routes the shell open request to the page and renders the page into connected hosts only', async () => {
     const bridge = install()
+    expect(bridge.accessMode).toBe('api-key')
     electron.handlers.get('hallucodex:open')?.({})
     const open = vi.fn()
     bridge.onOpen(open)

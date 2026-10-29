@@ -41,6 +41,8 @@ kind: "package-reference"
 
 ### 填充设置 slot
 
+`SettingsNavigation` 声明 `ctx.settingsNavigation.open(section?)`，由 `ui-settings-general` 的外壳提供；产品插件通过注入它打开设置，并可指定 `models` 等分区。省略分区时保留当前选择。导航共享外壳现有的 store，不持久化偏好设置。
+
 设置界面会注册进本包声明的 slot 类型。外壳（`sidebar.settings` 占位方、导航、界面框架）位于 ui-settings-general；功能页面注册 `settings.section` 贡献；「插件」分区承载 `settings.plugins.tab` 页面；首次使用引导步骤注册 `settings.onboarding`。跨命名空间的表面（schema 内省、已服务命名空间目录、`hasDocument`）通过 `ctx.configForms.describe()` 读同一面镜像。
 
 ### 可观察的成功与失败

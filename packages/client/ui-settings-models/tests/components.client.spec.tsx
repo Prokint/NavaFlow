@@ -635,6 +635,20 @@ describe('ModelsSection', () => {
     expect(screen.getByRole('button', { name: en.add })).toBeTruthy()
   })
 
+  it('guides an empty declared route through model setup without exposing its catalog diagnostic', async () => {
+    const scripted = scriptedFace()
+    scripted.face.llm.listConfigurableProviders.mockResolvedValue(remoteOk([
+      { provider: 'openai', displayName: 'openai', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'openai'], declared: true, error: 'Internal catalog diagnostic' },
+    ]))
+    const namespaces = wireNamespaces().map(view => view.ns === 'llm-pi-ai'
+      ? { ...view, value: { providers: { openai: { apiKeyEnv: 'OPENAI_API_KEY', models: [] } } } }
+      : view)
+    scripted.face.settings.describe.mockResolvedValue(remoteOk({ writable: true, hasDocument: false, namespaces }))
+    await mountFace(scripted)
+    expect(screen.getByRole('alert').textContent).toBe(en.modelsSetup)
+    expect(screen.getByRole('button', { name: openaiCopy(en.editProvider) })).toBeTruthy()
+  })
+
   it('renders nothing before the slot injects its dependencies', () => {
     const uninjected = {} as ModelsSectionProps
     render(<ModelsSection {...uninjected} />)

@@ -156,6 +156,8 @@ async function main(): Promise<void> {
   const { ctx } = await application
   if (nativeConfiguration) {
     installNovaFlowIdentity(ctx)
+  }
+  if (nativeConfiguration && nativeConfiguration.accessMode !== 'api-key') {
     const updateProvider = installNovaFlowProvider(ctx, nativeConfiguration, saveCapacity)
     const modelSelection = ctx.get('agentDefaultModel')
     const alignDefaultModel = async (configuration: NovaFlowHostConfiguration) => {

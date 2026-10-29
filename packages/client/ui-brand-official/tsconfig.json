@@ -30,6 +30,9 @@
       "path": "../ui-sidebar"
     },
     {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
       "path": "../ui-slots"
     }
   ]

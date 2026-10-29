@@ -4,6 +4,7 @@ import { SafeStorageRefreshStore } from './hallucodex/secure-storage.ts'
 import { startNovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
 import type { NovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
 import { halluCodexAccountCopy } from './hallucodex/locale.ts'
+import { NOVAFLOW_ACCESS_MODE } from './hallucodex/server-default.ts'
 import { ServerOriginSetting } from './hallucodex/server-origin.ts'
 import { ModelCapacitySettings, type ModelCapacityOverride } from './hallucodex/model-capacity.ts'
 import { desktopDeviceName } from './hallucodex/device-name.ts'
@@ -507,7 +508,7 @@ async function main(): Promise<void> {
     const snapshot = hallucodex.getSnapshot()
     const own = modelCapacity.get(snapshot.serverOrigin)
     const models = snapshot.catalogStatus === 'ready' ? snapshot.catalog?.models ?? [] : []
-    return { type: 'hallucodex-config', baseURL: hallucodexRelay.baseURL,
+    return { type: 'hallucodex-config', accessMode: NOVAFLOW_ACCESS_MODE, baseURL: hallucodexRelay.baseURL,
       localCapability: hallucodexRelay.localCapability, revision: hallucodex.getRelayRevision(),
       models: models.map((model) => {
         const capacity = own.get(model.id)
@@ -554,7 +555,8 @@ async function main(): Promise<void> {
   })
   const hallucodexRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: hallucodex,
     maxRequestBytes: 20 * 1024 * 1024, maxConcurrentRequests: 16, requestTimeoutMs: 30_000 })
-  await hallucodex.restore()
+  // Standard API-key mode uses the Host credential store and does not restore desktop OAuth credentials.
+  if (String(NOVAFLOW_ACCESS_MODE) !== 'api-key') await hallucodex.restore()
   const closeNovaFlow = async (): Promise<void> => {
     await hallucodexRelay.close()
     await hallucodex.dispose()
@@ -981,7 +983,7 @@ async function main(): Promise<void> {
       : { label: currentDesktopLocale().messages.aboutMenu,
         click: () => { void showAbout().catch((error: unknown) => { console.error(error) }) } },
     { type: 'separator' },
-    { label: halluCodexAccountCopy(currentDesktopLocale().id).title, click: () => {
+    { label: halluCodexAccountCopy(currentDesktopLocale().id).modelSettings, click: () => {
       mainWindow?.webContents.send('hallucodex:open')
       mainWindow?.show()
     } },
@@ -1178,8 +1180,9 @@ async function main(): Promise<void> {
   const openInitialWindow = async (): Promise<void> => {
     if (quitting || recovery.active) return
     await enterWorkspace()
-    // The preload keeps this request until the client's account page listens, then shows that page.
-    if (hallucodex.getSnapshot().account.status !== 'signed-in') mainWindow?.webContents.send('hallucodex:open')
+    // The preload keeps the request until model settings are ready on first use.
+    const credentials = await settingsBackend?.read()
+    if (credentials?.hasApiKey === false) mainWindow?.webContents.send('hallucodex:open')
   }
   focusPrimaryWindow = () => {
     if (quitting) return

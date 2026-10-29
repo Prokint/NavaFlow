@@ -815,7 +815,7 @@ it('accepts the complete server group limit without rejecting a legitimate large
 describe('server selection and device naming', () => {
   it('normalizes a site address to its origin and refuses paths, credentials and other schemes', async () => {
     const { normalizeServerOrigin } = await import('../src/hallucodex/server-origin.ts')
-    expect(normalizeServerOrigin(' https://API.NovaFlow.com/ ')).toBe('https://api.hallucodex.com')
+    expect(normalizeServerOrigin(' https://API.LANJIAOTRADE.COM/ ')).toBe('https://api.lanjiaotrade.com')
     expect(normalizeServerOrigin('http://192.168.1.20:3000')).toBe('http://192.168.1.20:3000')
     for (const value of ['http://sgm1.example:60003/v1', 'https://user:pass@example.com', 'ftp://example.com', 'https://example.com/?a=1', 'https://example.com/#x', 'example.com', 7]) {
       expect(() => normalizeServerOrigin(value)).toThrow('invalid server address')

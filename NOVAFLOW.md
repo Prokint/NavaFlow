@@ -40,7 +40,11 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk pnpm run build
 
 ## 自有中转站
 
-当前仍沿用原服务设置，没有接入自有中转站。桌面账号模式要求服务器支持 `/api/desktop/v1` 授权、分组、模型目录和余额接口。普通兼容模型 API 的 Base URL 与 API Key 需要恢复或新增自定义提供方入口；不能仅修改默认域名。后续应先确定中转站接口与登录方式，再验证流式响应、工具调用、取消和上下文容量。
+默认中转地址为 `https://api.lanjiaotrade.com/v1`，客户端通过标准 API Key 接入。在应用菜单“模型与 API Key”或“设置 → 模型”中编辑 `NovaFlow API`，填写专用模型 Key，展开“自定义设置”，获取并选择模型后保存。默认不猜测服务器上的模型；模型目录为空时需要先发现或手动添加，再在对话选择器选择模型。管理员登录密码不能用作模型 Key。
+
+Key 通过 Host 的凭据服务保存，配置仅引用 `NOVAFLOW_API_KEY`，不会写入 YAML 或源码。提供方编辑器支持修改 Base URL、模型和协议；OpenAI Chat/Responses 使用含 `/v1` 的地址，Anthropic Messages 使用站点根地址。新部署不恢复原桌面 OAuth，也不请求 `/api/desktop/v1` 接口。DeepSeek 账号和遥测服务继续关闭，系统中的现有 DSH 应用及 `dsh` 命令不变。
+
+中转站必须配置可用上游渠道才能返回模型并处理请求。没有渠道或专用 Key 时只能验证客户端配置和模拟协议，无法完成真实模型对话测试。
 
 ## Git 与发布
 

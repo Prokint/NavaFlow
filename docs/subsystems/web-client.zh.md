@@ -55,6 +55,8 @@ Connection 拥有请求 URL 解析、request correlation、`/api` carrier、trus
 
 ## Conversation 与 presentation
 
+设置底座声明 `SettingsNavigation`，设置外壳在共享视图 store 上提供 `ctx.settingsNavigation.open(section?)`。产品插件注入该服务即可打开设置及可选分区，无需导入外壳实现。分区选择属于本地视图状态。
+
 Web 和桌面端共享[代码工作工具偏好](../../packages/client/ui-settings/README.zh.md#use-this-package)。它控制诊断 View、[可用的预设选项](../../packages/client/ui-agent-preset/README.zh.md)、改动文件卡片和内置 HTML 预览策略，不改变 Session 记录。
 
 `ui-session` 安装 Session scope adapter，并在 [remote-access](../../packages/api/remote-access/README.zh.md) Client 服务之上提供 `useSessions`、`useSessionStatus`、`useSessionRetainInfo`、`useSessionAccess`、`useSession`、`sessionId`、`useProjection` 和会话作用域的 `useAccess`。`SessionProvider` 可以继承外围 binding，也可以绑定显式 `SessionReference`，因此并存子树可以指向不同 Session。领域 adapter 可以继续添加标准 source，但不会把 React hook 放进 model object。

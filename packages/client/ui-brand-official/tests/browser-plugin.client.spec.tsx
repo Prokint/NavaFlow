@@ -80,6 +80,22 @@ describe('NovaFlow browser-brand plugin', () => {
     expect(inject).toEqual(['slots', 'locale', 'layout'])
   })
 
+  it('opens model settings for API-key shells without mounting desktop authorization', async () => {
+    const account = bridge()
+    vi.stubGlobal('dshNovaFlow', { ...account.value, accessMode: 'api-key' })
+    const desktop = await bench()
+    const open = vi.fn()
+    desktop.ctx.provide('settingsNavigation', { open })
+    const fiber = desktop.ctx.plugin({ inject: [...inject], apply })
+    await fiber.await()
+    account.requestOpen()
+    expect(open).toHaveBeenCalledWith('models')
+    expect(desktop.slots.entries(ACCOUNT_HOLE)).toHaveLength(0)
+    expect(desktop.slots.entries(PAGE_HOLE)).toHaveLength(0)
+    await fiber.dispose()
+    expect(account.stopOpening).toHaveBeenCalledOnce()
+  })
+
   it('fills every brand declaration before or after apply in every build profile and removes them on teardown', async () => {
     const before = await bench()
     const fiber = before.ctx.plugin({ inject: [...inject], apply })

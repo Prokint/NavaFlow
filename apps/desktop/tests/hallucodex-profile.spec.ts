@@ -19,7 +19,7 @@ const DEEPSEEK_SERVICES = [
   '@deepseek-ai/dsh-deepseek-llm-api-extensions', '@deepseek-ai/dsh-plugin-package-inventory-deepseek',
   '@deepseek-ai/dsh-web-search-deepseek', '@deepseek-ai/dsh-web-deepseek-api', '@deepseek-ai/dsh-client-ui-settings-web-search',
   '@deepseek-ai/dsh-client-ui-deepseek-model-label-1017',
-  '@deepseek-ai/dsh-client-ui-settings-account', '@deepseek-ai/dsh-client-ui-settings-models',
+  '@deepseek-ai/dsh-client-ui-settings-account',
 ]
 
 function flatten(rows: readonly Row[]): Row[] {
@@ -52,6 +52,11 @@ it('mounts no DeepSeek-hosted service, keeps web search off DeepSeek and drops t
     expect(rows.find(row => row.id === 'web-runtime')?.config).toMatchObject({ surfaceContext: false, printUrl: true })
     expect(rows.find(row => row.id === 'harness-dev-context')?.disabled).toBe(true)
     expect(rows.find(row => row.id === 'workspace-controller')?.config).toEqual({ productDirectory: 'NovaFlow' })
+    expect(rows.find(row => row.id === 'llm-pi-ai')).toMatchObject({ disabled: false, config: {
+      providers: { novaflow: { baseURL: 'https://api.lanjiaotrade.com/v1', api: 'openai-completions', apiKeyEnv: 'NOVAFLOW_API_KEY', models: [] } },
+    } })
+    expect(rows.find(row => row.id === 'ui-settings-models')).toMatchObject({ disabled: false, config: { credentialOnboarding: false } })
+    expect(rows.find(row => row.id === 'agent-default-model')?.config).toEqual({ provider: 'novaflow', model: 'select-a-model' })
   } finally {
     rmSync(home, { recursive: true, force: true })
   }

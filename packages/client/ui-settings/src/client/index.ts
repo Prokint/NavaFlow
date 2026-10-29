@@ -19,6 +19,7 @@ export type {
 export type { ConfigForms } from './config-form.ts'
 export type { ConfigForm, ConfigFormSnapshot } from './config-form-types.ts'
 export type { SettingsSchemaService } from './schema.ts'
+export type { SettingsNavigation } from './navigation.ts'
 export type { SchemaNode } from './schema.ts'
 export type {
   SettingsDescribeFace, SettingsDescribeView, SettingsMirrorSnapshot,

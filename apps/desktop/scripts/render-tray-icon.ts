@@ -1,5 +1,5 @@
 /**
- * Render the Windows and Linux tray icons from `resources/icon-windows.svg`, with its logo disk enlarged to the bitmap edge.
+ * Render the Windows and Linux tray icons from `resources/icon-windows.svg`, with its rounded logo tile enlarged to the bitmap edge.
  *
  * The Windows tray shows the icon at 16 logical pixels, so Windows picks one of the
  * bundled bitmaps by display scale. Each size is rendered from the SVG source
@@ -106,7 +106,7 @@ export async function renderTrayIconEntries(svg: Buffer, sizes: readonly number[
   const source = svg.toString('utf8')
   const glyph = '<g id="tray-glyph"'
   if (!source.includes(glyph)) throw new Error('tray icon: SVG requires a tray-glyph group')
-  // Scale the 960-unit logo disk around the canvas center to 1020 units, nearly the full 1024-unit edge.
+  // Scale the 960-unit rounded logo tile around the canvas center to 1020 units, nearly the full 1024-unit edge.
   const tray = Buffer.from(source.replace(glyph, `${glyph} transform="translate(512 512) scale(1.0625) translate(-512 -512)"`))
   return Promise.all(sizes.map(async size => ({
     size,

@@ -1,6 +1,6 @@
 # NovaFlow
 
-NovaFlow is a desktop agent project maintained for ecommerce customization. This repository is named NavaFlow and is based on HalluCodex 0.1.10 and DeepSeek Harness. Existing artwork, licenses, and compatible data directories are retained.
+NovaFlow is a desktop agent project maintained for ecommerce customization. This repository is named NavaFlow and is based on HalluCodex 0.1.10 and DeepSeek Harness. Licenses and compatible data directories are retained; the product uses the selected NovaFlow logo.
 
 Start with the [NovaFlow maintenance guide](NOVAFLOW.md). Model access still uses the existing service configuration; a custom relay is not connected yet. The npm command below runs the upstream CLI; use the source instructions for this repository.
 

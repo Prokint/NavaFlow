@@ -8,7 +8,7 @@ import { HALLUCODEX_MARK_IMAGE } from './mark-image.ts'
 /**
  * Render the NovaFlow mark at the edge length requested by its host surface.
  * @param props - Host-supplied size and, in the hero, its geometry class.
- * @returns the decorative logo disk, inset one unit on a 24-unit square; the adjacent name carries the accessible label.
+ * @returns the decorative logo tile, inset one unit on a 24-unit square; the adjacent name carries the accessible label.
  */
 export function NovaFlowMark({ size, className }: SidebarBrandMarkOwnerProps & Partial<Pick<HeroBrandMarkOwnerProps, 'className'>>) {
   return (

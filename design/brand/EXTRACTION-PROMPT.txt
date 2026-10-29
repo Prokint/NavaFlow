@@ -1,0 +1,7 @@
+Image editing mode: built-in image_gen, transparent_background=true.
+Selected artwork: novaflow-selected.png
+Output master: novaflow-symbol-transparent.png
+
+Use case: background-extraction.
+Edit target: the attached NovaFlow logo image.
+Extract ONLY the upper black-and-gray interlocking geometric symbol as a high-resolution app-logo master on a genuinely transparent background. Remove the white background and remove the entire "NovaFlow" wordmark below it. Preserve the EXACT original silhouette, relative proportions, three-piece geometry, rounded corners, positions, central cutouts and black/dark gray/medium gray colors of the upper symbol. This is an extraction, not a redesign: do not invent, simplify, restyle, add strokes or change the shape. The gaps and negative spaces must also be transparent. No white fringe, no checkerboard painted into the image, no white backplate, no text, no shadow, no outline. Center the extracted symbol on a square transparent canvas with modest equal safety margins, occupying roughly 82% of the canvas. Crisp clean edges.

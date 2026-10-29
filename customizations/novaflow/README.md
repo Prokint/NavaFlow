@@ -13,3 +13,9 @@ python3 customizations/novaflow/rebrand-installed.py \
 Requires macOS, Python 3, and Node.js. The output directory must not exist. The tool copies the application, replaces display branding, preserves images, protocol identifiers, and data directories, updates ASAR integrity records, and disables the original update source. It does not modify the input application or read local accounts or sessions.
 
 The output application and its helpers still require local signing with `codesign`. Distribution separately requires signing, notarization, and installed-application verification. Do not commit the output application or its `changes.json` build report to this source repository.
+
+## Current logo assets
+
+The selected black-and-gray mark is stored at `design/brand/novaflow-symbol-transparent.png`, alongside the selected reference and extraction prompt. Run `node customizations/novaflow/prepare-logo.mjs` to generate desktop icons, the sidebar mark, favicon, and installer artwork; then run the Linux and tray render commands in the desktop guide. A white rounded backplate keeps the same artwork legible in light and dark themes.
+
+`apply-logo.py` updates prepared assets in a stopped local macOS app using `--app`, `--icns`, and a new `--backup` directory. It preserves the original package, updates the embedded mark and integrity records, and requires re-signing before launch. Source builds let electron-builder generate platform icons directly from the new PNGs.

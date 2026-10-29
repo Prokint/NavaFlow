@@ -1,5 +1,5 @@
 /**
- * Render the Linux application icon set from `resources/icon-windows.svg`, the same logo disk as Windows.
+ * Render the Linux application icon set from `resources/icon-windows.svg`, the same rounded logo tile as Windows.
  *
  * Desktop environments resolve the desktop entry's `Icon=hallucodex` through
  * the hicolor theme, which searches only the sizes its index lists; a single

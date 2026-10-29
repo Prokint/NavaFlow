@@ -1,10 +1,10 @@
 # NovaFlow 开发与维护
 
-本仓库名为 **NavaFlow**，产品界面使用 **NovaFlow**。代码基于 [HalluCodex](https://github.com/AkumaRealLabs/hallucodex-desktop) 的 `hallucodex-v0.1.10` 标签；其上游是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。原 Git 历史、MIT 许可证、第三方声明和 logo 均保留。
+本仓库名为 **NavaFlow**，产品界面使用 **NovaFlow**。代码基于 [HalluCodex](https://github.com/AkumaRealLabs/hallucodex-desktop) 的 `hallucodex-v0.1.10` 标签；其上游是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。原 Git 历史、MIT 许可证和第三方声明均保留；Logo 使用已选定的黑灰交扣图形。
 
 ## 当前定制
 
-应用名称、原生菜单、账号页、首页、提示文案和打包程序名已改为 NovaFlow。技术包名、协议标识和数据目录继续兼容 HalluCodex：`~/.hallucodex` 与 Electron 的 `hallucodex` 用户数据目录。原 DeepSeek Harness 的 `~/.dsh` 和系统中的 `dsh` 命令不需要修改。NovaFlow 与原 HalluCodex 共用数据，切换时先退出另一份应用。
+应用名称、原生菜单、账号页、首页、提示文案和打包程序名已改为 NovaFlow。桌面、侧栏、首页、浏览器与安装器图标从 `design/brand/novaflow-symbol-transparent.png` 生成；可运行 `node customizations/novaflow/prepare-logo.mjs` 后重新执行桌面文档中的 Linux 和托盘渲染命令。技术包名、协议标识和数据目录继续兼容 HalluCodex：`~/.hallucodex` 与 Electron 的 `hallucodex` 用户数据目录。原 DeepSeek Harness 的 `~/.dsh` 和系统中的 `dsh` 命令不需要修改。NovaFlow 与原 HalluCodex 共用数据，切换时先退出另一份应用。
 
 源码的更新检查和打包更新配置指向 `Prokint/NavaFlow`，不再读取原 HalluCodex 更新源。私有仓库没有匿名可读的 Release 时不会提供更新。继承的发行标签前缀及文件名仍为 `hallucodex-v*`、`hallucodex-*`，正式发版前需统一调整发布工作流、安装器元数据及更新解析器。
 

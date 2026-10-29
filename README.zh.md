@@ -1,6 +1,6 @@
 # NovaFlow
 
-NovaFlow 是面向电商智能体二次开发维护的桌面项目。本仓库名为 NavaFlow，基于 HalluCodex 0.1.10 与 DeepSeek Harness，保留原 logo、许可证及兼容的数据目录。
+NovaFlow 是面向电商智能体二次开发维护的桌面项目。本仓库名为 NavaFlow，基于 HalluCodex 0.1.10 与 DeepSeek Harness，保留许可证及兼容的数据目录，使用选定的 NovaFlow Logo。
 
 开发与维护请先阅读 [NovaFlow 维护说明](NOVAFLOW.md)。当前模型服务仍沿用原配置，自有中转站尚未接入。下方 npm 命令运行上游 CLI；运行本仓库的 NovaFlow 请使用源码方式。
 

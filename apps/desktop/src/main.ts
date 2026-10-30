@@ -555,8 +555,7 @@ async function main(): Promise<void> {
   })
   const hallucodexRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: hallucodex,
     maxRequestBytes: 20 * 1024 * 1024, maxConcurrentRequests: 16, requestTimeoutMs: 30_000 })
-  // Standard API-key mode uses the Host credential store and does not restore desktop OAuth credentials.
-  if (String(NOVAFLOW_ACCESS_MODE) !== 'api-key') await hallucodex.restore()
+  // The account page restores desktop OAuth when opened; API-key startup uses the Host credential store.
   const closeNovaFlow = async (): Promise<void> => {
     await hallucodexRelay.close()
     await hallucodex.dispose()
@@ -983,8 +982,12 @@ async function main(): Promise<void> {
       : { label: currentDesktopLocale().messages.aboutMenu,
         click: () => { void showAbout().catch((error: unknown) => { console.error(error) }) } },
     { type: 'separator' },
-    { label: halluCodexAccountCopy(currentDesktopLocale().id).modelSettings, click: () => {
+    { label: halluCodexAccountCopy(currentDesktopLocale().id).title, click: () => {
       mainWindow?.webContents.send('hallucodex:open')
+      mainWindow?.show()
+    } },
+    { label: halluCodexAccountCopy(currentDesktopLocale().id).modelSettings, click: () => {
+      mainWindow?.webContents.send('novaflow:open-models')
       mainWindow?.show()
     } },
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdates(true) } },
@@ -1182,7 +1185,7 @@ async function main(): Promise<void> {
     await enterWorkspace()
     // The preload keeps the request until model settings are ready on first use.
     const credentials = await settingsBackend?.read()
-    if (credentials?.hasApiKey === false) mainWindow?.webContents.send('hallucodex:open')
+    if (credentials?.hasApiKey === false) mainWindow?.webContents.send('novaflow:open-models')
   }
   focusPrimaryWindow = () => {
     if (quitting) return

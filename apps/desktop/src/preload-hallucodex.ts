@@ -78,6 +78,16 @@ export function installNovaFlowAccountUi(): void {
       return () => { ipcRenderer.off('hallucodex:changed', handler) }
     },
   }
+  let restored: Promise<void> | undefined
+  const pageOperations: NovaFlowAccountUiOperations = {
+    ...operations,
+    async state() {
+      // Opening the account page restores its session; API-key use does not read account credentials.
+      restored ??= operations.restore().then(() => {}, (error: unknown) => { restored = undefined; throw error })
+      await restored
+      return operations.state()
+    },
+  }
   let ui: NovaFlowAccountPage | undefined
   let chinese: boolean | undefined
   let hosts: { head: HTMLElement; content: HTMLElement } | undefined
@@ -88,7 +98,7 @@ export function installNovaFlowAccountUi(): void {
     if (ui === undefined || wantsChinese !== chinese) {
       ui?.dispose()
       chinese = wantsChinese
-      ui = createNovaFlowAccountUi(document, operations, halluCodexAccountCopy(current))
+      ui = createNovaFlowAccountUi(document, pageOperations, halluCodexAccountCopy(current))
     }
     if (hosts === undefined) return
     void ui.mount(hosts.head, hosts.content).catch((_mountError: unknown) => { /* A disposed page renders nothing. */ })
@@ -96,7 +106,10 @@ export function installNovaFlowAccountUi(): void {
   const language = new MutationObserver(() => { render() })
   const opens = createAccountOpenRequests()
   const open = (): void => { opens.request() }
+  const modelOpens = createAccountOpenRequests()
+  const openModels = (): void => { modelOpens.request() }
   ipcRenderer.on('hallucodex:open', open)
+  ipcRenderer.on('novaflow:open-models', openModels)
   contextBridge.exposeInMainWorld('dshNovaFlow', {
     accessMode: NOVAFLOW_ACCESS_MODE,
     subscribe(listener: (state: NovaFlowSidebarAccount) => void): () => void {
@@ -110,6 +123,7 @@ export function installNovaFlowAccountUi(): void {
       return () => { active = false; unsubscribe() }
     },
     onOpen: (listener: () => void): (() => void) => opens.listen(listener),
+    onOpenModels: (listener: () => void): (() => void) => modelOpens.listen(listener),
     mount(head: unknown, content: unknown): () => void {
       if (!(head instanceof HTMLElement) || !(content instanceof HTMLElement) || !head.isConnected || !content.isConnected) {
         throw new TypeError('hallucodex: the account page needs connected head and content hosts')
@@ -126,5 +140,9 @@ export function installNovaFlowAccountUi(): void {
       }
     },
   })
-  window.addEventListener('unload', () => { ipcRenderer.off('hallucodex:open', open); language.disconnect(); ui?.dispose() }, { once: true })
+  window.addEventListener('unload', () => {
+    ipcRenderer.off('hallucodex:open', open)
+    ipcRenderer.off('novaflow:open-models', openModels)
+    language.disconnect(); ui?.dispose()
+  }, { once: true })
 }

@@ -35,9 +35,15 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark' }, NovaFlowMark))
   const bridge = readDesktopAccountBridge(globalThis)
   if (bridge === undefined) return
-  if (bridge.accessMode === 'api-key') {
+  if (bridge.onOpenModels !== undefined) {
+    const onOpenModels = bridge.onOpenModels
     ctx.inject(['settingsNavigation'], (settings) => {
-      settings.effect(() => bridge.onOpen(() => { settings.settingsNavigation.open('models') }), 'novaflow: model settings')
+      settings.effect(() => onOpenModels(() => { settings.settingsNavigation.open('models') }), 'novaflow: model settings')
+    })
+  }
+  if (bridge.accessMode === 'api-key') {
+    if (bridge.onOpenModels === undefined) ctx.inject(['settingsNavigation'], (settings) => {
+      settings.effect(() => bridge.onOpen(() => { settings.settingsNavigation.open('models') }), 'novaflow: legacy model settings')
     })
     return
   }

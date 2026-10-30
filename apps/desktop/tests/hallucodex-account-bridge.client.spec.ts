@@ -22,6 +22,7 @@ interface ExposedBridge {
   accessMode: string
   subscribe(listener: (state: unknown) => void): () => void
   onOpen(listener: () => void): () => void
+  onOpenModels(listener: () => void): () => void
   mount(head: unknown, content: unknown): () => void
 }
 
@@ -64,12 +65,13 @@ describe('NovaFlow account page bridge', () => {
 
   it('routes the shell open request to the page and renders the page into connected hosts only', async () => {
     const bridge = install()
-    expect(bridge.accessMode).toBe('api-key')
+    expect(bridge.accessMode).toBe('hybrid')
     electron.handlers.get('hallucodex:open')?.({})
     const open = vi.fn()
     bridge.onOpen(open)
     await Promise.resolve()
     expect(open).toHaveBeenCalledOnce()
+    expect(electron.invoke).not.toHaveBeenCalledWith('hallucodex:restore')
     const head = document.createElement('div')
     const content = document.createElement('div')
     expect(() => bridge.mount(head, content)).toThrow(TypeError)
@@ -77,10 +79,26 @@ describe('NovaFlow account page bridge', () => {
     document.body.append(head, content)
     const unmount = bridge.mount(head, content)
     await vi.waitFor(() => { expect(head.querySelector('.hcx-chip')?.textContent).toBe('Not signed in') })
+    expect(electron.invoke).toHaveBeenCalledWith('hallucodex:restore')
     expect(content.querySelector('.hcx-signin')).not.toBeNull()
     unmount()
     expect(head.childElementCount).toBe(0)
     expect(content.childElementCount).toBe(0)
+  })
+
+  it('keeps model settings requests separate from account requests', async () => {
+    const bridge = install()
+    const account = vi.fn()
+    const models = vi.fn()
+    bridge.onOpen(account)
+    electron.handlers.get('novaflow:open-models')?.({})
+    bridge.onOpenModels(models)
+    await Promise.resolve()
+    expect(models).toHaveBeenCalledOnce()
+    expect(account).not.toHaveBeenCalled()
+    electron.handlers.get('hallucodex:open')?.({})
+    expect(account).toHaveBeenCalledOnce()
+    expect(models).toHaveBeenCalledOnce()
   })
 
   it('re-creates the mounted page when the client language changes', async () => {

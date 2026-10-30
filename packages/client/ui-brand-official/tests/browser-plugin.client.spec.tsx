@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { Context } from '@deepseek-ai/cordis'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { apply, inject } from '../src/client/index.ts'
@@ -94,6 +94,28 @@ describe('NovaFlow browser-brand plugin', () => {
     expect(desktop.slots.entries(PAGE_HOLE)).toHaveLength(0)
     await fiber.dispose()
     expect(account.stopOpening).toHaveBeenCalledOnce()
+  })
+
+  it('keeps account login and API-key settings independent in hybrid shells', async () => {
+    const account = bridge()
+    const models = bridge()
+    vi.stubGlobal('dshNovaFlow', { ...account.value, accessMode: 'hybrid', onOpenModels: models.value.onOpen })
+    const desktop = await bench()
+    onTestFinished(() => desktop.ctx.fiber.dispose())
+    const open = vi.fn()
+    desktop.ctx.provide('settingsNavigation', { open })
+    const fiber = desktop.ctx.plugin({ inject: [...inject], apply })
+    await fiber.await()
+    expect(desktop.slots.entries(ACCOUNT_HOLE)).toHaveLength(1)
+    expect(desktop.slots.entries(PAGE_HOLE).map(entry => entry.options.key)).toEqual([ACCOUNT_PANEL_ID])
+    account.requestOpen()
+    expect(desktop.layout.selectPanel).toHaveBeenCalledWith(ACCOUNT_PANEL_ID)
+    expect(open).not.toHaveBeenCalled()
+    models.requestOpen()
+    expect(open).toHaveBeenCalledWith('models')
+    await fiber.dispose()
+    expect(account.stopOpening).toHaveBeenCalledOnce()
+    expect(models.stopOpening).toHaveBeenCalledOnce()
   })
 
   it('fills every brand declaration before or after apply in every build profile and removes them on teardown', async () => {

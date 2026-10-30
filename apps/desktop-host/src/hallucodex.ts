@@ -55,7 +55,7 @@ export type NovaFlowCapacitySaver = (model: string, contextWindow: number | null
 /** Main-to-Host private message. localCapability grants only access to this process's limited loopback relay. */
 export interface NovaFlowHostConfiguration {
   readonly type: 'hallucodex-config'
-  readonly accessMode?: 'api-key' | 'desktop-account'
+  readonly accessMode?: 'api-key' | 'desktop-account' | 'hybrid'
   readonly baseURL: string
   readonly localCapability: string
   readonly revision: number
@@ -98,7 +98,7 @@ export function parseNovaFlowHostConfiguration(value: unknown): NovaFlowHostConf
     throw new Error('hallucodex Host: invalid native configuration')
   }
   const accessMode: unknown = Reflect.get(value, 'accessMode')
-  if (accessMode !== undefined && accessMode !== 'api-key' && accessMode !== 'desktop-account') {
+  if (accessMode !== undefined && accessMode !== 'api-key' && accessMode !== 'desktop-account' && accessMode !== 'hybrid') {
     throw new Error('hallucodex Host: invalid access mode')
   }
   const url = new URL(value.baseURL)
@@ -376,15 +376,16 @@ function describeCapacity(model: NovaFlowHostModel): ModelCapacity {
 }
 
 /**
- * Correct a saved default model selection for a configuration. A selection outside NovaFlow becomes the unselected
- * placeholder, and a selection of a model the configuration lists on another route moves to that route without its
+ * Correct a saved default model selection for a configuration. Account-only deployments replace outside routes with
+ * an unselected placeholder; hybrid deployments retain API-key routes. A listed model moves to its native route without its
  * reasoning effort, whose levels belong to the route.
  * @param configuration - applied native configuration.
  * @param saved - current default selection.
  * @returns the selection to save, or undefined when the saved one stands.
  */
 export function halluCodexDefaultSelection(configuration: NovaFlowHostConfiguration, saved: ModelSelection): ModelSelection | undefined {
-  if (!routes.some(route => route.id === saved.provider)) return { provider: 'hallucodex-responses', model: 'select-a-model' }
+  if (!routes.some(route => route.id === saved.provider)) return configuration.accessMode === 'hybrid'
+    ? undefined : { provider: 'hallucodex-responses', model: 'select-a-model' }
   const model = configuration.models.find(entry => entry.id === saved.model)
   const route = model === undefined || resolveCapacity(model, true) === undefined ? undefined : modelRoute(model)
   return route === undefined || route.id === saved.provider ? undefined : { provider: route.id, model: saved.model }

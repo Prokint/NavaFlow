@@ -40,11 +40,13 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk pnpm run build
 
 ## 自有中转站
 
-默认中转地址为 `https://api.lanjiaotrade.com/v1`，客户端通过标准 API Key 接入。在应用菜单“模型与 API Key”或“设置 → 模型”中编辑 `NovaFlow API`，填写专用模型 Key，展开“自定义设置”，获取并选择模型后保存。默认不猜测服务器上的模型；模型目录为空时需要先发现或手动添加，再在对话选择器选择模型。管理员登录密码不能用作模型 Key。
+默认服务为 `https://api.lanjiaotrade.com`。点击“登录 NovaFlow → 登录并使用模型”，在隔离的登录窗口完成站点原有的账号验证后，应用自动加载该账号当前分组可用的模型；尚未选过模型时自动选择第一个可用模型。账号模式复用站点的登录会话和 `/pg/chat/completions`，无需创建、复制或填写 API Key。当前账号模式支持 Chat Completions 的流式对话和工具调用。
 
-Key 通过 Host 的凭据服务保存，配置仅引用 `NOVAFLOW_API_KEY`，不会写入 YAML 或源码。提供方编辑器支持修改 Base URL、模型和协议；OpenAI Chat/Responses 使用含 `/v1` 的地址，Anthropic Messages 使用站点根地址。桌面账号登录与 API Key 模式并存，侧边栏保留“登录 NovaFlow”，应用菜单分别提供账号页和模型设置入口。打开账号页时才恢复原桌面会话；该登录流程要求服务端支持 `/api/desktop/v1` 授权接口，普通 New API 的管理后台登录不能替代它。DeepSeek 账号和遥测服务继续关闭，系统中的现有 DSH 应用及 `dsh` 命令不变。
+登录窗口直接使用站点的登录页面，保留站点自己的密码加密和多因素验证流程。主进程仅接收第一方 HttpOnly 刷新 Cookie，使用系统加密存储保存在独立的 `new-api-account` 目录；不保存密码、短期访问 Token 或管理 API Key。重启时自动恢复会话，退出登录时撤销本次站点会话。旧桌面授权目录保持独立，旧协议实现仍保留在源码中。模型目录和账户余额只向应用界面公开必要信息，模型请求通过受限的本地代理进入站点。
 
-中转站必须配置可用上游渠道才能返回模型并处理请求。没有渠道或专用 Key 时只能验证客户端配置和模拟协议，无法完成真实模型对话测试。
+API Key 模式作为备用入口保留。在“模型与 API Key”或“设置 → 模型”中编辑 `NovaFlow API`，地址为 `https://api.lanjiaotrade.com/v1`，填写专用模型 Key 后获取模型并保存。Key 经 Host 凭据服务保存，配置仅引用 `NOVAFLOW_API_KEY`。该入口也支持其他 OpenAI Chat/Responses 或 Anthropic 兼容服务。DeepSeek 账号和遥测继续关闭，现有 DSH 应用与系统 `dsh` 命令不变。
+
+中转站必须有可用上游渠道和账户额度。账号模式只展示站点明确声明支持 Chat Completions 且该账号分组允许的模型；缺少容量元数据时使用可调整的保守默认值（上下文 65536、输出 8192），已知模型优先使用适配器目录中的容量。账号模式不显示不存在的设备独立额度。
 
 ## Git 与发布
 

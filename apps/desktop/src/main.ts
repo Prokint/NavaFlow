@@ -1,5 +1,6 @@
 import { NovaFlowDesktopRuntime, type NovaFlowDesktopSnapshot } from './hallucodex/runtime.ts'
-import { NovaFlowHttpAuthTransport } from './hallucodex/auth-protocol.ts'
+import { NewApiSessionTransport, newApiSessionEndpoint, parseNewApiRefreshRecord, readNewApiCatalog, readNewApiWallet } from './hallucodex/new-api.ts'
+import { openNewApiLoginWindow } from './hallucodex/new-api-login.ts'
 import { SafeStorageRefreshStore } from './hallucodex/secure-storage.ts'
 import { startNovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
 import type { NovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
@@ -508,7 +509,7 @@ async function main(): Promise<void> {
     const snapshot = hallucodex.getSnapshot()
     const own = modelCapacity.get(snapshot.serverOrigin)
     const models = snapshot.catalogStatus === 'ready' ? snapshot.catalog?.models ?? [] : []
-    return { type: 'hallucodex-config', accessMode: NOVAFLOW_ACCESS_MODE, baseURL: hallucodexRelay.baseURL,
+    return { type: 'hallucodex-config', accessMode: NOVAFLOW_ACCESS_MODE, autoSelectModel: snapshot.accountMode === 'site-session', baseURL: hallucodexRelay.baseURL,
       localCapability: hallucodexRelay.localCapability, revision: hallucodex.getRelayRevision(),
       models: models.map((model) => {
         const capacity = own.get(model.id)
@@ -532,10 +533,21 @@ async function main(): Promise<void> {
   }
   // The browser callback finishes sign-in; bring the window back so the user does not have to switch apps.
   let lastAccountStatus: NovaFlowDesktopSnapshot['account']['status'] | undefined
+  const newApi = new NewApiSessionTransport(() => server.get())
   const hallucodex = new NovaFlowDesktopRuntime({
     server,
-    transport: new NovaFlowHttpAuthTransport(() => server.get()),
-    store: new SafeStorageRefreshStore(join(app.getPath('userData'), 'hallucodex-account'), safeStorage, () => server.get()),
+    transport: newApi,
+    store: new SafeStorageRefreshStore(join(app.getPath('userData'), 'new-api-account'), safeStorage, () => server.get(), process.platform, parseNewApiRefreshRecord),
+    accountMode: 'site-session',
+    interactiveSignIn: async (origin, signal) => {
+      const cookie = await openNewApiLoginWindow(origin, signal, { parent: mainWindow,
+        title: halluCodexAccountCopy(currentDesktopLocale().id).title, timeoutMs: 300_000 })
+      return newApi.exchangeBrowserSession(cookie, signal, origin)
+    },
+    readCatalog: (origin, access, signal) => readNewApiCatalog(globalThis.fetch, origin, access, signal,
+      { contextWindow: 65536, maxOutputTokens: 8192 }),
+    readWalletQuota: readNewApiWallet,
+    endpointPath: newApiSessionEndpoint,
     fetch: globalThis.fetch, maxRequestBytes: 20 * 1024 * 1024,
     deviceName: desktopDeviceName(hostname(), process.platform, process.arch),
     openExternal: url => shell.openExternal(url),
@@ -555,7 +567,7 @@ async function main(): Promise<void> {
   })
   const hallucodexRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: hallucodex,
     maxRequestBytes: 20 * 1024 * 1024, maxConcurrentRequests: 16, requestTimeoutMs: 30_000 })
-  // The account page restores desktop OAuth when opened; API-key startup uses the Host credential store.
+  await hallucodex.restore()
   const closeNovaFlow = async (): Promise<void> => {
     await hallucodexRelay.close()
     await hallucodex.dispose()
@@ -1185,7 +1197,9 @@ async function main(): Promise<void> {
     await enterWorkspace()
     // The preload keeps the request until model settings are ready on first use.
     const credentials = await settingsBackend?.read()
-    if (credentials?.hasApiKey === false) mainWindow?.webContents.send('novaflow:open-models')
+    if (credentials?.hasApiKey === false && hallucodex.getSnapshot().account.status !== 'signed-in') {
+      mainWindow?.webContents.send('hallucodex:open')
+    }
   }
   focusPrimaryWindow = () => {
     if (quitting) return

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
+import { applyEntryPatches } from '@deepseek-ai/cordis-plugin-include'
+import { loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import LocalAttachments from '@deepseek-ai/dsh-attachment-local'
 import LlmRuntime, { ReasoningEffortId, createUserMessage } from '@deepseek-ai/dsh-llm'
 import {
@@ -12,6 +14,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const disposers: (() => Promise<void>)[] = []
 afterEach(async () => { while (disposers.length) await disposers.pop()?.() })
@@ -26,11 +29,27 @@ function configuration(baseURL = 'http://127.0.0.1:43210') {
 }
 
 describe('native Host configuration', () => {
+  it('lets a saved model override the shipped deployment defaults', () => {
+    const deployment = loadOverlayPatches('test', fileURLToPath(new URL('../src/hallucodex.patch.yml', import.meta.url)))
+    const next = halluCodexDefaultSelection({ ...configuration(), autoSelectModel: true },
+      { provider: 'hallucodex-responses', model: 'select-a-model' })
+    expect(next).toEqual({ provider: 'hallucodex-chat', model: 'fixture-model' })
+    const rows = deployment.filter(row => row.id !== undefined).map(row => ({ id: row.id!, name: 'fixture:plugin' }))
+    rows.push({ id: 'agent-default-model', name: 'fixture:model' })
+    const composed = applyEntryPatches(rows, [{ id: 'agent-default-model', config: next }, ...deployment],
+      (message) => { throw new Error(message) })
+    expect(composed.find(row => row.id === 'agent-default-model')?.config).toEqual(next)
+  })
   it('preserves standard API-key mode and refuses unknown access modes', () => {
     expect(parseNovaFlowHostConfiguration({ ...configuration(), accessMode: 'api-key' }).accessMode).toBe('api-key')
     const hybrid = parseNovaFlowHostConfiguration({ ...configuration(), accessMode: 'hybrid' })
     expect(hybrid.accessMode).toBe('hybrid')
     expect(halluCodexDefaultSelection(hybrid, { provider: 'novaflow', model: 'saved-api-model' })).toBeUndefined()
+    expect(halluCodexDefaultSelection({ ...hybrid, autoSelectModel: true }, { provider: 'novaflow', model: 'select-a-model' }))
+      .toEqual({ provider: 'hallucodex-chat', model: 'fixture-model' })
+    expect(halluCodexDefaultSelection({ ...hybrid, autoSelectModel: true }, { provider: 'novaflow', model: 'saved-api-model' })).toBeUndefined()
+    expect(halluCodexDefaultSelection({ ...hybrid, autoSelectModel: true }, { provider: 'deepseek-official', model: 'deepseek-v4-pro' }))
+      .toEqual({ provider: 'hallucodex-chat', model: 'fixture-model' })
     expect(() => parseNovaFlowHostConfiguration({ ...configuration(), accessMode: 'password' })).toThrow('invalid access mode')
   })
   it.each(['https://api.hallucodex.com', 'http://localhost:43210', 'http://127.0.0.1:43210/v1', 'http://user@127.0.0.1:43210', 'http://127.0.0.1:43210?x=1'])('rejects a non-exact loopback endpoint %s', (baseURL) => {

@@ -602,7 +602,15 @@ export function createNovaFlowAccountUi(
     headActions.hidden = !signedIn
     status.dataset.status = account?.status ?? 'signed-out'
     status.textContent = signedIn ? copy.signedIn : account?.status === 'signing-in' ? copy.signingIn : copy.signedOut
-    signinTitle.textContent = account?.status === 'signing-in' ? copy.waiting : copy.signedOut
+    const siteSession = snapshot?.accountMode === 'site-session'
+    start.textContent = siteSession ? copy.signInSite : copy.signIn
+    signinTitle.textContent = account?.status === 'signing-in' ? siteSession ? copy.waitingSite : copy.waiting : copy.signedOut
+    groupNote.textContent = siteSession ? copy.siteGroupHint : copy.selectGroup
+    for (const value of [deviceValue, limitValue]) {
+      value.hidden = siteSession
+      const label = value.previousElementSibling
+      if (label instanceof HTMLElement) label.hidden = siteSession
+    }
     headServer.textContent = snapshot?.serverOrigin ?? ''
     // The sign-in actions sit in the sign-in panel; a signed-in account whose login expired gets them above the page.
     if (signedIn) notice.append(actions)

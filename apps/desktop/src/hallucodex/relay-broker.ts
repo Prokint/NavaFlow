@@ -26,6 +26,8 @@ export interface RelayBrokerOptions {
   readonly origin: () => string
   readonly fetch: typeof globalThis.fetch
   readonly maxRequestBytes: number
+  /** Native-owned protocol path mapping; renderers and model requests cannot choose a target. */
+  readonly endpointPath?: (endpoint: DesktopEndpoint) => string
 }
 
 /** One relay result and the exact group snapshot admitted before the request began. */
@@ -124,7 +126,7 @@ export class NovaFlowRelayBroker {
     if (endpoint === '/v1/messages') headers['anthropic-version'] = '2023-06-01'
     let response: Response
     try {
-      response = await this.options.fetch(`${this.options.origin()}${endpoint}`, {
+      response = await this.options.fetch(`${this.options.origin()}${this.options.endpointPath?.(endpoint) ?? endpoint}`, {
         method: 'POST', headers, body, signal: signal ?? null, redirect: 'error', credentials: 'omit', cache: 'no-store',
       })
     } catch (_networkError) {

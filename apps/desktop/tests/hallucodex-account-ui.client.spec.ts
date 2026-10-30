@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { createNovaFlowAccountUi, halluCodexAccountCopy } from '../src/hallucodex/account-ui.ts'
 import type { GroupSelection } from '../src/hallucodex/group-policy.ts'
 import type { GroupSelectionResult, NovaFlowDesktopSnapshot } from '../src/hallucodex/runtime.ts'
+import { DEFAULT_HALLUCODEX_ORIGIN } from '../src/hallucodex/server-default.ts'
 
 const serverOrigin = 'https://api.hallucodex.com'
 const signedOut: NovaFlowDesktopSnapshot = { account: { status: 'signed-out' }, serverOrigin, catalogStatus: 'unavailable' }
@@ -142,7 +143,8 @@ describe('native NovaFlow account UI', () => {
     expect(unsubscribe).toHaveBeenCalledOnce()
   })
   it('keeps the server address behind a small link and warns about plain HTTP', async () => {
-    const { ui, page, operations, publish } = fixture()
+    const serverOrigin = DEFAULT_HALLUCODEX_ORIGIN
+    const { ui, page, operations, publish } = fixture({ ...signedOut, serverOrigin })
     await ui.open()
     const form = page.querySelector('form')!
     expect(form.hidden).toBe(true)
@@ -164,6 +166,19 @@ describe('native NovaFlow account UI', () => {
     publish({ ...signedOut, serverOrigin: 'http://localhost:3000' })
     button('Use NovaFlow service').click()
     await vi.waitFor(() => { expect(operations.setServer).toHaveBeenLastCalledWith(serverOrigin) })
+  })
+  it('offers site sign-in without an API key and hides unsupported device meters', async () => {
+    const copy = halluCodexAccountCopy('en')
+    const { ui, page, publish } = fixture({ ...signedOut, accountMode: 'site-session' })
+    await ui.open()
+    expect(button(copy.signInSite)).toBeTruthy()
+    expect(page.querySelector('input[type="password"]')).toBeNull()
+    publish({ ...signedIn, accountMode: 'site-session' })
+    for (const label of [copy.deviceUsage, copy.deviceLimit]) {
+      const term = [...page.querySelectorAll('dt')].find(node => node.textContent === label)!
+      expect(term.hidden).toBe(true)
+      expect((term.nextElementSibling as HTMLElement).hidden).toBe(true)
+    }
   })
   it('switches groups in the page when the server allows it', async () => {
     const groups = [{ name: 'discount', description: '', ratio: 1 }, { name: 'premium', description: 'Fast', ratio: 2 }]

@@ -56,6 +56,8 @@ export type NovaFlowCapacitySaver = (model: string, contextWindow: number | null
 export interface NovaFlowHostConfiguration {
   readonly type: 'hallucodex-config'
   readonly accessMode?: 'api-key' | 'desktop-account' | 'hybrid'
+  /** Select the first available account model only when no model was chosen. */
+  readonly autoSelectModel?: boolean
   readonly baseURL: string
   readonly localCapability: string
   readonly revision: number
@@ -98,6 +100,8 @@ export function parseNovaFlowHostConfiguration(value: unknown): NovaFlowHostConf
     throw new Error('hallucodex Host: invalid native configuration')
   }
   const accessMode: unknown = Reflect.get(value, 'accessMode')
+  const autoSelectModel: unknown = Reflect.get(value, 'autoSelectModel')
+  if (autoSelectModel !== undefined && typeof autoSelectModel !== 'boolean') throw new Error('hallucodex Host: invalid model selection mode')
   if (accessMode !== undefined && accessMode !== 'api-key' && accessMode !== 'desktop-account' && accessMode !== 'hybrid') {
     throw new Error('hallucodex Host: invalid access mode')
   }
@@ -139,7 +143,7 @@ export function parseNovaFlowHostConfiguration(value: unknown): NovaFlowHostConf
     })
   }
   return { type: 'hallucodex-config', baseURL: url.origin, localCapability: value.localCapability, revision: value.revision, models,
-    ...accessMode === undefined ? {} : { accessMode } }
+    ...accessMode === undefined ? {} : { accessMode }, ...autoSelectModel === undefined ? {} : { autoSelectModel } }
 }
 
 /**
@@ -384,6 +388,12 @@ function describeCapacity(model: NovaFlowHostModel): ModelCapacity {
  * @returns the selection to save, or undefined when the saved one stands.
  */
 export function halluCodexDefaultSelection(configuration: NovaFlowHostConfiguration, saved: ModelSelection): ModelSelection | undefined {
+  if (configuration.autoSelectModel === true && (saved.model === 'select-a-model'
+    || (saved.provider !== 'novaflow' && !routes.some(route => route.id === saved.provider)))) {
+    const first = configuration.models.find(model => resolveCapacity(model, true) !== undefined && modelRoute(model) !== undefined)
+    const route = first === undefined ? undefined : modelRoute(first)
+    if (first !== undefined && route !== undefined) return { provider: route.id, model: first.id }
+  }
   if (!routes.some(route => route.id === saved.provider)) return configuration.accessMode === 'hybrid'
     ? undefined : { provider: 'hallucodex-responses', model: 'select-a-model' }
   const model = configuration.models.find(entry => entry.id === saved.model)

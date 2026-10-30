@@ -8,13 +8,15 @@ import { groupSelection, sameGroupSelection, type GroupSelection } from './group
 import type { NovaFlowAccountSnapshot, NovaFlowAuthBrokerOptions } from './auth-broker.ts'
 import { normalizeServerOrigin, type ServerOriginSetting } from './server-origin.ts'
 import { NovaFlowCatalogController } from './catalog-controller.ts'
-import type { DesktopCatalogView } from './catalog-controller.ts'
+import type { CatalogControllerOptions, DesktopCatalogView } from './catalog-controller.ts'
 import { NovaFlowRelayBroker } from './relay-broker.ts'
 import type { DesktopRelayResult } from './relay-broker.ts'
 import type { DesktopEndpoint } from './catalog.ts'
 
 /** Safe native account view; no method returning credentials belongs in renderer IPC. */
 export interface NovaFlowDesktopSnapshot {
+  /** Site sessions share the account's usage; the desktop OAuth protocol also has device meters. */
+  readonly accountMode?: 'site-session'
   readonly account: NovaFlowAccountSnapshot
   readonly serverOrigin: string
   readonly catalogStatus: 'unavailable' | 'loading' | 'ready'
@@ -37,6 +39,10 @@ export interface NovaFlowDesktopOptions extends Omit<NovaFlowAuthBrokerOptions, 
   readonly server: ServerOriginSetting
   readonly fetch: typeof globalThis.fetch
   readonly maxRequestBytes: number
+  readonly accountMode?: 'site-session'
+  readonly readCatalog?: CatalogControllerOptions['readCatalog']
+  readonly readWalletQuota?: typeof readNovaFlowWalletQuota
+  readonly endpointPath?: (endpoint: DesktopEndpoint) => string
   readonly onChange?: (snapshot: NovaFlowDesktopSnapshot) => void
 }
 
@@ -75,8 +81,10 @@ export class NovaFlowDesktopRuntime {
     const origin = () => options.server.get()
     this.account = new NovaFlowAuthBroker({ ...options, origin, onChange: (snapshot) => { this.accountChanged(snapshot) } })
     const access = () => this.account.getRequestCredentials()
-    this.relay = new NovaFlowRelayBroker({ access, origin, fetch: options.fetch, maxRequestBytes: options.maxRequestBytes })
-    this.catalog = new NovaFlowCatalogController({ access, origin, fetch: options.fetch, relay: this.relay })
+    this.relay = new NovaFlowRelayBroker({ access, origin, fetch: options.fetch, maxRequestBytes: options.maxRequestBytes,
+      ...options.endpointPath === undefined ? {} : { endpointPath: options.endpointPath } })
+    this.catalog = new NovaFlowCatalogController({ access, origin, fetch: options.fetch, relay: this.relay,
+      ...options.readCatalog === undefined ? {} : { readCatalog: options.readCatalog } })
   }
 
   /** @returns the account/catalog admission revision for the private Host relay. */
@@ -87,6 +95,7 @@ export class NovaFlowDesktopRuntime {
     const catalog = this.catalog.getSnapshot()
     return structuredClone({
       account: this.account.getSnapshot(), serverOrigin: this.options.server.get(),
+      ...this.options.accountMode === undefined ? {} : { accountMode: this.options.accountMode },
       catalogStatus: this.catalogStatus, walletStatus: this.walletStatus,
       ...(this.catalogError === undefined ? {} : { catalogError: this.catalogError }),
       ...(this.accountRefreshStatus === undefined ? {} : { accountRefreshStatus: this.accountRefreshStatus }),
@@ -283,12 +292,13 @@ export class NovaFlowDesktopRuntime {
     try {
       let access = await this.account.getRequestCredentials()
       let wallet: NovaFlowWalletQuota
-      try { wallet = await readNovaFlowWalletQuota(this.options.fetch, this.options.server.get(), access, signal) }
+      const readWallet = this.options.readWalletQuota ?? readNovaFlowWalletQuota
+      try { wallet = await readWallet(this.options.fetch, this.options.server.get(), access, signal) }
       catch (error) {
         if (!(error instanceof NovaFlowUnauthorizedError) || generation !== this.generation || signal.aborted) throw error
         this.account.expireAccessToken()
         access = await this.account.getRequestCredentials()
-        wallet = await readNovaFlowWalletQuota(this.options.fetch, this.options.server.get(), access, signal)
+        wallet = await readWallet(this.options.fetch, this.options.server.get(), access, signal)
       }
       if (generation === this.generation && !signal.aborted) {
         this.wallet = wallet

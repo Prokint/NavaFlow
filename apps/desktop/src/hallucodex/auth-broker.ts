@@ -33,6 +33,8 @@ export interface NovaFlowAuthBrokerOptions {
    */
   openExternal(url: string): Promise<void>
   deviceName: string
+  /** Optional native site-session sign-in; its credentials never pass through renderer IPC. */
+  interactiveSignIn?(origin: string, signal: AbortSignal): Promise<AccessGrant>
   now?: () => number
   /**
    * Receives only renderer-safe state; observer failures cannot disrupt the account lifecycle.
@@ -112,6 +114,10 @@ export class NovaFlowAuthBroker {
       this.assertCurrent(generation, attempt.expiresAt)
       this.#options.store.assertAvailable()
       const origin = this.#options.origin()
+      if (this.#options.interactiveSignIn !== undefined) {
+        this.track(this.finishInteractiveSignIn(attempt, this.#options.interactiveSignIn, origin, signal))
+        return this.getSnapshot()
+      }
       attempt.callback = await createLoopbackLogin(state, { signal, expiresAt: attempt.expiresAt, now: this.#now, origin })
       this.assertCurrent(generation, attempt.expiresAt)
       const authorization = await this.#options.transport.authorize({
@@ -324,6 +330,29 @@ export class NovaFlowAuthBroker {
         }
       }
     } finally { await this.closeAttempt(attempt) }
+  }
+
+  private async finishInteractiveSignIn(attempt: Attempt, signIn: NonNullable<NovaFlowAuthBrokerOptions['interactiveSignIn']>,
+    origin: string, signal: AbortSignal): Promise<void> {
+    let received: AccessGrant | undefined
+    try {
+      received = await signIn(origin, signal)
+      await this.install(received, attempt.generation, attempt.expiresAt)
+      if (this.#attempt === attempt) this.#attempt = undefined
+    } catch (error) {
+      const rejected = received
+      if (rejected) this.bestEffort(() => this.#options.transport.revoke(rejected.refreshToken))
+      if (attempt.generation === this.#generation) {
+        this.#attempt = undefined
+        this.publish({ status: 'signed-out', errorCode: safeError(error).code })
+        if (received) {
+          try { await this.storage(() => this.#options.store.clear()) }
+          catch (_error) {
+            if (attempt.generation === this.#generation) this.publish({ status: 'signed-out', errorCode: 'storage_error' })
+          }
+        }
+      }
+    }
   }
 
   private async restoreSaved(): Promise<NovaFlowAccountSnapshot> {

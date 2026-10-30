@@ -28,6 +28,8 @@ export interface CatalogControllerOptions {
   readonly origin: () => string
   readonly fetch: typeof globalThis.fetch
   readonly relay: NovaFlowRelayBroker
+  /** Optional account protocol reader; it returns only validated, credential-free metadata. */
+  readonly readCatalog?: (origin: string, access: RelayAccess, signal: AbortSignal) => Promise<DesktopCatalogView>
 }
 
 /** Owns one generation of account-bound discovery; stale and interrupted reads never reopen relay admission. */
@@ -64,40 +66,49 @@ export class NovaFlowCatalogController {
       const access = await this.options.access()
       routingGroup(access.group)
       controller.signal.throwIfAborted()
-      const request: RequestInit = {
-        headers: { authorization: `Bearer ${access.accessToken}`, accept: 'application/json' },
-        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]), redirect: 'error', credentials: 'omit', cache: 'no-store',
-      }
       const origin = this.options.origin()
-      const reads = [
-        readAccountJson(this.options.fetch, `${origin}/api/desktop/v1/groups`, request, MAX_CATALOG_BYTES),
-        readAccountJson(this.options.fetch, `${origin}/api/desktop/v1/models`, request, MAX_CATALOG_BYTES),
-      ]
-      const [groupsJson, modelsJson] = await Promise.all(reads).catch(async (error: unknown) => {
-        controller.abort()
-        await Promise.allSettled(reads)
-        throw error
-      })
-      const { groups, auto } = parseDesktopGroups(groupsJson)
+      const view = this.options.readCatalog === undefined
+        ? await this.readNativeCatalog(origin, access, controller.signal)
+        : await this.options.readCatalog(origin, access, controller.signal)
+      const { group, groups, auto, models } = view
       const allowed = [...groups.map(item => item.name), ...auto === null ? [] : [AUTO_GROUP]]
-      const group = allowedGroup(access.group, allowed)
-      const { routeGroups, models } = parseDesktopModels(modelsJson, group)
+      allowedGroup(group, allowed)
       const current = await this.options.access()
       if (generation !== this.generation || current.deviceSessionId !== access.deviceSessionId || current.group !== group) {
         throw new Error('hallucodex: account changed during discovery')
       }
       controller.signal.throwIfAborted()
-      const view = Object.freeze({ group, groups, auto, routeGroups, models })
       this.options.relay.configure({ deviceSessionId: access.deviceSessionId, group, allowedGroups: allowed, models })
       this.view = view
       return view
     } catch (refreshError) {
       controller.abort()
       if (refreshError instanceof NovaFlowUnauthorizedError || refreshError instanceof NovaFlowAuthError) throw refreshError
-      // The public error excludes bearer-bearing Request and provider diagnostics.
       throw new NovaFlowReadError(accountFailure(refreshError, 'catalog_unavailable'), 'hallucodex: account catalog unavailable')
     } finally {
       if (this.active === controller) this.active = undefined
     }
+  }
+
+  private async readNativeCatalog(origin: string, access: RelayAccess, signal: AbortSignal): Promise<DesktopCatalogView> {
+    const readsController = new AbortController()
+    const request: RequestInit = {
+      headers: { authorization: `Bearer ${access.accessToken}`, accept: 'application/json' },
+      signal: AbortSignal.any([signal, readsController.signal, AbortSignal.timeout(15_000)]), redirect: 'error', credentials: 'omit', cache: 'no-store',
+    }
+    const reads = [
+      readAccountJson(this.options.fetch, `${origin}/api/desktop/v1/groups`, request, MAX_CATALOG_BYTES),
+      readAccountJson(this.options.fetch, `${origin}/api/desktop/v1/models`, request, MAX_CATALOG_BYTES),
+    ]
+    const [groupsJson, modelsJson] = await Promise.all(reads).catch(async (error: unknown) => {
+      readsController.abort()
+      await Promise.allSettled(reads)
+      throw error
+    })
+    const { groups, auto } = parseDesktopGroups(groupsJson)
+    const allowed = [...groups.map(item => item.name), ...auto === null ? [] : [AUTO_GROUP]]
+    const group = allowedGroup(access.group, allowed)
+    const { routeGroups, models } = parseDesktopModels(modelsJson, group)
+    return Object.freeze({ group, groups, auto, routeGroups, models })
   }
 }

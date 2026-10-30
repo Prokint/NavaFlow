@@ -52,19 +52,23 @@ export class SafeStorageRefreshStore implements RefreshStore {
   readonly #encryption: SafeStorageEncryption
   readonly #origin: () => string
   readonly #platform: NodeJS.Platform
+  readonly #parseRecord: (value: unknown, origin: string) => RefreshGrant
 
   /**
    * @param directory - Dedicated account directory under trusted app userData.
    * @param encryption - OS-backed Electron safeStorage.
    * @param origin - Selected server origin; a saved record issued by another origin does not load.
    * @param platform - Native platform deciding the accepted Linux key-store backends.
+   * @param parseRecord - Protocol-owned refresh-only decoder; separate protocols use separate directories.
    */
-  constructor(directory: string, encryption: SafeStorageEncryption, origin: () => string, platform: NodeJS.Platform = process.platform) {
+  constructor(directory: string, encryption: SafeStorageEncryption, origin: () => string, platform: NodeJS.Platform = process.platform,
+    parseRecord: (value: unknown, origin: string) => RefreshGrant = parseRefreshRecord) {
     this.#directory = resolve(directory)
     this.#file = join(this.#directory, 'refresh.enc')
     this.#encryption = encryption
     this.#origin = origin
     this.#platform = platform
+    this.#parseRecord = parseRecord
   }
 
   assertAvailable(): void {
@@ -93,7 +97,7 @@ export class SafeStorageRefreshStore implements RefreshStore {
         this.checkPrivateFile(fstatSync(fd))
         encrypted = readFileSync(fd)
       } finally { closeSync(fd) }
-      return parseRefreshRecord(JSON.parse(this.#encryption.decryptString(encrypted)), this.#origin())
+      return this.#parseRecord(JSON.parse(this.#encryption.decryptString(encrypted)), this.#origin())
     } catch (_error) {
       throw new NovaFlowAuthError('storage_error')
     }
@@ -111,7 +115,7 @@ export class SafeStorageRefreshStore implements RefreshStore {
       this.checkFile()
       // Project explicitly so an AccessGrant passed structurally cannot put its accessToken on disk.
       const origin = this.#origin()
-      const record = parseRefreshRecord({
+      const record = this.#parseRecord({
         version: 1, origin,
         refreshToken: grant.refreshToken, refreshExpiresAt: grant.refreshExpiresAt,
         deviceSessionId: grant.deviceSessionId, group: grant.group,

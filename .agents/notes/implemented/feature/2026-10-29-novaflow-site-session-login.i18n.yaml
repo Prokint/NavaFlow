@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-29-novaflow-site-session-login.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-10-29-novaflow-site-session-login.md
+/agent-note-novaflow-uses-the-site-s-account-session-for-model-access:
+  en: d3947ea731d79c66
+  zh: c6ecd1071b17b51a
+/agent-note-novaflow-uses-the-site-s-account-session-for-model-access/problem:
+  en: 8ddb66120864d58e
+  zh: 6ac6d8978527a7d5
+/agent-note-novaflow-uses-the-site-s-account-session-for-model-access/decision:
+  en: 28f8719107d842ce
+  zh: 2d7ac4759f71544e
+/agent-note-novaflow-uses-the-site-s-account-session-for-model-access/alternatives-considered:
+  en: a67fd18ac3e5fda8
+  zh: a2d9bcfaf3c925bf
+/agent-note-novaflow-uses-the-site-s-account-session-for-model-access/consequences:
+  en: b8a26151361aaeac
+  zh: c01ca3592cf45a29

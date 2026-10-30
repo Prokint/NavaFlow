@@ -1,4 +1,4 @@
-# This deployment uses standard API keys. DeepSeek account routes stay disabled.
+# NovaFlow supplies its own account session and optional API keys. DeepSeek account routes stay disabled.
 - id: deepseek-account
   disabled: true
 - id: llm-deepseek
@@ -23,10 +23,6 @@
   disabled: false
   config:
     credentialOnboarding: false
-- id: agent-default-model
-  config:
-    provider: novaflow
-    model: select-a-model
 - id: product-analytics
   disabled: true
 # DeepSeek-hosted services stay off. Feedback (like/dislike, the feedback dialog and /feedback) would upload the

@@ -10,9 +10,9 @@ import type {} from '@deepseek-ai/dsh-deepseek-account'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import {
-  halluCodexDefaultSelection, installNovaFlowIdentity, installNovaFlowProvider, parseNovaFlowHostConfiguration,
+  novaFlowDefaultSelection, installNovaFlowIdentity, installNovaFlowProvider, parseNovaFlowHostConfiguration,
   type NovaFlowCapacityRequest, type NovaFlowHostConfiguration,
-} from './hallucodex.ts'
+} from './novaflow.ts'
 import * as desktopOffice from './office.ts'
 
 import { installDesktopUpdateTaskControl } from './update-tasks.ts'
@@ -22,7 +22,7 @@ import { installSharpWasmResolution } from './sharp-wasm.ts'
 
 async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
-  const branded = process.env.DSH_HALLUCODEX_DESKTOP === '1'
+  const branded = process.env.DSH_NOVAFLOW_DESKTOP === '1'
   if (branded) process.env.NO_PROXY = ['127.0.0.1', 'localhost', process.env.NO_PROXY ?? ''].join(',')
   let nativeConfiguration: NovaFlowHostConfiguration | undefined
   let updateNativeConfiguration: ((configuration: NovaFlowHostConfiguration) => void) | undefined
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
     nativeConfiguration = await new Promise<NovaFlowHostConfiguration | undefined>((resolve, reject) => {
       let waiting = true
       process.once('disconnect', () => { if (waiting) { waiting = false; clearTimeout(timer); resolve(undefined) } })
-      const timer = setTimeout(() => { waiting = false; reject(new Error('hallucodex Host: native configuration timed out')) }, 30_000)
+      const timer = setTimeout(() => { waiting = false; reject(new Error('novaflow Host: native configuration timed out')) }, 30_000)
       timer.unref()
       process.on('message', (message: unknown) => {
         if (typeof message !== 'object' || message === null || !('type' in message)) return
@@ -42,16 +42,16 @@ async function main(): Promise<void> {
           })
           return
         }
-        if (message.type !== 'hallucodex-config') return
+        if (message.type !== 'novaflow-config') return
         try {
           const configuration = parseNovaFlowHostConfiguration(message)
           if (updateNativeConfiguration) updateNativeConfiguration(configuration)
           else nativeConfiguration = configuration
           waiting = false; clearTimeout(timer)
           resolve(configuration)
-        } catch (_configurationError) { reject(new Error('hallucodex Host: invalid native configuration')); process.exitCode = 1; process.disconnect() }
+        } catch (_configurationError) { reject(new Error('novaflow Host: invalid native configuration')); process.exitCode = 1; process.disconnect() }
       })
-      process.send?.({ type: 'hallucodex-ready' })
+      process.send?.({ type: 'novaflow-ready' })
     })
     if (nativeConfiguration === undefined) return
   }
@@ -65,7 +65,7 @@ async function main(): Promise<void> {
     environment: loadLayeredEnv('dsh'),
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
-    patchFiles: branded ? [join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh-desktop-host', 'lib', 'hallucodex.patch.yml')] : [],
+    patchFiles: branded ? [join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh-desktop-host', 'lib', 'novaflow.patch.yml')] : [],
     args: ['--no-open', '--host', '127.0.0.1', '--port', '0'],
     ...(process.argv[5] === undefined ? {} : {
       packageManager: {
@@ -92,9 +92,9 @@ async function main(): Promise<void> {
   const capacityRequests = new Map<number, { resolve: () => void; reject: (error: Error) => void }>()
   // Main answers after it has sent the configuration with the change, which the message listener above applies first.
   const saveCapacity = async (model: string, contextWindow: number | null, maxOutputTokens: number | null) => {
-    if (stopping !== undefined || !process.connected) throw new Error('hallucodex Host: the desktop shell is unavailable')
+    if (stopping !== undefined || !process.connected) throw new Error('novaflow Host: the desktop shell is unavailable')
     const requestId = nextCapacityRequest++
-    const request: NovaFlowCapacityRequest = { type: 'hallucodex-set-capacity', requestId, model, contextWindow, maxOutputTokens }
+    const request: NovaFlowCapacityRequest = { type: 'novaflow-set-capacity', requestId, model, contextWindow, maxOutputTokens }
     try {
       await new Promise<void>((resolve, reject) => {
         capacityRequests.set(requestId, { resolve, reject })
@@ -114,7 +114,7 @@ async function main(): Promise<void> {
   process.on('message', (message: unknown) => {
     if (typeof message !== 'object' || message === null || !('type' in message)) return
     if (message.type === 'shutdown') { void stop(); return }
-    if (message.type === 'hallucodex-set-capacity') {
+    if (message.type === 'novaflow-set-capacity') {
       const request = 'requestId' in message && typeof message.requestId === 'number' ? capacityRequests.get(message.requestId) : undefined
       if ('error' in message && typeof message.error === 'string') request?.reject(new Error(message.error))
       else request?.resolve()
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
     })().catch((error: unknown) => { console.error(error) })
   })
   process.once('disconnect', () => {
-    for (const request of capacityRequests.values()) request.reject(new Error('hallucodex Host: the desktop shell disconnected'))
+    for (const request of capacityRequests.values()) request.reject(new Error('novaflow Host: the desktop shell disconnected'))
     void stop()
   })
   const { ctx } = await application
@@ -162,7 +162,7 @@ async function main(): Promise<void> {
     const modelSelection = ctx.get('agentDefaultModel')
     const alignDefaultModel = async (configuration: NovaFlowHostConfiguration) => {
       if (modelSelection === undefined) return
-      const next = halluCodexDefaultSelection(configuration, modelSelection.currentSelection())
+      const next = novaFlowDefaultSelection(configuration, modelSelection.currentSelection())
       if (next !== undefined) await modelSelection.saveSelection(next)
     }
     await alignDefaultModel(nativeConfiguration)

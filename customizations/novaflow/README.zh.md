@@ -2,11 +2,11 @@
 
 [English](README.md) | 中文
 
-该工具保存最初在 macOS 上将 HalluCodex 0.1.10 改为 NovaFlow 的安装包修改步骤，供复现或回溯。日常二次开发以本仓库 TypeScript 源码为准。
+该工具为已有的上游 macOS 安装包应用 NovaFlow 显示品牌，供复现或回溯。日常二次开发以本仓库 TypeScript 源码为准。
 
 ```sh
 python3 customizations/novaflow/rebrand-installed.py \
-  --source-app /path/to/HalluCodex.app \
+  --source-app /path/to/Upstream.app --source-name Upstream \
   --output-app /path/to/local-output/NovaFlow.app
 ```
 

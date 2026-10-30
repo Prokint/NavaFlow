@@ -103,7 +103,7 @@ export async function packageMacOSArtifacts(
     apple.verifySignature(zipApp, expected)
     apple.verifySignature(dmgApp, expected)
     // Matches the electron-builder `artifactName`; the ZIP target writes its blockmap and the update metadata.
-    const base = `hallucodex-${version}-mac-${arch}`
+    const base = `novaflow-${version}-mac-${arch}`
     const artifacts = [
       [dmgOutput, `${base}.dmg`],
       [zipOutput, `${base}.zip`],

@@ -69,7 +69,7 @@ export class DesktopUpdateCoordinator {
     this.updater.autoDownload = false
     this.updater.autoInstallOnAppQuit = false
     // GitHub Releases on the default `latest` channel: only published stable releases are offered, because the
-    // provider resolves prefixed `hallucodex-v*` tags through the latest-release endpoint, not the prerelease feed.
+    // provider resolves prefixed `novaflow-v*` tags through the latest-release endpoint, not the prerelease feed.
     this.updater.allowPrerelease = false
     this.updater.allowDowngrade = false
     this.updater.on('download-progress', this.onProgress)

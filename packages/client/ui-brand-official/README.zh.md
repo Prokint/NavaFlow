@@ -29,7 +29,7 @@ kind: "package-reference"
 
 ### 桌面端账号入口
 
-NovaFlow preload 暴露的 `window.dshNovaFlow` 只有三个操作：`subscribe` 推送不含凭据的摘要（`signed-out`、`signing-in`，或带显示名的 `signed-in`）；`onOpen` 推送外壳要求显示账号页面的请求，来自应用菜单或未登录时打开的工作区；`mount` 把原生账号页面渲染进页面框架的标题区和内容区，并返回卸载函数。页面是 `hallucodex-account` 主区域面板：高度固定的框架，标题行可拖动 macOS 窗口，在外壳渲染的标题旁显示 NovaFlow 标志，其余部分由外壳内容填满。入口渲染在 `sidebar.footer.action` slot 中，样式与「设置」触发器一致，点击后切到该页面，显示期间保持选中样式，收起侧栏时变成头像或图标。Web 客户端没有这个桥，因此两者都不显示。
+NovaFlow preload 暴露的 `window.dshNovaFlow` 只有三个操作：`subscribe` 推送不含凭据的摘要（`signed-out`、`signing-in`，或带显示名的 `signed-in`）；`onOpen` 推送外壳要求显示账号页面的请求，来自应用菜单或未登录时打开的工作区；`mount` 把原生账号页面渲染进页面框架的标题区和内容区，并返回卸载函数。页面是 `novaflow-account` 主区域面板：高度固定的框架，标题行可拖动 macOS 窗口，在外壳渲染的标题旁显示 NovaFlow 标志，其余部分由外壳内容填满。入口渲染在 `sidebar.footer.action` slot 中，样式与「设置」触发器一致，点击后切到该页面，显示期间保持选中样式，收起侧栏时变成头像或图标。Web 客户端没有这个桥，因此两者都不显示。
 
 ### 替换品牌
 
@@ -56,7 +56,7 @@ NovaFlow preload 暴露的 `window.dshNovaFlow` 只有三个操作：`subscribe`
 
 - [ui-sidebar](../ui-sidebar/README.zh.md)——声明 `sidebar.brand.mark`、`sidebar.brand.name` 与 `sidebar.footer.action`，并渲染品牌回退。
 - [ui-conversation](../ui-conversation/README.zh.md)——在首屏声明 `conversation.hero.brand.mark`。
-- [桌面端](../../../apps/desktop/hallucodex/README.zh.md)——账号入口背后的账号页面与 preload 桥。
+- [桌面端](../../../apps/desktop/novaflow/README.zh.md)——账号入口背后的账号页面与 preload 桥。
 - [Web 客户端架构](../../../docs/subsystems/web-client.zh.md)——浏览器插件行如何加载并注册 slot。
 
 -----
@@ -78,7 +78,7 @@ NovaFlow preload 暴露的 `window.dshNovaFlow` 只有三个操作：`subscribe`
 这些限制界定了品牌呈现的供给方式。它们是当前包约束，不是品牌设计对比或任务积压。
 
 - **只有一组填充**——替代呈现属于占据相同 slot 的另一个 Cordis 包。
-- **标志不随主题变化**——侧栏和首屏在浅色与深色主题下都显示带白色底板的黑灰标志（`HALLUCODEX_MARK_IMAGE`）。
+- **标志不随主题变化**——侧栏和首屏在浅色与深色主题下都显示带白色底板的黑灰标志（`NOVAFLOW_MARK_IMAGE`）。
 - **浏览器标题独立**——`DSH_CLIENT_TITLE` 在构建时选择标题文本，而非通过 UI slot。
 
 <a id="dev-note"></a>

@@ -9,8 +9,8 @@
   "files": [
     "lib/index.js",
     "lib/cli.js",
-    "lib/hallucodex.js",
-    "lib/hallucodex.patch.yml",
+    "lib/novaflow.js",
+    "lib/novaflow.patch.yml",
     "lib/types/**/*.d.ts"
   ],
   "dependencies": {
@@ -48,9 +48,9 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
-    "./hallucodex": {
-      "types": "./lib/types/hallucodex.d.ts",
-      "default": "./lib/hallucodex.js"
+    "./novaflow": {
+      "types": "./lib/types/novaflow.d.ts",
+      "default": "./lib/novaflow.js"
     }
   }
 }

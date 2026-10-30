@@ -109,7 +109,7 @@ describe('desktop package target', () => {
       executable: join(root, 'win-unpacked', 'NovaFlow.exe'),
     })
     expect(desktopPackagedApplication(resolveDesktopPackageTarget('linux-x64', 'linux', 'x64'), root).executable)
-      .toBe(join(root, 'linux-unpacked', 'hallucodex'))
+      .toBe(join(root, 'linux-unpacked', 'novaflow'))
     expect(desktopPackagedApplication(resolveDesktopPackageTarget('linux-arm64', 'linux', 'arm64'), root).resources)
       .toBe(join(root, 'linux-arm64-unpacked', 'resources'))
   })

@@ -12,6 +12,9 @@ while [ -L "$launcher" ]; do
 done
 resources=$(CDPATH= cd -- "$(dirname -- "$launcher")/../../.." && pwd -P)
 # The packaged desktop keeps NovaFlow state apart from DeepSeek Harness; the CLI must share it.
-DSH_HOME=${DSH_HOME:-"$HOME/.hallucodex"}
+if [ -z "$DSH_HOME" ]; then
+  DSH_HOME="$HOME/.novaflow"
+  if [ ! -d "$DSH_HOME" ] && [ -d "$HOME/.hallucodex" ]; then DSH_HOME="$HOME/.hallucodex"; fi
+fi
 export DSH_HOME
 ELECTRON_RUN_AS_NODE=1 exec "$resources/../MacOS/NovaFlow" --expose-internals "$resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/cli.js" "$@"

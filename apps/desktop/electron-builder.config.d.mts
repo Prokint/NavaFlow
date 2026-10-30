@@ -21,7 +21,7 @@ export interface DesktopElectronBuilderConfig {
     readonly desktopName?: string
     readonly homepage?: string
     readonly version?: string
-    readonly hallucodexUpdateMode?: 'install'
+    readonly novaflowUpdateMode?: 'install'
   }
   readonly asarUnpack: readonly string[]
   readonly extraResources: readonly [
@@ -80,8 +80,8 @@ export interface DesktopElectronBuilderConfig {
   readonly detectUpdateChannel: false
   readonly publish: readonly [{
     readonly provider: 'github'
-    readonly owner: 'AkumaRealLabs'
-    readonly repo: 'hallucodex-desktop'
+    readonly owner: 'Prokint'
+    readonly repo: 'NavaFlow'
     readonly releaseType: 'release'
   }] | null
 }

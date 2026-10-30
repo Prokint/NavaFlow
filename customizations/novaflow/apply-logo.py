@@ -48,7 +48,7 @@ with archive.open('rb') as src:
             src.seek(base + int(old['offset']))
             data = src.read(old['size']).decode()
             updated, count = re.subn(
-                r'(HALLUCODEX_MARK_IMAGE\s*=\s*[\'\"])data:image/webp;base64,[A-Za-z0-9+/=]+',
+                r'(NOVAFLOW_MARK_IMAGE\s*=\s*[\'\"])data:image/webp;base64,[A-Za-z0-9+/=]+',
                 lambda match: match[1] + new_mark, data)
             assert count == 1, 'Expected one embedded product mark'
             changes[name] = updated.encode()

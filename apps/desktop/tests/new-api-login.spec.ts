@@ -37,7 +37,7 @@ vi.mock('electron', async () => {
   } } }
 })
 
-const { openNewApiLoginWindow } = await import('../src/hallucodex/new-api-login.ts')
+const { openNewApiLoginWindow } = await import('../src/novaflow/new-api-login.ts')
 const refresh = `a3851245-c3e5-4e2b-8b78-6ac18c57c835.${'r'.repeat(43)}`
 const cookie = { name: 'new_api_refresh', value: refresh, domain: 'relay.example', path: '/api/user/auth', httpOnly: true }
 const options = { parent: undefined, title: 'NovaFlow account', timeoutMs: 300000 }

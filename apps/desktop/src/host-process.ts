@@ -2,8 +2,8 @@
 
 import { spawn, type ChildProcess } from 'node:child_process'
 import { join } from 'node:path'
-import type { NovaFlowCapacityRequest, NovaFlowHostConfiguration } from '@deepseek-ai/dsh-desktop-host/hallucodex'
-import { parseModelCapacityOverride, type ModelCapacityOverride } from './hallucodex/model-capacity.ts'
+import type { NovaFlowCapacityRequest, NovaFlowHostConfiguration } from '@deepseek-ai/dsh-desktop-host/novaflow'
+import { parseModelCapacityOverride, type ModelCapacityOverride } from './novaflow/model-capacity.ts'
 import { desktopNodeEnvironment } from './node-environment.ts'
 
 interface ReadyEvent {
@@ -19,7 +19,7 @@ interface FatalEvent {
   readonly diagnostic?: string
 }
 
-type DesktopHostEvent = { readonly type: 'hallucodex-ready' } | ReadyEvent | FatalEvent | { readonly type: 'shutdown-complete' } | {
+type DesktopHostEvent = { readonly type: 'novaflow-ready' } | ReadyEvent | FatalEvent | { readonly type: 'shutdown-complete' } | {
   readonly type: 'update-tasks'
   readonly requestId: number
   readonly active: boolean
@@ -52,10 +52,10 @@ function isDesktopHostEvent(message: unknown): message is DesktopHostEvent {
   if (typeof message !== 'object' || message === null || !('type' in message)) return false
   const candidate = message as Record<string, unknown>
   switch (candidate.type) {
-    case 'hallucodex-ready':
+    case 'novaflow-ready':
     case 'shutdown-complete':
       return true
-    case 'hallucodex-set-capacity':
+    case 'novaflow-set-capacity':
       return Number.isSafeInteger(candidate.requestId) && typeof candidate.model === 'string'
         && isCount(candidate.contextWindow) && isCount(candidate.maxOutputTokens)
     case 'ready':
@@ -195,12 +195,12 @@ export class DesktopHostProcess {
         child.kill('SIGTERM')
         return
       }
-      if (message.type === 'hallucodex-ready') {
-        if (!this.nativeConfiguration) { this.fail(new Error('hallucodex Host: unexpected configuration request')); child.kill('SIGTERM'); return }
+      if (message.type === 'novaflow-ready') {
+        if (!this.nativeConfiguration) { this.fail(new Error('novaflow Host: unexpected configuration request')); child.kill('SIGTERM'); return }
         this.nativeConfigurationReady = true
         this.publishNovaFlow(this.nativeConfiguration)
       }
-      else if (message.type === 'hallucodex-set-capacity') this.setNovaFlowCapacity(child, message)
+      else if (message.type === 'novaflow-set-capacity') this.setNovaFlowCapacity(child, message)
       else if (message.type === 'ready') this.readyResolve({ url: message.url, injections: message.injections })
       else if (message.type === 'shutdown-complete') {
         if (this.stopping) this.shutdownCompleted = true
@@ -232,19 +232,19 @@ export class DesktopHostProcess {
   publishNovaFlow(configuration: NovaFlowHostConfiguration): void {
     this.nativeConfiguration = configuration
     if (this.nativeConfigurationReady && this.child?.connected && !this.stopping) {
-      this.child.send(configuration, (error) => { if (error !== null) this.fail(new Error('hallucodex Host: configuration delivery failed')) })
+      this.child.send(configuration, (error) => { if (error !== null) this.fail(new Error('novaflow Host: configuration delivery failed')) })
     }
   }
 
   private setNovaFlowCapacity(child: ChildProcess, request: NovaFlowCapacityRequest): void {
     const answer = (error?: string) => {
       if (!child.connected) return
-      child.send({ type: 'hallucodex-set-capacity', requestId: request.requestId, ...error === undefined ? {} : { error } }, (sendError) => {
+      child.send({ type: 'novaflow-set-capacity', requestId: request.requestId, ...error === undefined ? {} : { error } }, (sendError) => {
         if (sendError !== null) console.error(sendError)
       })
     }
     void (async () => {
-      if (this.saveNovaFlowCapacity === undefined) throw new Error('hallucodex: model capacities are unavailable')
+      if (this.saveNovaFlowCapacity === undefined) throw new Error('novaflow: model capacities are unavailable')
       const capacity = parseModelCapacityOverride({ contextWindow: request.contextWindow, maxOutputTokens: request.maxOutputTokens })
       await this.saveNovaFlowCapacity(request.model, capacity)
     })().then(() => { answer() }, (error: unknown) => { answer(error instanceof Error ? error.message : String(error)) })

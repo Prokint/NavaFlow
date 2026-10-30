@@ -1,12 +1,12 @@
 /** Tag prefix of NovaFlow desktop releases; upstream `dsh-v*` tags are not releases of this application. */
-export const DESKTOP_RELEASE_TAG_PREFIX: 'hallucodex-v'
+export const DESKTOP_RELEASE_TAG_PREFIX: 'novaflow-v'
 
 /** Line separating the release notes the application shows from the installation instructions. */
-export const DESKTOP_INSTALL_NOTES_MARKER: '<!-- hallucodex:install-notes -->'
+export const DESKTOP_INSTALL_NOTES_MARKER: '<!-- novaflow:install-notes -->'
 
 /**
  * Read the application version a release tag names.
- * @param tag - Pushed or requested tag, such as `hallucodex-v0.1.0-beta.1`.
+ * @param tag - Pushed or requested tag, such as `novaflow-v0.1.0-beta.1`.
  * @returns Version without the prefix, and whether it has a prerelease part.
  */
 export function desktopReleaseVersion(tag: string): { readonly version: string, readonly prerelease: boolean }

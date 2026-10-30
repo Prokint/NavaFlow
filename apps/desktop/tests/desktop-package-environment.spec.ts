@@ -87,13 +87,13 @@ describe('Desktop local packaging configuration', () => {
   ] as const)('reads %s settings from the parent environment only when it is selected explicitly', async (platform, platformSettings) => {
     await withDirectory(async (directory) => {
       const parent = {
-        PATH: 'build-tools', DSH_DESKTOP_PACKAGE_SETTINGS: 'environment', DSH_DESKTOP_APP_ID: 'com.hallucodex.desktop',
+        PATH: 'build-tools', DSH_DESKTOP_PACKAGE_SETTINGS: 'environment', DSH_DESKTOP_APP_ID: 'com.novaflow.desktop',
         DSH_DESKTOP_NPM_REGISTRY: 'https://registry.example.com', ...platformSettings,
         ...(platform === 'linux' ? { DSH_DESKTOP_WINDOWS_TOKEN_PIN: 'other-platform' } : { DSH_DESKTOP_LINUX_MAINTAINER: 'other-platform' }),
       }
       const loaded = loadDesktopPackageEnvironment(platform, parent, directory)
       expect(loaded).toEqual({
-        PATH: 'build-tools', DSH_DESKTOP_APP_ID: 'com.hallucodex.desktop', DSH_DESKTOP_NPM_REGISTRY: 'https://registry.example.com',
+        PATH: 'build-tools', DSH_DESKTOP_APP_ID: 'com.novaflow.desktop', DSH_DESKTOP_NPM_REGISTRY: 'https://registry.example.com',
         ...platformSettings,
         ...('CSC_LINK' in platformSettings ? { CSC_LINK: join(directory, 'keys/signing.p12') } : {}),
       })

@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write customizations/novaflow/README.md
 /local-package-branding-tool:
-  en: 9e69935182ef52a4
-  zh: 7b010cd34924ea3b
+  en: a338bb2751dc08c9
+  zh: 13e3c95da9d377b8
 /local-package-branding-tool/current-logo-assets:
   en: 0c622a724a945b0d
   zh: afb18cdd6cb5f89b

@@ -12,9 +12,14 @@ import tempfile
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--source-app', type=Path, required=True)
 parser.add_argument('--output-app', type=Path, required=True)
+parser.add_argument('--source-name', required=True, help='Display name used by the source application')
 args = parser.parse_args()
 SOURCE_APP = args.source_app.resolve()
 APP = args.output_app.resolve()
+source_name = args.source_name
+if not source_name or '/' in source_name or '\\' in source_name:
+    parser.error('source-name must be a nonempty application display name')
+source_bytes = source_name.encode()
 if SOURCE_APP == APP:
     parser.error('source and output applications must differ')
 if APP.exists():
@@ -49,9 +54,9 @@ with SOURCE.open('rb') as src:
             continue
         src.seek(original_base + int(old['offset']))
         data = src.read(old['size'])
-        if b'HalluCodex' not in data:
+        if source_bytes not in data:
             continue
-        updated = data.replace(b'HalluCodex', b'NovaFlow')
+        updated = data.replace(source_bytes, b'NovaFlow')
         if name == 'lib/main.js':
             # Disable the original release source on this local custom build.
             marker = b'checkForRelease = (manual) => {'
@@ -70,7 +75,7 @@ with SOURCE.open('rb') as src:
                 check.flush()
                 subprocess.run(['node', '--check', check.name], check=True, capture_output=True)
         changes[name] = updated
-        report.append({'path': name, 'replacements': data.count(b'HalluCodex'), 'sha256': digest(updated)})
+        report.append({'path': name, 'replacements': data.count(source_bytes), 'sha256': digest(updated)})
 
     # Refresh the shipped runtime manifest for changed first-party modules.
     manifest_name = 'dsh/desktop-runtime.json'
@@ -130,23 +135,23 @@ plist = plistlib.loads(plist_path.read_bytes())
 plist['CFBundleDisplayName'] = 'NovaFlow'
 plist['CFBundleName'] = 'NovaFlow'
 plist['CFBundleExecutable'] = 'NovaFlow'
-plist['NSMicrophoneUsageDescription'] = plist['NSMicrophoneUsageDescription'].replace('HalluCodex', 'NovaFlow')
+plist['NSMicrophoneUsageDescription'] = plist['NSMicrophoneUsageDescription'].replace(source_name, 'NovaFlow')
 plist['ElectronAsarIntegrity']['Resources/app.asar']['hash'] = digest(header)
 plist_path.write_bytes(plistlib.dumps(plist))
-original_executable = APP / 'Contents/MacOS/HalluCodex'
+original_executable = APP / 'Contents/MacOS' / source_name
 if original_executable.exists():
     original_executable.rename(original_executable.with_name('NovaFlow'))
-for helper in (APP / 'Contents/Frameworks').glob('HalluCodex Helper*.app'):
+for helper in (APP / 'Contents/Frameworks').glob(f'{source_name} Helper*.app'):
     helper_plist = helper / 'Contents/Info.plist'
     meta = plistlib.loads(helper_plist.read_bytes())
     old_executable = meta['CFBundleExecutable']
     for key in ('CFBundleExecutable', 'CFBundleName', 'CFBundleDisplayName'):
         if key in meta:
-            meta[key] = meta[key].replace('HalluCodex', 'NovaFlow')
+            meta[key] = meta[key].replace(source_name, 'NovaFlow')
     helper_plist.write_bytes(plistlib.dumps(meta))
     exe = helper / 'Contents/MacOS' / old_executable
     exe.rename(exe.with_name(meta['CFBundleExecutable']))
-    helper.rename(helper.with_name(helper.name.replace('HalluCodex', 'NovaFlow')))
+    helper.rename(helper.with_name(helper.name.replace(source_name, 'NovaFlow')))
 update = APP / 'Contents/Resources/app-update.yml'
 if update.exists():
     update.rename(update.with_suffix('.yml.disabled'))

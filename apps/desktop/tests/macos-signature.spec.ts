@@ -85,7 +85,7 @@ describe('desktop macOS release signature', () => {
         writeUpdateInfo: false,
       },
       // Only a signed and notarized macOS build may replace itself from an update.
-      extraMetadata: { hallucodexUpdateMode: 'install' },
+      extraMetadata: { novaflowUpdateMode: 'install' },
       detectUpdateChannel: false,
       publish: GITHUB_RELEASES,
     })
@@ -141,14 +141,14 @@ describe('desktop macOS release signature', () => {
       DSH_DESKTOP_UNSIGNED: '1',
     }, 'win32', 'x64')
     expect(portablePath(config.directories.output)).toContain('/targets/win-x64/unsigned-artifacts')
-    expect(config.artifactName).toBe('hallucodex-${version}-${os}-${arch}-unsigned.${ext}')
+    expect(config.artifactName).toBe('novaflow-${version}-${os}-${arch}-unsigned.${ext}')
     expect(portablePath(config.nsis.include)).toMatch(/\/scripts\/installer\.nsh$/u)
     expect(config).toMatchObject({
       win: { forceCodeSigning: false, signtoolOptions: { sign: undefined } },
       publish: GITHUB_RELEASES,
     })
     // Windows decides its own update mode; the field is reserved for signed macOS builds.
-    expect(config.extraMetadata).not.toHaveProperty('hallucodexUpdateMode')
+    expect(config.extraMetadata).not.toHaveProperty('novaflowUpdateMode')
   })
 
   it.each(['arm64', 'x64'] as const)('builds unsigned macOS %s artifacts without an identity, notarization, or in-place updates', async (arch) => {
@@ -160,16 +160,16 @@ describe('desktop macOS release signature', () => {
       DSH_DESKTOP_UNSIGNED: '1',
     }, 'darwin', arch)
     expect(portablePath(config.directories.output)).toContain(`/targets/mac-${arch}/unsigned-artifacts`)
-    expect(config.artifactName).toBe('hallucodex-${version}-${os}-${arch}-unsigned.${ext}')
+    expect(config.artifactName).toBe('novaflow-${version}-${os}-${arch}-unsigned.${ext}')
     expect(config).toMatchObject({
       mac: { identity: null, forceCodeSigning: false, hardenedRuntime: false, notarize: false, target: ['dmg', 'zip'] },
       dmg: { sign: false, writeUpdateInfo: false },
       publish: GITHUB_RELEASES,
     })
-    expect(config.extraMetadata).not.toHaveProperty('hallucodexUpdateMode')
+    expect(config.extraMetadata).not.toHaveProperty('novaflowUpdateMode')
     // No Developer ID verification or DMG notarization runs for an ad-hoc signed build.
     await config.afterSign({ electronPlatformName: 'darwin' } as never)
-    expect(await config.artifactBuildCompleted({ file: `/out/hallucodex-0.1.0-mac-${arch}-unsigned.dmg` })).toBeUndefined()
+    expect(await config.artifactBuildCompleted({ file: `/out/novaflow-0.1.0-mac-${arch}-unsigned.dmg` })).toBeUndefined()
   })
 
   it('rejects unsigned Linux builds and malformed signing modes', async () => {

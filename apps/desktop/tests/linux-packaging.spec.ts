@@ -12,25 +12,25 @@ import { loadDesktopPackageEnvironment, validateDesktopPackageEnvironment } from
 import { resolveLinuxPackageSettings } from '../scripts/linux-package-settings.mjs'
 
 const ENVIRONMENT = {
-  DSH_DESKTOP_APP_ID: 'com.example.hallucodex',
+  DSH_DESKTOP_APP_ID: 'com.example.novaflow',
   DSH_DESKTOP_LINUX_MAINTAINER: 'Example Developer <developer@example.com>',
-  DSH_DESKTOP_LINUX_HOMEPAGE: 'https://example.com/hallucodex',
+  DSH_DESKTOP_LINUX_HOMEPAGE: 'https://example.com/novaflow',
 }
 
 describe('Linux development package configuration', () => {
   it.each(['x64', 'arm64'])('keeps Linux %s artifacts separate and reads the GitHub Releases feed', (arch) => {
     const config = createElectronBuilderConfig(ENVIRONMENT, 'linux', arch)
     expect(config.productName).toBe('NovaFlow')
-    expect(config.artifactName).toBe('hallucodex-${version}-${os}-${arch}.${ext}')
+    expect(config.artifactName).toBe('novaflow-${version}-${os}-${arch}.${ext}')
     expect(config.directories.output).toContain(join('targets', `linux-${arch}`, 'artifacts'))
-    expect(config.linux).toMatchObject({ executableName: 'hallucodex', target: ['AppImage', 'deb'], executableArgs: [] })
+    expect(config.linux).toMatchObject({ executableName: 'novaflow', target: ['AppImage', 'deb'], executableArgs: [] })
     expect(config.appImage.executableArgs).toEqual([])
-    expect(config.deb).toEqual({ packageName: 'hallucodex', executableArgs: [] })
+    expect(config.deb).toEqual({ packageName: 'novaflow', executableArgs: [] })
     expect(config.publish).toEqual([{ provider: 'github', owner: 'Prokint', repo: 'NavaFlow', releaseType: 'release' }])
     expect(config.detectUpdateChannel).toBe(false)
-    expect(config.extraMetadata).not.toHaveProperty('hallucodexUpdateMode')
+    expect(config.extraMetadata).not.toHaveProperty('novaflowUpdateMode')
     expect(config.protocols).toEqual([])
-    expect(config.extraMetadata).toMatchObject({ name: 'hallucodex', homepage: ENVIRONMENT.DSH_DESKTOP_LINUX_HOMEPAGE })
+    expect(config.extraMetadata).toMatchObject({ name: 'novaflow', homepage: ENVIRONMENT.DSH_DESKTOP_LINUX_HOMEPAGE })
     expect(() => { validateDesktopPackageEnvironment(ENVIRONMENT, { platform: 'linux', arch }) }).not.toThrow()
     expect(() => {
       validateDesktopPackageEnvironment({ ...ENVIRONMENT, DSH_DESKTOP_APP_ID: 'com.deepseek.harness' }, { platform: 'linux', arch })
@@ -88,7 +88,7 @@ it('passes the pinned builder schema and retains sandboxing in the emitted Linux
   const packager = new Packager({ projectDir: tmpdir() })
   Object.defineProperties(packager, {
     config: { value: config },
-    metadata: { value: { name: 'hallucodex', desktopName: 'hallucodex.desktop', version: '1.2.3', description: 'NovaFlow desktop' } },
+    metadata: { value: { name: 'novaflow', desktopName: 'novaflow.desktop', version: '1.2.3', description: 'NovaFlow desktop' } },
   })
   const linux = new LinuxPackager(packager)
   const helper = new LinuxTargetHelper(linux)
@@ -97,7 +97,7 @@ it('passes the pinned builder schema and retains sandboxing in the emitted Linux
   const entry = Reflect.get(target, 'desktopEntry') as { value: Promise<string> }
   expect(await entry.value).toBe(await readFile(new URL('./expected/linux-appimage.desktop', import.meta.url), 'utf8'))
   const debEntry = await helper.computeDesktopEntry(linux.platformSpecificBuildOptions)
-  expect(debEntry).toContain('Exec=/opt/NovaFlow/hallucodex %U')
+  expect(debEntry).toContain('Exec=/opt/NovaFlow/novaflow %U')
   expect(debEntry).not.toContain('--no-sandbox')
 })
 
@@ -105,9 +105,9 @@ it('builds only explicitly marked development AppImages without inventing deb pu
   const env = { DSH_DESKTOP_APP_ID: ENVIRONMENT.DSH_DESKTOP_APP_ID, DSH_DESKTOP_LINUX_DEVELOPMENT_APPIMAGE: '1' }
   const config = createElectronBuilderConfig(env, 'linux', 'x64')
   expect(config.linux.target).toEqual(['AppImage'])
-  expect(config.artifactName).toBe('hallucodex-${version}-${os}-${arch}-dev-unsigned.${ext}')
+  expect(config.artifactName).toBe('novaflow-${version}-${os}-${arch}-dev-unsigned.${ext}')
   expect(config.directories.output).toContain('unsigned-artifacts')
-  expect(config.extraMetadata).toMatchObject({ name: 'hallucodex', dshDevelopmentArtifact: true })
+  expect(config.extraMetadata).toMatchObject({ name: 'novaflow', dshDevelopmentArtifact: true })
   expect(config.extraMetadata.homepage).toBeUndefined()
   expect(config.linux.maintainer).toBeUndefined()
   expect(config.publish).toBeNull()

@@ -230,19 +230,19 @@ it('forwards browser guest input only for the focused live webview lease', async
 it('exposes only a credential-free NovaFlow account summary, open requests and the account page mount to the page', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   const signedIn = { account: { status: 'signed-in', profile: { id: '7', displayName: '' }, group: 'vip', allowedGroups: ['vip'] }, serverOrigin: 'https://api.example.com', catalogStatus: 'ready' }
-  electron.ipcRenderer.invoke.mockImplementation((channel: string) => Promise.resolve(channel === 'hallucodex:state' ? signedIn : null))
+  electron.ipcRenderer.invoke.mockImplementation((channel: string) => Promise.resolve(channel === 'novaflow:state' ? signedIn : null))
   await import('../src/preload-app.ts')
   const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshNovaFlow')?.[1] as
     { subscribe(listener: (state: unknown) => void): () => void; mount(head: HTMLElement, content: HTMLElement): () => void }
-  expect(Object.keys(api).sort()).toEqual(['mount', 'onOpen', 'subscribe'])
+  expect(Object.keys(api).sort()).toEqual(['accessMode', 'mount', 'onOpen', 'onOpenModels', 'subscribe'])
   const listener = vi.fn()
   const off = api.subscribe(listener)
   await vi.waitFor(() => { expect(listener).toHaveBeenCalledExactlyOnceWith({ status: 'signed-in', name: '7' }) })
-  const changed = electron.ipcRenderer.on.mock.calls.find(([name]) => name === 'hallucodex:changed')![1] as (event: unknown, snapshot: unknown) => void
+  const changed = electron.ipcRenderer.on.mock.calls.find(([name]) => name === 'novaflow:changed')![1] as (event: unknown, snapshot: unknown) => void
   changed({}, { ...signedIn, account: { status: 'signing-in', expiresAt: 1 } })
   expect(listener).toHaveBeenLastCalledWith({ status: 'signing-in' })
   off()
-  expect(electron.ipcRenderer.off).toHaveBeenCalledWith('hallucodex:changed', changed)
+  expect(electron.ipcRenderer.off).toHaveBeenCalledWith('novaflow:changed', changed)
   document.documentElement.lang = 'zh-CN'
   const head = document.createElement('div')
   const content = document.createElement('div')

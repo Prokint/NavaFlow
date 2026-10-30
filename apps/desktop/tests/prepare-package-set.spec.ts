@@ -82,13 +82,13 @@ describe('desktop package-set selection', () => {
     const files = [
       'package/lib/index.js',
       'package/lib/cli.js',
-      'package/lib/hallucodex.js',
-      'package/lib/hallucodex.patch.yml',
+      'package/lib/novaflow.js',
+      'package/lib/novaflow.patch.yml',
     ]
     expect(() => {
       assertDesktopHostPackageFiles(files)
     }).not.toThrow()
-    for (const missing of ['hallucodex.js', 'hallucodex.patch.yml']) {
+    for (const missing of ['novaflow.js', 'novaflow.patch.yml']) {
       expect(() => { assertDesktopHostPackageFiles(files.filter(file => !file.endsWith(missing))) }).toThrow(missing)
     }
     expect(() => {

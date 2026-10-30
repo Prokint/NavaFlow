@@ -3,7 +3,8 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
+import { LEGACY_DESKTOP_BRAND } from '@deepseek-ai/dsh-desktop-host/novaflow'
 import { dirname, join, relative } from 'node:path'
 import { expect, it, onTestFinished } from 'vitest'
 import { prepareDesktopCli } from '../scripts/prepare-cli.ts'
@@ -23,7 +24,7 @@ function fixture(platform: 'win32' | 'darwin' | 'linux' = process.platform === '
   const resources = join(application, ...platform === 'darwin' ? ['Contents', 'Resources'] : ['resources'])
   const cli = join(resources, 'runtime', 'cli')
   prepareDesktopCli(cli, platform)
-  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'NovaFlow'] : [platform === 'linux' ? 'hallucodex' : 'NovaFlow.exe'])
+  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'NovaFlow'] : [platform === 'linux' ? 'novaflow' : 'NovaFlow.exe'])
   mkdirSync(dirname(electron), { recursive: true })
   if (platform === 'win32') copyFileSync(process.execPath, electron)
   else symlinkSync(process.execPath, electron)
@@ -39,7 +40,10 @@ function fixture(platform: 'win32' | 'darwin' | 'linux' = process.platform === '
     '',
   ].join('\n'))
   const command = join(cli, 'bin', platform === 'win32' ? 'dsh.cmd' : 'dsh')
-  const { DSH_HOME: _home, ...inherited } = process.env
+  const home = join(root, 'home')
+  mkdirSync(home)
+  const { DSH_HOME: _home, ...ambient } = process.env
+  const inherited = { ...ambient, HOME: home, USERPROFILE: home }
   function start(args: string[], executable = command) {
     // cmd fixture inputs contain no metacharacters; POSIX cases exercise literal expansion characters separately.
     const child = platform === 'win32'
@@ -59,7 +63,7 @@ function fixture(platform: 'win32' | 'darwin' | 'linux' = process.platform === '
     child.stderr.setEncoding('utf8').on('data', (text: string) => { stderr += text })
     return { child, closed, stdout: () => stdout, stderr: () => stderr }
   }
-  return { root, command, start }
+  return { root, home, command, start }
 }
 
 it('preserves common arguments, cwd, environment, binary input, stderr and exit status', async () => {
@@ -69,8 +73,19 @@ it('preserves common arguments, cwd, environment, binary input, stderr and exit 
   const input = Buffer.from([0, 1, 10, 255])
   run.child.stdin.end(input)
   expect(await run.closed, run.stderr()).toBe(23)
-  expect(JSON.parse(run.stdout())).toEqual({ args, cwd: f.root, value: 'kept', nodeMode: '1', home: join(homedir(), '.hallucodex'), input: input.toString('hex') })
+  expect(JSON.parse(run.stdout())).toEqual({ args, cwd: f.root, value: 'kept', nodeMode: '1',
+    home: join(f.home, '.novaflow'), input: input.toString('hex') })
   expect(run.stderr()).toBe('separate stderr\n')
+})
+
+it('continues using an existing desktop data home after the brand rename', async () => {
+  const f = fixture()
+  const previous = join(f.home, `.${LEGACY_DESKTOP_BRAND}`)
+  mkdirSync(previous)
+  const run = f.start([])
+  run.child.stdin.end()
+  expect(await run.closed, run.stderr()).toBe(23)
+  expect(JSON.parse(run.stdout())).toMatchObject({ home: previous })
 })
 
 it.skipIf(process.platform === 'win32')('resolves chained command symlinks without expanding argument contents', async () => {

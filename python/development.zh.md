@@ -31,7 +31,7 @@ uv run --project python/sdk pytest
 
 将 `DSH_OFFICE_TEST_ARTIFACTS` 设为一个新目录，即可保留已安装 wheel 包冒烟测试的 Office 输入、PNG、清单与失败诊断信息。CI 在成功与失败时都会上传这些文件，不包含临时运行时文件。
 
-该套件面向的是伪造的运行时对端。`scripts/smoke-python-runtime.py` 面向打包运行时。HalluCodex CI 不构建打包运行时；手动触发 `.github/workflows/build-exe-for-python-sdk.yml` 时构建所选目标。每个选定目标把匹配的 SDK wheel 包与运行时 wheel 包安装进新的 Python 3.10 虚拟环境，在 checkout 外清除 `PYTHONPATH` 与 `DSH_RUNTIME_MODE` 后运行，证明两个模块及可执行文件都来自这些 distribution，然后运行全部 keyless 场景。聚焦的本地源码 SDK 运行可以选择一个已构建可执行文件与场景：
+该套件面向的是伪造的运行时对端。`scripts/smoke-python-runtime.py` 面向打包运行时。NovaFlow CI 不构建打包运行时；手动触发 `.github/workflows/build-exe-for-python-sdk.yml` 时构建所选目标。每个选定目标把匹配的 SDK wheel 包与运行时 wheel 包安装进新的 Python 3.10 虚拟环境，在 checkout 外清除 `PYTHONPATH` 与 `DSH_RUNTIME_MODE` 后运行，证明两个模块及可执行文件都来自这些 distribution，然后运行全部 keyless 场景。聚焦的本地源码 SDK 运行可以选择一个已构建可执行文件与场景：
 
 ```sh
 uv run --project python/sdk python scripts/smoke-python-runtime.py \

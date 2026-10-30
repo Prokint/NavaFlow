@@ -26,7 +26,7 @@ export const inject = ['slots', 'locale', 'layout']
  * @param ctx - Client root context.
  */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'hallucodex: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'novaflow: dictionaries')
   ctx.slots.inject('sidebar.brand.mark', () =>
     ctx.slots.inject('sidebar.brand.name', function* () {
       yield ctx.slots.register({ name: 'sidebar.brand.mark' }, NovaFlowMark)
@@ -55,7 +55,7 @@ export function apply(ctx: ClientContext): void {
   })
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
     name: 'sidebar.footer.action',
-    id: 'hallucodex-account',
+    id: 'novaflow-account',
     locale: NS,
     inject: (): AccountActionFace => ({ bridge, openPage }),
   }, AccountAction))

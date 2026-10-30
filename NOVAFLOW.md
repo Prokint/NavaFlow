@@ -1,12 +1,12 @@
 # NovaFlow 开发与维护
 
-本仓库名为 **NavaFlow**，产品界面使用 **NovaFlow**。代码基于 [HalluCodex](https://github.com/AkumaRealLabs/hallucodex-desktop) 的 `hallucodex-v0.1.10` 标签；其上游是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)。原 Git 历史、MIT 许可证和第三方声明均保留；Logo 使用已选定的黑灰交扣图形。
+本仓库名为 **NavaFlow**，产品名称为 **NovaFlow**，基于 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 及继承的桌面分支开发。原 Git 历史、MIT 许可证和第三方声明均保留；Logo 使用已选定的黑灰交扣图形。
 
 ## 当前定制
 
-应用名称、原生菜单、账号页、首页、提示文案和打包程序名已改为 NovaFlow。桌面、侧栏、首页、浏览器与安装器图标从 `design/brand/novaflow-symbol-transparent.png` 生成；可运行 `node customizations/novaflow/prepare-logo.mjs` 后重新执行桌面文档中的 Linux 和托盘渲染命令。技术包名、协议标识和数据目录继续兼容 HalluCodex：`~/.hallucodex` 与 Electron 的 `hallucodex` 用户数据目录。原 DeepSeek Harness 的 `~/.dsh` 和系统中的 `dsh` 命令不需要修改。NovaFlow 与原 HalluCodex 共用数据，切换时先退出另一份应用。
+应用名称、原生菜单、账号页、首页、提示文案、内部模块与打包程序统一为 NovaFlow。桌面、侧栏、首页、浏览器与安装器图标从 `design/brand/novaflow-symbol-transparent.png` 生成；可运行 `node customizations/novaflow/prepare-logo.mjs` 后重新执行桌面文档中的 Linux 和托盘渲染命令。新安装默认使用 `~/.novaflow` 与 Electron 的 `novaflow` 用户数据目录；已有安装继续读取原目录与设置文件，不搬移、改写或清除账号和会话。旧会话的模型路由通过兼容层调用，新选择保存为 NovaFlow 路由。原 DeepSeek Harness 的 `~/.dsh` 和系统中的 `dsh` 命令不需要修改。与旧版共用数据时，切换前先退出另一份应用。
 
-源码的更新检查和打包更新配置指向 `Prokint/NavaFlow`，不再读取原 HalluCodex 更新源。私有仓库没有匿名可读的 Release 时不会提供更新。继承的发行标签前缀及文件名仍为 `hallucodex-v*`、`hallucodex-*`，正式发版前需统一调整发布工作流、安装器元数据及更新解析器。
+源码的更新检查和打包更新配置指向 `Prokint/NavaFlow`。发布工作流、更新解析器与安装器统一使用 `novaflow-v*` 标签和 `novaflow-*` 文件名，应用标识为 `com.novaflow.desktop`。私有仓库没有匿名可读的 Release 时不会提供更新。
 
 ## 开发
 
@@ -31,8 +31,8 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk pnpm run build
 | 路径 | 用途 |
 |---|---|
 | `apps/desktop/src` | 桌面窗口、菜单、账号和更新 |
-| `apps/desktop/src/hallucodex` | 服务器地址、授权、模型目录、请求代理 |
-| `apps/desktop-host/src/hallucodex.ts` | 模型协议适配 |
+| `apps/desktop/src/novaflow` | 服务器地址、授权、模型目录、请求代理 |
+| `apps/desktop-host/src/novaflow.ts` | 模型协议适配 |
 | `apps/desktop/scripts/electron-builder-config.mjs` | 应用名称与打包配置 |
 | `packages/client/ui-brand-official` | 首页与账号入口品牌界面 |
 | `packages/llm/llm-pi-ai` | 自定义模型提供方能力 |
@@ -50,10 +50,9 @@ API Key 模式作为备用入口保留。在“模型与 API Key”或“设置 
 
 ## Git 与发布
 
-`origin` 指向本仓库，`upstream` 指向 HalluCodex；同步上游时先在独立分支合并、检查品牌改动并运行相关验证。现有工作流继承自上游，需要在维护者确认目标、标签和权限后再手动发版。GitHub Actions 的签名证书和发布密钥需要在本仓库重新配置，未从上游复制。
+`origin` 指向本仓库；已有的 `upstream` 保留继承来源。同步上游时先在独立分支合并、检查品牌改动并运行相关验证。正式发布使用本仓库的 NovaFlow 工作流；GitHub Actions 的签名证书和发布密钥需要在本仓库配置，未从上游复制。
 
 ```sh
-git remote add upstream https://github.com/AkumaRealLabs/hallucodex-desktop.git
 git fetch upstream --tags
 git switch -c codex/sync-upstream
 ```

@@ -1,6 +1,9 @@
 @echo off
 setlocal DisableDelayedExpansion
 set "ELECTRON_RUN_AS_NODE=1"
-if not defined DSH_HOME set "DSH_HOME=%USERPROFILE%\.hallucodex"
+if not defined DSH_HOME (
+  set "DSH_HOME=%USERPROFILE%\.novaflow"
+  if not exist "%USERPROFILE%\.novaflow" if exist "%USERPROFILE%\.hallucodex" set "DSH_HOME=%USERPROFILE%\.hallucodex"
+)
 "%~dp0..\..\..\..\NovaFlow.exe" --expose-internals "%~dp0..\..\..\app.asar\dsh\node_modules\@deepseek-ai\dsh-desktop-host\lib\cli.js" %*
 exit /b %errorlevel%

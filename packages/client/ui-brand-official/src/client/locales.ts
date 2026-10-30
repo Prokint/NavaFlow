@@ -1,6 +1,6 @@
 /** NovaFlow brand and desktop-account dictionaries. */
 
-export const NS = 'hallucodex'
+export const NS = 'novaflow'
 
 /** Simplified Chinese NovaFlow messages. */
 export const zh = {
@@ -16,7 +16,7 @@ export type NovaFlowKey = keyof typeof zh
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** NovaFlow brand and desktop-account copy. */
-    hallucodex: NovaFlowKey
+    novaflow: NovaFlowKey
   }
 }
 

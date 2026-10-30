@@ -14,7 +14,7 @@ it.skipIf(process.platform === 'win32')('forwards literal arguments without fall
   writeFileSync(join(helpers, 'id'), '#!/bin/sh\nprintf 1000\n', { mode: 0o755 })
   const marker = join(root, 'namespace-probe')
   writeFileSync(join(helpers, 'unshare'), `#!/bin/sh\ntouch '${marker}'\nexit 1\n`, { mode: 0o755 })
-  writeFileSync(join(root, 'hallucodex'), '#!/bin/sh\nprintf "<%s>\\n" "$@"\nexit 23\n', { mode: 0o755 })
+  writeFileSync(join(root, 'novaflow'), '#!/bin/sh\nprintf "<%s>\\n" "$@"\nexit 23\n', { mode: 0o755 })
   await writeDesktopLinuxAppRun(root)
   const args = ['quoted "value"', '$HOME', '中文', '']
   const result = spawnSync(join(root, 'AppRun'), args, {
@@ -42,7 +42,7 @@ it.skipIf(process.platform === 'win32')('verifies extracted launcher bytes and r
   onTestFinished(() => { rmSync(root, { recursive: true, force: true }) })
   const artifact = join(root, 'fixture.AppImage')
   for (const accepted of [true, false]) {
-    const launcher = accepted ? desktopLinuxAppRun() : '#!/bin/sh\nexec hallucodex --no-sandbox\n'
+    const launcher = accepted ? desktopLinuxAppRun() : '#!/bin/sh\nexec novaflow --no-sandbox\n'
     writeFileSync(artifact, `#!/bin/sh\nset -eu\nmkdir squashfs-root\ncat > squashfs-root/AppRun <<'LAUNCHER'\n${launcher}LAUNCHER\n`, { mode: 0o755 })
     if (accepted) await expect(verifyDesktopLinuxAppRun(artifact)).resolves.toBeUndefined()
     else await expect(verifyDesktopLinuxAppRun(artifact)).rejects.toThrow(/sandbox-preserving AppRun/u)

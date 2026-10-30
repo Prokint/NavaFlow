@@ -26,18 +26,18 @@ async function runner(name: string, files: Record<string, string>, metadata: Rec
 }
 
 async function releaseInputs(version = '0.1.0') {
-  const exe = `hallucodex-${version}-win-x64-unsigned.exe`
-  const armZip = `hallucodex-${version}-mac-arm64-unsigned.zip`
-  const intelZip = `hallucodex-${version}-mac-x64-unsigned.zip`
-  const appImage = `hallucodex-${version}-linux-x86_64.AppImage`
+  const exe = `novaflow-${version}-win-x64-unsigned.exe`
+  const armZip = `novaflow-${version}-mac-arm64-unsigned.zip`
+  const intelZip = `novaflow-${version}-mac-x64-unsigned.zip`
+  const appImage = `novaflow-${version}-linux-x86_64.AppImage`
   return [
     await runner('win', { [exe]: 'exe', [`${exe}.blockmap`]: 'map' },
       { 'latest.yml': { version, files: [entry(exe, 'exe')], path: exe } }),
-    await runner('mac-arm64', { [armZip]: 'arm zip', [`${armZip}.blockmap`]: 'map', [`hallucodex-${version}-mac-arm64-unsigned.dmg`]: 'arm dmg' },
+    await runner('mac-arm64', { [armZip]: 'arm zip', [`${armZip}.blockmap`]: 'map', [`novaflow-${version}-mac-arm64-unsigned.dmg`]: 'arm dmg' },
       { 'latest-mac.yml': { version, files: [entry(armZip, 'arm zip')], path: armZip, releaseDate: '2026-10-07T01:00:00.000Z' } }),
-    await runner('mac-x64', { [intelZip]: 'intel zip', [`${intelZip}.blockmap`]: 'map', [`hallucodex-${version}-mac-x64-unsigned.dmg`]: 'intel dmg' },
+    await runner('mac-x64', { [intelZip]: 'intel zip', [`${intelZip}.blockmap`]: 'map', [`novaflow-${version}-mac-x64-unsigned.dmg`]: 'intel dmg' },
       { 'latest-mac.yml': { version, files: [entry(intelZip, 'intel zip')], path: intelZip, releaseDate: '2026-10-07T02:00:00.000Z' } }),
-    await runner('linux', { [appImage]: 'appimage', [`hallucodex-${version}-linux-amd64.deb`]: 'deb' },
+    await runner('linux', { [appImage]: 'appimage', [`novaflow-${version}-linux-amd64.deb`]: 'deb' },
       { 'latest-linux.yml': { version, files: [entry(appImage, 'appimage')], path: appImage } }),
   ]
 }
@@ -47,28 +47,28 @@ describe('release asset collection', () => {
     const output = join(root, 'release')
     const assets = await collectDesktopReleaseAssets({ version: '0.1.0', inputs: await releaseInputs(), output })
     expect(assets).toEqual([
-      'hallucodex-0.1.0-linux-amd64.deb',
-      'hallucodex-0.1.0-linux-x86_64.AppImage',
-      'hallucodex-0.1.0-mac-arm64-unsigned.dmg',
-      'hallucodex-0.1.0-mac-arm64-unsigned.zip',
-      'hallucodex-0.1.0-mac-arm64-unsigned.zip.blockmap',
-      'hallucodex-0.1.0-mac-x64-unsigned.dmg',
-      'hallucodex-0.1.0-mac-x64-unsigned.zip',
-      'hallucodex-0.1.0-mac-x64-unsigned.zip.blockmap',
-      'hallucodex-0.1.0-win-x64-unsigned.exe',
-      'hallucodex-0.1.0-win-x64-unsigned.exe.blockmap',
       'latest-linux.yml',
       'latest-mac.yml',
       'latest.yml',
+      'novaflow-0.1.0-linux-amd64.deb',
+      'novaflow-0.1.0-linux-x86_64.AppImage',
+      'novaflow-0.1.0-mac-arm64-unsigned.dmg',
+      'novaflow-0.1.0-mac-arm64-unsigned.zip',
+      'novaflow-0.1.0-mac-arm64-unsigned.zip.blockmap',
+      'novaflow-0.1.0-mac-x64-unsigned.dmg',
+      'novaflow-0.1.0-mac-x64-unsigned.zip',
+      'novaflow-0.1.0-mac-x64-unsigned.zip.blockmap',
+      'novaflow-0.1.0-win-x64-unsigned.exe',
+      'novaflow-0.1.0-win-x64-unsigned.exe.blockmap',
       'SHA256SUMS',
     ])
     expect((await readdir(output)).sort()).toEqual([...assets].sort())
     const mac = load(await readFile(join(output, 'latest-mac.yml'), 'utf8')) as { files: { url: string }[]; releaseDate: string }
-    expect(mac.files.map(file => file.url)).toEqual(['hallucodex-0.1.0-mac-arm64-unsigned.zip', 'hallucodex-0.1.0-mac-x64-unsigned.zip'])
+    expect(mac.files.map(file => file.url)).toEqual(['novaflow-0.1.0-mac-arm64-unsigned.zip', 'novaflow-0.1.0-mac-x64-unsigned.zip'])
     expect(mac.releaseDate).toBe('2026-10-07T02:00:00.000Z')
     const sums = (await readFile(join(output, 'SHA256SUMS'), 'utf8')).trim().split('\n')
     expect(sums).toHaveLength(assets.length - 1)
-    expect(sums).toContain(`${createHash('sha256').update('exe').digest('hex')}  hallucodex-0.1.0-win-x64-unsigned.exe`)
+    expect(sums).toContain(`${createHash('sha256').update('exe').digest('hex')}  novaflow-0.1.0-win-x64-unsigned.exe`)
   })
 
   it('accepts its own earlier collection as input, as the release job receives per-runner collections', async () => {
@@ -87,9 +87,9 @@ describe('release asset collection', () => {
     const inputs = await releaseInputs()
     await expect(collectDesktopReleaseAssets({ version: '0.1.1', inputs, output: join(root, 'other') }))
       .rejects.toThrow(/declares 0\.1\.0, expected 0\.1\.1|missing file/u)
-    await rm(join(inputs[0]!, 'hallucodex-0.1.0-win-x64-unsigned.exe'))
+    await rm(join(inputs[0]!, 'novaflow-0.1.0-win-x64-unsigned.exe'))
     await expect(collectDesktopReleaseAssets({ version: '0.1.0', inputs, output: join(root, 'missing') }))
-      .rejects.toThrow(/missing file hallucodex-0\.1\.0-win-x64-unsigned\.exe/u)
+      .rejects.toThrow(/missing file novaflow-0\.1\.0-win-x64-unsigned\.exe/u)
     await mkdir(join(root, 'busy'))
     await writeFile(join(root, 'busy', 'stale.exe'), 'stale')
     await expect(collectDesktopReleaseAssets({ version: '0.1.0', inputs, output: join(root, 'busy') })).rejects.toThrow(/not empty/u)
@@ -98,8 +98,8 @@ describe('release asset collection', () => {
   })
 
   it('refuses one installer name with different bytes on two runners', async () => {
-    const first = await runner('a', { 'hallucodex-0.1.0-linux-amd64.deb': 'one' }, {})
-    const second = await runner('b', { 'hallucodex-0.1.0-linux-amd64.deb': 'two' }, {})
+    const first = await runner('a', { 'novaflow-0.1.0-linux-amd64.deb': 'one' }, {})
+    const second = await runner('b', { 'novaflow-0.1.0-linux-amd64.deb': 'two' }, {})
     await expect(collectDesktopReleaseAssets({ version: '0.1.0', inputs: [first, second], output: join(root, 'release') }))
       .rejects.toThrow(/differs between inputs/u)
   })

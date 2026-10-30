@@ -159,19 +159,19 @@ describe('desktop host process', () => {
       import { join } from 'node:path'
       const log = []
       process.on('message', message => {
-        log.push(message.type === 'hallucodex-config' ? { revision: message.revision } : message)
-        if (message.type === 'hallucodex-config' && message.revision === 1) {
-          for (const request of ${JSON.stringify(requests)}) process.send({ type: 'hallucodex-set-capacity', ...request })
+        log.push(message.type === 'novaflow-config' ? { revision: message.revision } : message)
+        if (message.type === 'novaflow-config' && message.revision === 1) {
+          for (const request of ${JSON.stringify(requests)}) process.send({ type: 'novaflow-set-capacity', ...request })
         }
-        if (log.filter(entry => entry.type === 'hallucodex-set-capacity').length === ${String(requests.length)}) {
+        if (log.filter(entry => entry.type === 'novaflow-set-capacity').length === ${String(requests.length)}) {
           writeFileSync(join(process.argv[3], 'log.json'), JSON.stringify(log))
           process.send({ type: 'ready', url: 'http://127.0.0.1:3080/' })
         }
         if (message.type === 'shutdown') process.send({ type: 'shutdown-complete' }, () => process.disconnect())
       })
-      process.send({ type: 'hallucodex-ready' })
+      process.send({ type: 'novaflow-ready' })
     `
-    const configuration = { type: 'hallucodex-config', baseURL: 'http://127.0.0.1:1', localCapability: 'x', revision: 1, models: [] } as const
+    const configuration = { type: 'novaflow-config', baseURL: 'http://127.0.0.1:1', localCapability: 'x', revision: 1, models: [] } as const
     const requests = [
       { requestId: 1, model: 'gpt-5.1', contextWindow: 300_000, maxOutputTokens: null },
       { requestId: 2, model: 'gpt-5.1', contextWindow: 100_000_001, maxOutputTokens: null },
@@ -180,7 +180,7 @@ describe('desktop host process', () => {
     const project = projectWithHost(asks(requests))
     const save = vi.fn(async (model: string) => {
       await Promise.resolve()
-      if (model === 'unknown') throw new Error('hallucodex: unknown model')
+      if (model === 'unknown') throw new Error('novaflow: unknown model')
       host.publishNovaFlow({ ...configuration, revision: 2 })
     })
     const host = new DesktopHostProcess(process.execPath, project, project, undefined, process.env, undefined, undefined, undefined,
@@ -192,13 +192,13 @@ describe('desktop host process', () => {
     expect(log).toHaveLength(5)
     expect(log).toEqual(expect.arrayContaining([
       { revision: 1 },
-      { type: 'hallucodex-set-capacity', requestId: 2, error: 'hallucodex: invalid model capacity' },
-      { type: 'hallucodex-set-capacity', requestId: 3, error: 'hallucodex: unknown model' },
+      { type: 'novaflow-set-capacity', requestId: 2, error: 'novaflow: invalid model capacity' },
+      { type: 'novaflow-set-capacity', requestId: 3, error: 'novaflow: unknown model' },
     ]))
     // The Host applies the configuration with the change before it learns that the change is saved.
     const position = (expected: object) => log.findIndex(entry => isDeepStrictEqual(entry, expected))
     expect(position({ revision: 2 })).toBeGreaterThan(0)
-    expect(position({ type: 'hallucodex-set-capacity', requestId: 1 })).toBeGreaterThan(position({ revision: 2 }))
+    expect(position({ type: 'novaflow-set-capacity', requestId: 1 })).toBeGreaterThan(position({ revision: 2 }))
 
     const refused = projectWithHost(asks([{ requestId: 1, model: 'gpt-5.1', contextWindow: 300_000, maxOutputTokens: null }]))
     const unsupported = new DesktopHostProcess(process.execPath, refused, refused, undefined, process.env, undefined, undefined,
@@ -206,7 +206,7 @@ describe('desktop host process', () => {
     hosts.push(unsupported)
     await unsupported.start()
     expect(JSON.parse(readFileSync(join(refused, 'log.json'), 'utf8'))).toContainEqual(
-      { type: 'hallucodex-set-capacity', requestId: 1, error: 'hallucodex: model capacities are unavailable' })
+      { type: 'novaflow-set-capacity', requestId: 1, error: 'novaflow: model capacities are unavailable' })
 
     for (const request of [
       { requestId: 1.5, model: 'gpt-5.1', contextWindow: null, maxOutputTokens: null },

@@ -3,7 +3,7 @@ import type { SidebarBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-side
 import type { Translate } from '@deepseek-ai/dsh-client-ui-slots'
 import type { NovaFlowKey } from './locales.ts'
 import css from './Brand.module.css'
-import { HALLUCODEX_MARK_IMAGE } from './mark-image.ts'
+import { NOVAFLOW_MARK_IMAGE } from './mark-image.ts'
 
 /**
  * Render the NovaFlow mark at the edge length requested by its host surface.
@@ -13,7 +13,7 @@ import { HALLUCODEX_MARK_IMAGE } from './mark-image.ts'
 export function NovaFlowMark({ size, className }: SidebarBrandMarkOwnerProps & Partial<Pick<HeroBrandMarkOwnerProps, 'className'>>) {
   return (
     <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <image href={HALLUCODEX_MARK_IMAGE} x={1} y={1} width={22} height={22} />
+      <image href={NOVAFLOW_MARK_IMAGE} x={1} y={1} width={22} height={22} />
     </svg>
   )
 }

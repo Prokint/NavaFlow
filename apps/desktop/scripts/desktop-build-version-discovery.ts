@@ -19,7 +19,7 @@ import { desktopBuildVersionPrefix, validateDesktopBuildVersion } from './deskto
  * Artifacts named before the NovaFlow rename still occupy their index in the same directory.
  */
 const ARTIFACT = new RegExp(
-  '^(?:deepseek-harness|hallucodex)-(?<version>.+)-(?:mac|win|linux)-(?:arm64|x64|x86_64|arm_aarch64|amd64)'
+  '^(?:deepseek-harness|novaflow)-(?<version>.+)-(?:mac|win|linux)-(?:arm64|x64|x86_64|arm_aarch64|amd64)'
   + '(?:-(?:dev-)?unsigned)?\\.(?:exe|dmg|zip|deb|AppImage)$', 'u',
 )
 

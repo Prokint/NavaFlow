@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   DESKTOP_INSTALL_NOTES_MARKER,
@@ -33,15 +34,15 @@ const CHANGELOG = `# 更新日志
 
 describe('NovaFlow release tags', () => {
   it.each([
-    ['hallucodex-v0.1.0', '0.1.0', false],
-    ['hallucodex-v0.1.0-beta.1', '0.1.0-beta.1', true],
-    ['hallucodex-v1.12.3-rc.0.1', '1.12.3-rc.0.1', true],
+    ['novaflow-v0.1.0', '0.1.0', false],
+    ['novaflow-v0.1.0-beta.1', '0.1.0-beta.1', true],
+    ['novaflow-v1.12.3-rc.0.1', '1.12.3-rc.0.1', true],
   ] as const)('reads %s as version %s', (tag, version, prerelease) => {
     expect(desktopReleaseVersion(tag)).toEqual({ version, prerelease })
   })
 
-  it.each(['dsh-v0.2.1-alpha.1', 'v0.1.0', 'hallucodex-0.1.0', 'hallucodex-v0.1', 'hallucodex-v01.0.0',
-    'hallucodex-v0.1.0+build.1', 'hallucodex-v0.1.0-beta..1', 'hallucodex-v0.1.0-01'])('rejects %s', (tag) => {
+  it.each(['dsh-v0.2.1-alpha.1', 'v0.1.0', 'novaflow-0.1.0', 'novaflow-v0.1', 'novaflow-v01.0.0',
+    'novaflow-v0.1.0+build.1', 'novaflow-v0.1.0-beta..1', 'novaflow-v0.1.0-01'])('rejects %s', (tag) => {
     expect(() => desktopReleaseVersion(tag)).toThrow(/desktop release/u)
   })
 })
@@ -76,8 +77,8 @@ describe('NovaFlow release notes', () => {
   })
 
   it('serves the release workflow through its command line', async () => {
-    const script = new URL('../scripts/desktop-release-notes.mjs', import.meta.url).pathname
-    expect(execFileSync(process.execPath, [script, 'version', 'hallucodex-v0.1.0-beta.1'], { encoding: 'utf8' }))
+    const script = fileURLToPath(new URL('../scripts/desktop-release-notes.mjs', import.meta.url))
+    expect(execFileSync(process.execPath, [script, 'version', 'novaflow-v0.1.0-beta.1'], { encoding: 'utf8' }))
       .toBe('version=0.1.0-beta.1\nprerelease=true\n')
     const directory = await mkdtemp(join(tmpdir(), 'desktop-release-notes-'))
     try {

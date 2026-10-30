@@ -20,11 +20,11 @@ describe('installer preparation preserves application dependencies', () => {
     const config = createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.example.installer', DSH_DESKTOP_UNSIGNED: platform === 'win32' ? '1' : '0',
       DSH_DESKTOP_MACOS_SIGNING_IDENTITY: 'Example Company (TEAMID1234)', DSH_DESKTOP_MACOS_TEAM_ID: 'TEAMID1234', APPLE_KEYCHAIN_PROFILE: 'installer-test',
       DSH_DESKTOP_LINUX_DEVELOPMENT_APPIMAGE: '1', DSH_DESKTOP_TARGET_PLATFORM: platform }, platform, 'x64')
-    expect(config).toMatchObject({ productName: 'NovaFlow', protocols: [], extraMetadata: { name: 'hallucodex' } })
+    expect(config).toMatchObject({ productName: 'NovaFlow', protocols: [], extraMetadata: { name: 'novaflow' } })
     // Development AppImages stay out of the feed; installers read this repository's GitHub Releases.
     expect(config.publish).toEqual(platform === 'linux' ? null
       : [{ provider: 'github', owner: 'Prokint', repo: 'NavaFlow', releaseType: 'release' }])
-    expect(config.artifactName.startsWith('hallucodex-')).toBe(true)
+    expect(config.artifactName.startsWith('novaflow-')).toBe(true)
     expect(() => createElectronBuilderConfig({ DSH_DESKTOP_APP_ID: 'com.deepseek.harness', DSH_DESKTOP_TARGET_PLATFORM: platform }, platform, 'x64'))
       .toThrow('separate application identifier')
   })
@@ -102,7 +102,7 @@ describe('installer preparation preserves application dependencies', () => {
       DSH_DESKTOP_TARGET_ARCH: 'x64',
       DSH_DESKTOP_UNSIGNED: '1',
     }, 'win32', 'x64')
-    expect(config.artifactName).toBe('hallucodex-${version}-${os}-${arch}-unsigned.${ext}')
+    expect(config.artifactName).toBe('novaflow-${version}-${os}-${arch}-unsigned.${ext}')
   })
 
   it('packages every preload entry point the shell loads', async () => {

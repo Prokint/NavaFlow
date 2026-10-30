@@ -13,10 +13,10 @@ import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
 /** Tag prefix of NovaFlow desktop releases; upstream `dsh-v*` tags are not releases of this application. */
-export const DESKTOP_RELEASE_TAG_PREFIX = 'hallucodex-v'
+export const DESKTOP_RELEASE_TAG_PREFIX = 'novaflow-v'
 
 /** Line separating the release notes the application shows from the installation instructions. */
-export const DESKTOP_INSTALL_NOTES_MARKER = '<!-- hallucodex:install-notes -->'
+export const DESKTOP_INSTALL_NOTES_MARKER = '<!-- novaflow:install-notes -->'
 
 // SemVer 2.0.0 without build metadata, which does not take part in update precedence.
 const SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][\dA-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][\dA-Za-z-]*))*)?$/u
@@ -39,7 +39,7 @@ const INSTALL_NOTES = `## 安装说明
 
 /**
  * Read the application version a release tag names.
- * @param {string} tag - Pushed or requested tag, such as `hallucodex-v0.1.0-beta.1`.
+ * @param {string} tag - Pushed or requested tag, such as `novaflow-v0.1.0-beta.1`.
  * @returns {{ version: string, prerelease: boolean }} Version without the prefix, and whether it has a prerelease part.
  */
 export function desktopReleaseVersion(tag) {

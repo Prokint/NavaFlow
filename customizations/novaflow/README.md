@@ -2,11 +2,11 @@
 
 English | [中文](README.zh.md)
 
-This tool preserves the original macOS package changes from HalluCodex 0.1.10 to NovaFlow for reproduction and review. Use the repository TypeScript sources for ongoing development.
+This tool applies NovaFlow display branding to an existing upstream macOS package for reproduction and review. Use the repository TypeScript sources for ongoing development.
 
 ```sh
 python3 customizations/novaflow/rebrand-installed.py \
-  --source-app /path/to/HalluCodex.app \
+  --source-app /path/to/Upstream.app --source-name Upstream \
   --output-app /path/to/local-output/NovaFlow.app
 ```
 

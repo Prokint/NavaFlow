@@ -44,8 +44,8 @@ describe('desktop update feed', () => {
   })
 
   it('writes and verifies the packaged updater configuration for this repository', async () => {
-    await writeDesktopAppUpdateConfig(directory, 'hallucodex-updater')
-    expect(load(await readFile(join(directory, 'app-update.yml'), 'utf8'))).toEqual({ ...DESKTOP_UPDATE_PUBLISH, updaterCacheDirName: 'hallucodex-updater' })
+    await writeDesktopAppUpdateConfig(directory, 'novaflow-updater')
+    expect(load(await readFile(join(directory, 'app-update.yml'), 'utf8'))).toEqual({ ...DESKTOP_UPDATE_PUBLISH, updaterCacheDirName: 'novaflow-updater' })
     await expect(verifyDesktopAppUpdateConfig(directory)).resolves.toMatchObject({ provider: 'github', owner: 'Prokint' })
     await writeFile(join(directory, 'app-update.yml'), dump({ ...DESKTOP_UPDATE_PUBLISH, repo: 'other', updaterCacheDirName: 'x' }))
     await expect(verifyDesktopAppUpdateConfig(directory)).rejects.toThrow(/must set repo to NavaFlow/u)
@@ -56,12 +56,12 @@ describe('desktop update feed', () => {
   })
 
   it('returns the metadata, installers, and required blockmaps when every reference matches', async () => {
-    const exe = await installer('hallucodex-0.1.0-win-x64-unsigned.exe', 'installer bytes')
+    const exe = await installer('novaflow-0.1.0-win-x64-unsigned.exe', 'installer bytes')
     await writeFile(join(directory, `${exe.url}.blockmap`), 'blockmap')
     await metadata('latest.yml', { version: '0.1.0', files: [exe], path: exe.url, sha512: exe.sha512, releaseDate: '2026-10-07T00:00:00.000Z' })
     await expect(verifyDesktopUpdateMetadata({ directory, filename: 'latest.yml', version: '0.1.0', platform: 'win32' }))
       .resolves.toEqual(['latest.yml', exe.url, `${exe.url}.blockmap`])
-    const appImage = await installer('hallucodex-0.1.0-linux-x86_64.AppImage', 'appimage bytes')
+    const appImage = await installer('novaflow-0.1.0-linux-x86_64.AppImage', 'appimage bytes')
     await metadata('latest-linux.yml', { version: '0.1.0', files: [appImage], path: appImage.url })
     // AppImage embeds its blockmap, so Linux needs no sibling file.
     await expect(verifyDesktopUpdateMetadata({ directory, filename: 'latest-linux.yml', version: '0.1.0', platform: 'linux' }))
@@ -77,24 +77,24 @@ describe('desktop update feed', () => {
     ['a path missing from files', async (zip: object) => ({ version: '0.1.0', files: [zip], path: 'other.zip' }), /is not among its files/u],
     ['no files', async () => ({ version: '0.1.0', files: [] }), /lists no files/u],
   ] as const)('rejects metadata with %s', async (_label, document, error) => {
-    const zip = await installer('hallucodex-0.1.0-mac-arm64-unsigned.zip', 'zip bytes')
+    const zip = await installer('novaflow-0.1.0-mac-arm64-unsigned.zip', 'zip bytes')
     await writeFile(join(directory, `${zip.url}.blockmap`), 'blockmap')
     await metadata('latest-mac.yml', await document(zip))
     await expect(verifyDesktopUpdateMetadata({ directory, filename: 'latest-mac.yml', version: '0.1.0', platform: 'darwin' })).rejects.toThrow(error)
   })
 
   it('requires the differential blockmap beside Windows and macOS update installers', async () => {
-    const zip = await installer('hallucodex-0.1.0-mac-x64-unsigned.zip', 'zip bytes')
+    const zip = await installer('novaflow-0.1.0-mac-x64-unsigned.zip', 'zip bytes')
     await metadata('latest-mac.yml', { version: '0.1.0', files: [zip] })
     await expect(verifyDesktopUpdateMetadata({ directory, filename: 'latest-mac.yml', version: '0.1.0', platform: 'darwin' }))
-      .rejects.toThrow(/missing file hallucodex-0\.1\.0-mac-x64-unsigned\.zip\.blockmap/u)
+      .rejects.toThrow(/missing file novaflow-0\.1\.0-mac-x64-unsigned\.zip\.blockmap/u)
     await expect(verifyDesktopUpdateMetadata({ directory, filename: 'latest.yml', version: '0.1.0', platform: 'win32' }))
       .rejects.toThrow(/missing latest\.yml/u)
   })
 
   it('merges per-architecture macOS metadata so each architecture finds its own ZIP', () => {
-    const arm = { url: 'hallucodex-0.1.0-mac-arm64-unsigned.zip', sha512: 'arm', size: 10 }
-    const intel = { url: 'hallucodex-0.1.0-mac-x64-unsigned.zip', sha512: 'intel', size: 11 }
+    const arm = { url: 'novaflow-0.1.0-mac-arm64-unsigned.zip', sha512: 'arm', size: 10 }
+    const intel = { url: 'novaflow-0.1.0-mac-x64-unsigned.zip', sha512: 'intel', size: 11 }
     const merged = load(mergeDesktopUpdateMetadata([
       dump({ version: '0.1.0', files: [arm], path: arm.url, sha512: arm.sha512, releaseDate: '2026-10-07T01:00:00.000Z' }),
       dump({ version: '0.1.0', files: [intel], path: intel.url, sha512: intel.sha512, releaseDate: '2026-10-07T02:00:00.000Z' }),

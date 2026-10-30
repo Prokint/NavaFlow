@@ -1,0 +1,144 @@
+/** Main-process relay admission; no caller chooses an origin or receives an account credential. */
+import { allowedGroup } from './group-policy.ts'
+import type { DesktopEndpoint, DesktopModel } from './catalog.ts'
+
+/** Authentication material obtained only inside the native process. */
+export interface RelayAccess {
+  readonly accessToken: string
+  readonly deviceSessionId: string
+  readonly group: string
+}
+
+/** Immutable account and catalog binding committed after authenticated server reads. */
+export interface RelaySelection {
+  readonly deviceSessionId: string
+  /** Concrete group or `auto`; the server applies an automatic order from the device's grant. */
+  readonly group: string
+  /** Groups the account may route through, including `auto` when the site offers it. */
+  readonly allowedGroups: readonly string[]
+  readonly models: readonly DesktopModel[]
+}
+
+/** Native dependencies; production consumers supply the account broker's private access resolver. */
+export interface RelayBrokerOptions {
+  readonly access: () => Promise<RelayAccess>
+  /** Reads the selected server origin for every request. */
+  readonly origin: () => string
+  readonly fetch: typeof globalThis.fetch
+  readonly maxRequestBytes: number
+  /** Native-owned protocol path mapping; renderers and model requests cannot choose a target. */
+  readonly endpointPath?: (endpoint: DesktopEndpoint) => string
+}
+
+/** One relay result and the exact group snapshot admitted before the request began. */
+export interface DesktopRelayResult {
+  readonly response: Response
+  readonly group: string
+  readonly model: string
+}
+
+/**
+ * Refuse request-level routing overrides, redirects, stale selection, and unauthorized protocol/model pairs.
+ * This module never retries requests; streams already admitted retain their original server grant.
+ */
+export class NovaFlowRelayBroker {
+  private selection: RelaySelection | undefined
+  private generation = 0
+
+  constructor(private readonly options: RelayBrokerOptions) {
+    if (!Number.isSafeInteger(options.maxRequestBytes) || options.maxRequestBytes < 1) {
+      throw new Error('novaflow: invalid request size limit')
+    }
+  }
+
+  /**
+   * Commit an authenticated group/catalog snapshot after login, refresh, or explicit group selection.
+   * @param selection - complete server-authorized device selection.
+   */
+  configure(selection: RelaySelection): void {
+    allowedGroup(selection.group, selection.allowedGroups)
+    this.selection = Object.freeze({
+      deviceSessionId: selection.deviceSessionId,
+      group: selection.group,
+      allowedGroups: Object.freeze([...selection.allowedGroups]),
+      models: Object.freeze(selection.models.map(model => Object.freeze({
+        ...model, endpoints: Object.freeze([...model.endpoints]),
+      }))),
+    })
+    this.generation++
+  }
+
+  /** Suspend new admission before changing group, signing out, or handling a server revocation. */
+  suspend(): void {
+    this.selection = undefined
+    this.generation++
+  }
+
+  /**
+   * Send one JSON model request using a private, fresh desktop access token.
+   * @param endpoint - a supported exact protocol path.
+   * @param payload - serialized request fields from the local protocol adapter.
+   * @param signal - cancellation owned by the requesting turn.
+   * @returns the response stream and the group/model captured at admission.
+   */
+  async invoke(endpoint: DesktopEndpoint, payload: unknown, signal?: AbortSignal): Promise<DesktopRelayResult> {
+    const selection = this.selection
+    const generation = this.generation
+    if (selection === undefined) throw new Error('novaflow: select an allowed group before inference')
+    let encoded: unknown
+    try { encoded = JSON.stringify(payload) }
+    catch (_serializationError) { throw new Error('novaflow: invalid model request') }
+    if (typeof encoded !== 'string' || Buffer.byteLength(encoded, 'utf8') > this.options.maxRequestBytes) {
+      throw new Error('novaflow: model request is too large')
+    }
+    const body = encoded
+    const request: unknown = JSON.parse(body)
+    payload = request
+    if (typeof payload !== 'object' || payload === null || Array.isArray(payload)
+      || !('model' in payload) || typeof payload.model !== 'string') {
+      throw new Error('novaflow: invalid model request')
+    }
+    if (Object.keys(payload).some(key => key.toLowerCase() === 'model' && key !== 'model')) {
+      throw new Error('novaflow: ambiguous model field')
+    }
+    // Group is bound to the server-side grant, never accepted as a client request override.
+    if (Object.keys(payload).some(key => ['group', 'auto_groups', 'cross_group_retry'].includes(key.toLowerCase()))) {
+      throw new Error('novaflow: request routing overrides are forbidden')
+    }
+    const model = selection.models.find(candidate => candidate.id === payload.model)
+    if (model === undefined || !model.endpoints.includes(endpoint)) {
+      throw new Error('novaflow: model endpoint is not allowed')
+    }
+    const access = await this.options.access()
+    if (generation !== this.generation || this.selection !== selection) {
+      throw new Error('novaflow: account selection changed')
+    }
+    allowedGroup(access.group, selection.allowedGroups)
+    if (access.deviceSessionId !== selection.deviceSessionId || access.group !== selection.group
+      || access.accessToken.length === 0 || (/[\u0000-\u001f\u007f]/u.test(access.accessToken) || /\s/u.test(access.accessToken))) {
+      throw new Error('novaflow: access grant does not match selection')
+    }
+    signal?.throwIfAborted()
+    const headers: Record<string, string> = {
+      authorization: `Bearer ${access.accessToken}`, 'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+    }
+    if (endpoint === '/v1/messages') headers['anthropic-version'] = '2023-06-01'
+    let response: Response
+    try {
+      response = await this.options.fetch(`${this.options.origin()}${this.options.endpointPath?.(endpoint) ?? endpoint}`, {
+        method: 'POST', headers, body, signal: signal ?? null, redirect: 'error', credentials: 'omit', cache: 'no-store',
+      })
+    } catch (_networkError) {
+      if (signal?.aborted) throw signal.reason
+      // Fetch errors may contain request headers or adapter diagnostics; do not forward them to UI/logs.
+      throw new Error('novaflow: relay network failure')
+    }
+    // Only a rejected credential stops admission; 403 carries business limits such as an
+    // exhausted wallet or device cap and reaches the caller unchanged.
+    if (response.status === 401) {
+      if (generation === this.generation) this.suspend()
+    }
+    return { response, group: selection.group, model: model.id }
+  }
+}

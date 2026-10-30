@@ -2,19 +2,19 @@
 
 [English](README.md) | 中文
 
-Desktop 不发送产品埋点。NovaFlow profile 禁用埋点与遥测插件以及其他由 DeepSeek 托管的服务（[NovaFlow 账号模块](hallucodex/README.zh.md)），壳在启动 Host 时设置 `DSH_TELEMETRY_DISABLED=1`。
+Desktop 不发送产品埋点。NovaFlow profile 禁用埋点与遥测插件以及其他由 DeepSeek 托管的服务（[NovaFlow 账号模块](novaflow/README.zh.md)），壳在启动 Host 时设置 `DSH_TELEMETRY_DISABLED=1`。
 
 桌面应用是完整 dsh Web 应用外的一层 Electron 壳。Electron RunAsNode 子进程启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 将应用 HTTP 请求转发给已认证的 Web Host，转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。
 
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
-应用菜单第一项“**关于 NovaFlow**”在 macOS 和 Linux 上打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本；Windows 没有系统关于面板，由壳自己的对话框显示产品名称和版本。下一项“**NovaFlow 账号**”在主窗口中显示[账号页面](hallucodex/README.zh.md)。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 NovaFlow 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Linux 使用随包分发的 `resources/icon-windows.png` 副本。
+应用菜单第一项“**关于 NovaFlow**”在 macOS 和 Linux 上打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本；Windows 没有系统关于面板，由壳自己的对话框显示产品名称和版本。下一项“**NovaFlow 账号**”在主窗口中显示[账号页面](novaflow/README.zh.md)。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 NovaFlow 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Linux 使用随包分发的 `resources/icon-windows.png` 副本。
 
 Desktop 的本地原生目录流程打开绑定应用窗口的 Electron 文件夹对话框，并先恢复、显示和聚焦该窗口。并发请求共用一个对话框；取消不返回路径，失败后可以重试。普通 Web 使用 Host 选择器。浏览模式列出 Host 目录。Linux 缺少 zenity 或 kdialog 时，自动选择使用浏览模式，不使用 Electron 对话框。
 
 Desktop 在 `resources/runtime/primary-runtime/dependencies/pnpm` 中携带一份 pnpm 分发包。构建时的生产依赖安装、安装版 `dsh` CLI、Creator 和 Web 插件管理器通过 Electron Node 模式执行其中的 `bin/pnpm.mjs`；包操作不要求 PATH 上存在 pnpm。私有 Node 启动器环境仅用于包操作。agent（智能体）的工作区依赖将同一份完整 primary-runtime 复制到 Harness 主目录，并使用其中的独立 Node 执行 pnpm。
 
-Host 就绪后，启动流程显示带工作区的主窗口；在此之前再次启动应用不会显示窗口。此时若 NovaFlow 账号未登录，主窗口会显示[NovaFlow 账号页面](hallucodex/README.zh.md)；浏览器登录、退出登录和服务器地址设置见该文档。
+Host 就绪后，启动流程显示带工作区的主窗口；在此之前再次启动应用不会显示窗口。此时若 NovaFlow 账号未登录，主窗口会显示[NovaFlow 账号页面](novaflow/README.zh.md)；浏览器登录、退出登录和服务器地址设置见该文档。
 
 桌面麦克风访问仅允许主 `dsh-app://app` 页面发起的音频请求。macOS 使用系统麦克风授权、随包用途说明，以及主应用与 Helper 签名中的 `com.apple.security.device.audio-input` 权限。
 
@@ -60,7 +60,7 @@ electron-builder 只把清单中的 `dependencies` 复制进 `app.asar/node_modu
 
 Windows 签名打包按 PE 文件内容扫描第一方运行时和应用生产依赖，包括没有常规扩展名的文件。最终扫描覆盖整个解包应用。目录链接、格式错误的 `MZ` 文件以及非 PE 的 `.exe`、`.dll` 或 `.pyd` 文件会使打包停止；以 `MZ` 开头的数据文件也会被拒绝，除非包含有效 PE 头。它保留有效的上游签名，并在记录运行时哈希或执行冒烟检查前为未签名代码补签。公钥验签每个进程处理最多 32 个文件，同时最多运行四个进程；硬件令牌签名仍串行执行，每个新签名必须匹配配置的证书且带时间戳。硬件签名或验签失败会停止本轮执行；独立的时间戳请求遵循下文的有界重试规则。electron-builder 只有在验签和逐字节比对通过后，才保留复制后运行时可执行文件的签名。写入发布完成记录前，必须通过最终 PE 签名检查，以及使用全新缓存的 ASAR 载荷和 Host 冒烟检查。开发、仅准备和未签名构建不使用硬件令牌，可能被 Windows 代码完整性策略阻止；任何构建模式都不会关闭该策略。冒烟检查通过不代表兼容所有企业策略。
 
-Desktop 携带独立的 Python、Node.js 和 pnpm 分发包。Python 包含 numpy、pandas、python-docx、python-pptx、openpyxl、Pillow、lxml、XlsxWriter 及其完整依赖。`load_workspace_dependencies` 工具首次使用时，将该产物离线安装到 `$DSH_HOME/dsh-runtimes/dsh-primary-runtime`（打包版默认主目录下为 `~/.hallucodex/dsh-runtimes/dsh-primary-runtime`），并返回解释器、pnpm 脚本和库目录的绝对路径，以及记录内置分发包名称与版本的 `pythonDistributions`。版本报告不包含用户自行安装的包。Office 任务默认使用这些库，用户或工作区指令指定其他环境时遵循其要求。pnpm 脚本通过返回的 Node 可执行文件运行。返回的 Node 库目录为随包交付的库预留，不是 pnpm 的全局安装目录。
+Desktop 携带独立的 Python、Node.js 和 pnpm 分发包。Python 包含 numpy、pandas、python-docx、python-pptx、openpyxl、Pillow、lxml、XlsxWriter 及其完整依赖。`load_workspace_dependencies` 工具首次使用时，将该产物离线安装到 `$DSH_HOME/dsh-runtimes/dsh-primary-runtime`（打包版默认主目录下为 `~/.novaflow/dsh-runtimes/dsh-primary-runtime`），并返回解释器、pnpm 脚本和库目录的绝对路径，以及记录内置分发包名称与版本的 `pythonDistributions`。版本报告不包含用户自行安装的包。Office 任务默认使用这些库，用户或工作区指令指定其他环境时遵循其要求。pnpm 脚本通过返回的 Node 可执行文件运行。返回的 Node 库目录为随包交付的库预留，不是 pnpm 的全局安装目录。
 
 Desktop 展示精简的 `office` 路由及可具名调用的创作／操作子技能。创作使用内置 Python 库；操作技能调用配置的 Node 和 CLI 路径。技能位于 ASAR 外的 `runtime/office-skills`。渐进加载与限制见 [Office 技能包](../../packages/skill/skill-office/README.zh.md)。
 
@@ -172,7 +172,7 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 ### 发布版本
 
-NovaFlow 发布使用独立的版本线。每次发布对应标签 `hallucodex-v<版本>`，其中 `<版本>` 是不含构建元数据的 SemVer 版本，例如 `hallucodex-v0.1.0` 或预发布版本 `hallucodex-v0.1.0-beta.1`。[发布工作流](#upload-updates)把 `<版本>` 作为 `--build-version` 传给打包，该值同时决定产物文件名、更新元数据与已安装应用的版本。清单保留内置 dsh 运行时的产品版本，因此发布不改写任何受版本控制的文件。上游的 `dsh-v*` 标签不会启动桌面端发布。
+NovaFlow 发布使用独立的版本线。每次发布对应标签 `novaflow-v<版本>`，其中 `<版本>` 是不含构建元数据的 SemVer 版本，例如 `novaflow-v0.1.0` 或预发布版本 `novaflow-v0.1.0-beta.1`。[发布工作流](#upload-updates)把 `<版本>` 作为 `--build-version` 传给打包，该值同时决定产物文件名、更新元数据与已安装应用的版本。清单保留内置 dsh 运行时的产品版本，因此发布不改写任何受版本控制的文件。上游的 `dsh-v*` 标签不会启动桌面端发布。
 
 本地测试构建可以传入任意这类版本，也可以使用 `--build-version auto`：它根据本目标本地输出目录中的 NovaFlow 及更早 DeepSeek Harness 产物，按 `<产品版本>.<日期>.<序号>`（稳定产品版本使用 `-test.<日期>.<序号>`）给出下一个版本。run script 会自行透传 `--`，打包入口两种写法都接受：
 
@@ -248,26 +248,26 @@ pwsh -NoProfile -File apps/desktop/scripts/smoke-windows.ps1 -Makensis $Makensis
 
 Windows 安装器在启动时和选定目标目录后检查应用是否正在运行，通过检查后才将新版本解压到安装目录旁边。通过同卷目录改名替换前，安装器会再次检查。运行中的应用会阻止安装；更新启动允许等待应用退出，最长十秒。同路径升级在替换成功前保留旧目录；解压失败时旧版不变，替换失败时尝试恢复旧目录。安装器在启动前清理旧版备份。强制结束安装器或断电可能留下 `.new-*` 或 `.old-*` 目录；不同安装位置或安装范围迁移仍使用 electron-builder 的旧卸载器流程。
 
-解压失败时，安装器会把 7-Zip 的结果和完整错误输出写入更新缓存目录 `%LOCALAPPDATA%\<按包名派生>-updater\installer-logs\extract-failure-<时间戳>.log`（当前为 `hallucodex-updater`），并在弹窗中显示首条错误行和 **复制错误信息** 按钮；静默安装只写入报告。未签名的 Windows 构建（`DSH_DESKTOP_UNSIGNED=1`）会将安装包命名为 `hallucodex-<版本>-win-x64-unsigned.exe`，`latest.yml` 也引用该文件名。
+解压失败时，安装器会把 7-Zip 的结果和完整错误输出写入更新缓存目录 `%LOCALAPPDATA%\<按包名派生>-updater\installer-logs\extract-failure-<时间戳>.log`（当前为 `novaflow-updater`），并在弹窗中显示首条错误行和 **复制错误信息** 按钮；静默安装只写入报告。未签名的 Windows 构建（`DSH_DESKTOP_UNSIGNED=1`）会将安装包命名为 `novaflow-<版本>-win-x64-unsigned.exe`，`latest.yml` 也引用该文件名。
 
 <a id="upload-updates"></a>
 
 ### 发布工作流
 
-推送 `hallucodex-v<版本>` 标签，或以已有标签手动运行[发布工作流](../../.github/workflows/hallucodex-desktop-release.yml)，会为本仓库发布一个 GitHub Release：
+推送 `novaflow-v<版本>` 标签，或以已有标签手动运行[发布工作流](../../.github/workflows/novaflow-desktop-release.yml)，会为本仓库发布一个 GitHub Release：
 
-1. 在仓库根目录的 [CHANGELOG.md](../../CHANGELOG.md) 中添加 `## <版本>` 小节并在打标签前合并。标签不是 `hallucodex-v<SemVer>` 或缺少该小节时，工作流在构建前停止。
-2. 推送标签，例如 `git tag hallucodex-v0.1.0 && git push origin hallucodex-v0.1.0`。
+1. 在仓库根目录的 [CHANGELOG.md](../../CHANGELOG.md) 中添加 `## <版本>` 小节并在打标签前合并。标签不是 `novaflow-v<SemVer>` 或缺少该小节时，工作流在构建前停止。
+2. 推送标签，例如 `git tag novaflow-v0.1.0 && git push origin novaflow-v0.1.0`。
 3. 每个目标由一个任务在 GitHub 托管运行器上以标签版本打包未签名安装包：`windows-2025`（NSIS）、`macos-15`（Apple Silicon 的 DMG 与 ZIP）、`macos-15-intel`（Intel 的 DMG 与 ZIP）和 `ubuntu-24.04`（AppImage 与 deb）。每个任务在上传前用安装包校验自己的更新元数据。
 4. 发布任务合并两个架构的 `latest-mac.yml`，再次校验每个元数据文件，写入 `SHA256SUMS`，并以全部安装包、`latest.yml`、`latest-mac.yml`、`latest-linux.yml`、blockmap 与 `SHA256SUMS` 运行 `gh release create`。版本号含 `-` 时发布为预发布版本。
 
-Release 正文依次为对应的 CHANGELOG 小节、一行 `<!-- hallucodex:install-notes -->`，以及未签名构建的安装说明。应用把该标记之前的文字作为更新日志显示，因此小节内容不得包含该标记。打包从不发布：electron-builder 始终以 `--publish never` 运行，只有发布任务拥有 `contents: write`。安装包通过 electron-builder 为 `github` provider（`AkumaRealLabs/hallucodex-desktop`，发布类型 `release`）嵌入的 `app-update.yml` 读取更新，使用固定的 `latest` 通道文件；GitHub 不会把预发布版本报告为最新发布。
+Release 正文依次为对应的 CHANGELOG 小节、一行 `<!-- novaflow:install-notes -->`，以及未签名构建的安装说明。应用把该标记之前的文字作为更新日志显示，因此小节内容不得包含该标记。打包从不发布：electron-builder 始终以 `--publish never` 运行，只有发布任务拥有 `contents: write`。安装包通过 electron-builder 为 `github` provider（`Prokint/NavaFlow`，发布类型 `release`）嵌入的 `app-update.yml` 读取更新，使用固定的 `latest` 通道文件；GitHub 不会把预发布版本报告为最新发布。
 
 ### 未签名安装包
 
 在具备签名证书前，发布提供以下未签名安装包：
 
-- Windows：`hallucodex-<版本>-win-x64-unsigned.exe` 不带 Authenticode 签名。首次运行时 SmartScreen 会提示，点击“更多信息”再点击“仍要运行”。
+- Windows：`novaflow-<版本>-win-x64-unsigned.exe` 不带 Authenticode 签名。首次运行时 SmartScreen 会提示，点击“更多信息”再点击“仍要运行”。
 - macOS：`--unsigned` 跳过 Developer ID 签名、使用身份的运行时签名和公证，随后对完成的 App 施加 ad-hoc 签名（`codesign --force --deep --sign -`），使其能在 Apple Silicon 上启动。Gatekeeper 会拦截下载 App 的首次启动：按住 Control 点按 App 并选择“打开”（macOS 15 及以上在“系统设置 → 隐私与安全性”中点按“仍要打开”），或执行 `xattr -dr com.apple.quarantine /Applications/NovaFlow.app`。这类 App 无法替换自身，因此更新弹窗会打开 Release 页面。
 - Linux：AppImage 和 deb 不带签名；`latest-linux.yml` 记录它们的 SHA-512。
 
@@ -279,7 +279,7 @@ Release 正文依次为对应的 CHANGELOG 小节、一行 `<!-- hallucodex:inst
 
 签名接入同一个工作流，无需新增工具：
 
-- macOS：把 Developer ID p12（Base64）、其导出密码、签名身份、Team ID 以及一套公证凭据（例如 App Store Connect API Key）存为仓库 secrets。macOS 任务随后把文件解码到 `$RUNNER_TEMP`，通过环境变量传入 `DSH_DESKTOP_MACOS_SIGNING_IDENTITY`、`DSH_DESKTOP_MACOS_TEAM_ID`、`CSC_LINK`、`CSC_KEY_PASSWORD` 以及 `APPLE_API_KEY`、`APPLE_API_KEY_ID`、`APPLE_API_ISSUER`，运行不带 `:unsigned` 的 `package:mac:<arch>`，并从 `artifacts/` 收集产物。签名的 macOS 构建在清单中记录 `hallucodexUpdateMode: install`，应用因此可以原地安装更新。
+- macOS：把 Developer ID p12（Base64）、其导出密码、签名身份、Team ID 以及一套公证凭据（例如 App Store Connect API Key）存为仓库 secrets。macOS 任务随后把文件解码到 `$RUNNER_TEMP`，通过环境变量传入 `DSH_DESKTOP_MACOS_SIGNING_IDENTITY`、`DSH_DESKTOP_MACOS_TEAM_ID`、`CSC_LINK`、`CSC_KEY_PASSWORD` 以及 `APPLE_API_KEY`、`APPLE_API_KEY_ID`、`APPLE_API_ISSUER`，运行不带 `:unsigned` 的 `package:mac:<arch>`，并从 `artifacts/` 收集产物。签名的 macOS 构建在清单中记录 `novaflowUpdateMode: install`，应用因此可以原地安装更新。
 - Windows：签名路径通过 [Windows EV 签名](#windows-ev-signing)所述的硬件 Token 签名，需要挂载该 Token 的自托管 Windows 运行器；云签名服务需要单独接入签名器。
 
 工作流文件标注了这些输入的接入位置。
@@ -318,7 +318,7 @@ Windows 打包使用 Visual C++ Build Tools 和 Windows SDK 编译 x86 Win32/GDI
 
 在有交互式桌面的 Windows x64 上，从仓库根目录运行 `pnpm --dir apps/desktop run test:installer`，可将小型原生测试载荷接入正式安装配置并执行验证。每次运行使用独立产品身份，依次验证仅英文和仅中文的安装器变体，并根据实际显示的欢迎页按钮选择测试文案。两个变体均安装到私有目录并在测试后卸载；截图和结果保留在 `.desktop-build/installer-tests/` 下。检查包含末尾带分隔符的已登记路径升级，以及磁盘根目录拒绝。可选的 `--signed` 标志使用下文的 Windows EV 配置，在嵌入前对测试程序和辅助库签名；它不会启用更新源。
 
-Windows 卸载程序会随应用一起删除 Electron 用户数据目录（以包名命名的 `%APPDATA%\hallucodex`，存放浏览器存储与缓存）、`%APPDATA%` 下的产品目录，以及 `%LOCALAPPDATA%` 下的更新下载缓存。数据主目录（未设置 `DSH_HOME` 时为 `%USERPROFILE%\.hallucodex`：会话、设置、凭据、插件）不会被触碰；以 Windows 环境变量发布的 `DSH_HOME` 还会保护所有与其重叠的目标。静默卸载删除相同的数据；以 `--updated` 或 `/KEEP_APP_DATA` 启动的卸载程序保留数据，electron-builder 在原地更新和从其他目录替换旧安装时正是这样启动它。删除通过原生辅助程序执行：它拒绝受保护的 Windows 目录以及与安装目录或主目录重叠的路径，要求固定的本地驱动器，链接的根目录或祖先目录原样保留，遇到重解析点只解除链接而不进入目标，清除只读属性，并在遇到被占用文件后继续删除其余兄弟项；残余不会中止卸载，也不会提示。安装时在 Windows 卸载注册项上记录 `InstallLocation` 作为标准的清单元数据；在 Windows 11 上，开始菜单右键菜单中的“卸载”对所有 Win32 应用都会打开已安装应用列表，只有 MSIX 包能从那里直接卸载。卸载程序声明 DPI 感知，中文使用微软雅黑 UI。此行为仅适用于 Windows。
+Windows 卸载程序会随应用一起删除 Electron 用户数据目录（以包名命名的 `%APPDATA%\novaflow`，存放浏览器存储与缓存）、`%APPDATA%` 下的产品目录，以及 `%LOCALAPPDATA%` 下的更新下载缓存。数据主目录（未设置 `DSH_HOME` 时为 `%USERPROFILE%\.novaflow`：会话、设置、凭据、插件）不会被触碰；以 Windows 环境变量发布的 `DSH_HOME` 还会保护所有与其重叠的目标。静默卸载删除相同的数据；以 `--updated` 或 `/KEEP_APP_DATA` 启动的卸载程序保留数据，electron-builder 在原地更新和从其他目录替换旧安装时正是这样启动它。删除通过原生辅助程序执行：它拒绝受保护的 Windows 目录以及与安装目录或主目录重叠的路径，要求固定的本地驱动器，链接的根目录或祖先目录原样保留，遇到重解析点只解除链接而不进入目标，清除只读属性，并在遇到被占用文件后继续删除其余兄弟项；残余不会中止卸载，也不会提示。安装时在 Windows 卸载注册项上记录 `InstallLocation` 作为标准的清单元数据；在 Windows 11 上，开始菜单右键菜单中的“卸载”对所有 Win32 应用都会打开已安装应用列表，只有 MSIX 包能从那里直接卸载。卸载程序声明 DPI 感知，中文使用微软雅黑 UI。此行为仅适用于 Windows。
 
 使用 `node apps/desktop/scripts/test-windows-installer.mjs --uninstall-only --compile-only` 以每次运行唯一的带作用域包名编译独立的中英文夹具。省略 `--compile-only` 可对预置数据运行原生删除器回归，以及交互、静默、`--updated`、`/KEEP_APP_DATA` 和 `DSH_HOME` 位于 Electron 数据内的检查。编译本身不能证明已安装卸载行为。
 
@@ -389,13 +389,13 @@ Desktop 依赖 overrides 在补丁策略模块中单独声明，不从补丁版�
 
 每条打包命令都会构建仓库，打包以 dsh 和私有 Desktop Host 为根的第一方生产依赖闭包，并准备目标专用的 Electron 分发包和包含共享 pnpm CLI 的 primary-runtime。`prepare:dsh` 在构建时安装一次生产依赖图，准备物化包供 electron-builder 归档到 `app.asar/dsh`，移除包管理器元数据，并生成包含共享包版本和最终文件哈希的 `desktop-runtime.json`。macOS 签名构建先签名并验证原生文件，再生成清单；electron-builder 不对已签名的此目录重复进行嵌套签名。资源映射明确包含默认根目录过滤器会忽略的 `dsh/node_modules`；准备完成的运行时清单在原生签名后检查。原生可执行文件及库解包到 ASAR 旁；Python、独立 Node 和 pnpm 保留在外部 runtime 资源中。Windows 打包逐项检查准备好的 PE，确认其 ASAR 条目已标记为解包，且磁盘副本字节一致；未签名构建也执行此检查。Builder glob 规则用单字符通配符匹配 PE 文件名中的花括号，因此同目录中名称匹配的文件也可能被解包。准备好的运行时 smoke 沿用已验证的目标描述符，不使用构建宿主的架构。签名安装包、公证、已安装应用升级和各目标原生模块的验收需要发布环境。
 
-electron-builder 只为 DMG 和 ZIP 目标写入 `app-update.yml`，因此 macOS 目录构建会在签名前自行写入同一份 GitHub Releases 配置，每个 macOS 构建都会校验该文件。签名安装包流程从 ZIP 产物流移入 `hallucodex-<version>-mac-<arch>.dmg`、`.zip`、`.zip.blockmap` 和 `latest-mac.yml`；未签名构建的同名文件带有 `-unsigned` 后缀。
+electron-builder 只为 DMG 和 ZIP 目标写入 `app-update.yml`，因此 macOS 目录构建会在签名前自行写入同一份 GitHub Releases 配置，每个 macOS 构建都会校验该文件。签名安装包流程从 ZIP 产物流移入 `novaflow-<version>-mac-<arch>.dmg`、`.zip`、`.zip.blockmap` 和 `latest-mac.yml`；未签名构建的同名文件带有 `-unsigned` 后缀。
 
 未压缩产物包含 Electron、物化后的 dsh 生产依赖树、pnpm，以及壳应用。安装包大小与文件系统占用不同；发布验收需要测量两者，以及 profile 插件存储和首次启动耗时。此布局用更多应用内文件换取消除用户机器上的核心包安装过程。
 
 ## 更新
 
-NovaFlow 从本仓库公开的 GitHub Releases 检查更新，每次提示都会显示更新日志，即对应的 CHANGELOG 小节；未经用户确认不会下载或安装任何内容，也不存在强制更新策略。在 Windows 和 AppImage 中，用户先确认下载，再确认安装与重启。没有 Developer ID 签名的 macOS 构建和 deb 安装无法替换自身，弹窗会显示更新日志并打开 Release 页面；签名的 macOS 构建可以原地安装。[账号模块参考](hallucodex/README.zh.md)负责检查时机与弹窗；以下段落说明共用的更新器机制。
+NovaFlow 从本仓库公开的 GitHub Releases 检查更新，每次提示都会显示更新日志，即对应的 CHANGELOG 小节；未经用户确认不会下载或安装任何内容，也不存在强制更新策略。在 Windows 和 AppImage 中，用户先确认下载，再确认安装与重启。没有 Developer ID 签名的 macOS 构建和 deb 安装无法替换自身，弹窗会显示更新日志并打开 Release 页面；签名的 macOS 构建可以原地安装。[账号模块参考](novaflow/README.zh.md)负责检查时机与弹窗；以下段落说明共用的更新器机制。
 
 Windows 下载完成后的更新确认说明应用会在安装期间关闭、完成后自动打开，并提示期间不要重复启动。安装器携带 `--updated` 启动应用并打开工作区时，壳会将主窗口前置并聚焦一次，不启用永久置顶。普通启动和其他平台不执行此前置步骤。
 
@@ -433,7 +433,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 - 在配置签名证书前，安装包均未签名（见[启用签名](#enabling-signing)）；跨上一版本的已安装升级验证仍需要真实安装。
 - 依赖的生命周期脚本遵循 pnpm 的构建权限；Desktop 不提供单独的审批对话框。
-- 已打包的 Desktop 及其安装的 `dsh` 命令默认把 `DSH_HOME` 设为 `~/.hallucodex`；npm 安装的 dsh 只有使用相同的 `DSH_HOME` 时才与 Desktop 共享会话、设置、凭据、工作区和存储，而可执行包、插件激活和锁文件始终彼此隔离。
+- 已打包的 Desktop 及其安装的 `dsh` 命令默认把 `DSH_HOME` 设为 `~/.novaflow`；npm 安装的 dsh 只有使用相同的 `DSH_HOME` 时才与 Desktop 共享会话、设置、凭据、工作区和存储，而可执行包、插件激活和锁文件始终彼此隔离。
 - 在 Electron win32-arm64 宿主上，未打包启动现在可以成功，但载荷仍为 x64：`packages/skill/tool-workspace-dependencies/src/index.ts` 的架构校验会把载荷记录的架构与宿主 `process.arch` 比较，因此 `load_workspace_dependencies` 工具仍可能拒绝 primary runtime。
 
 仅向应用提供的 `dshOnboarding.hasApiKey()` preload 方法始终返回 `false`，因为模型访问来自 NovaFlow 账号，而不是提供方 API Key。`dshOnboarding.setActive(active)` 在激活期间把主窗口最小宽度从 520 像素提高到 960 像素，并加宽更窄的窗口。只有受管理的应用主 frame 可以调用它们。
@@ -448,7 +448,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 Linux x64 安装包为 AppImage 和 deb。`package:linux:x64`、`package:linux:x64:dir` 和 `check:package:linux:x64` 选择原生 x64 主机及按目标隔离的资源；发布工作流在 `ubuntu-24.04` 上构建它们。Linux arm64 选择器和载荷路径已经提供，但没有记录 arm64 桌面运行时验收。
 
-Linux 通道读取 `.env.linux`（复制[模板](.env.linux.example)），或在设置 `DSH_DESKTOP_PACKAGE_SETTINGS=environment` 时从自身环境读取同一组字段：应用标识、`Name <email>` 形式的公开维护者联系方式和 HTTPS 项目页面。发布工作流使用 `com.hallucodex.desktop`、`AkumaRealLabs <AkumaRealLabs@users.noreply.github.com>` 和本仓库页面。NovaFlow 是产品名称，`hallucodex` 是其包名和可执行文件名。Linux 使用独立的可执行文件、包名和桌面条目；与其他打包平台一样，默认数据目录为 `~/.hallucodex`，显式设置 `DSH_HOME` 仍是操作者覆盖项。与其他平台相同，它不注册 URL scheme。
+Linux 通道读取 `.env.linux`（复制[模板](.env.linux.example)），或在设置 `DSH_DESKTOP_PACKAGE_SETTINGS=environment` 时从自身环境读取同一组字段：应用标识、`Name <email>` 形式的公开维护者联系方式和 HTTPS 项目页面。发布工作流使用 `com.novaflow.desktop`、`Prokint <Prokint@users.noreply.github.com>` 和本仓库页面。NovaFlow 是产品名称，`novaflow` 是其包名和可执行文件名。Linux 使用独立的可执行文件、包名和桌面条目；与其他打包平台一样，默认数据目录为 `~/.novaflow`，显式设置 `DSH_HOME` 仍是操作者覆盖项。与其他平台相同，它不注册 URL scheme。
 
 AppImage 和 deb 启动时不添加禁用沙箱的参数。AppImage 使用应用自有 AppRun，组装后验证其解包字节，且启动器拒绝以 root 运行。应用以普通用户身份运行。主机没有可用 Chromium 沙箱支持时，验收应当失败；不要通过以 root 运行应用或禁用沙箱绕过问题。构建产物时，现有打包冒烟序列检查原生 Node/Python 载荷、可执行位、ASAR 解包库和 Host。
 
@@ -458,7 +458,7 @@ Linux 安装包通过 `latest-linux.yml` 从同一 GitHub Releases 更新源读�
 
 发行验收仍需实际构建 AppImage/deb，在干净目标发行版和用户机器上验证：glibc 基线和系统库、FUSE 与解包启动、X11/Wayland、GPU/字体/对话框、沙箱、安全密钥库及锁定状态、登录回调、任务执行、休眠恢复、N-1 升级、更新中断或磁盘耗尽、篡改和错误签名、数据保留及卸载范围。确定性配置测试和记录的 Linux 桌面条目不能代替这些证据。
 
-独立的 [NovaFlow 账号模块](hallucodex/README.zh.md)说明原生授权、模型路由及剩余集成工作。
+独立的 [NovaFlow 账号模块](novaflow/README.zh.md)说明原生授权、模型路由及剩余集成工作。
 
 若要在没有 deb 发布者元数据时构建本地未签名 AppImage，使用 `pnpm run package:linux:x64:dev`。其显式 `--development-appimage` 模式仅在 `unsigned-artifacts` 中生成 AppImage，为文件名添加 `-dev-unsigned`，且不写入发行记录、更新元数据或 `app-update.yml`。普通 AppImage/deb 打包仍要求完整的 Linux 包元数据。
 

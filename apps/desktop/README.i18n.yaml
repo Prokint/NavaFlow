@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/README.md
 /novaflow-desktop:
-  en: 15bdcfdbf9f2e8b7
-  zh: 3ff90287b545bff7
+  en: e5a6c972e0e687ad
+  zh: 5ff16f4b956a99e8
 /novaflow-desktop/terminal-command:
   en: bef92953c237363f
   zh: d21d6effd21b8c00
@@ -15,8 +15,8 @@
   en: 59144fda73c9c707
   zh: c0249cefeb216ae1
 /novaflow-desktop/key-technical-decisions/bundled-workspace-dependencies:
-  en: 4a3a17fd264eda5e
-  zh: e042db4616ce8a90
+  en: 3da5d5f73ea7c8a4
+  zh: a5e93839a743cb2c
 /novaflow-desktop/bundled-command-runtime:
   en: 09f0b75af9f0ed14
   zh: 60bbc2e67d5e87a8
@@ -36,38 +36,38 @@
   en: 4cd8a8da6977928d
   zh: 9f624855a2edac37
 /novaflow-desktop/package/release-versions:
-  en: 217900c0582022bb
-  zh: 3a904eef87ed9a09
+  en: fad834a16dbbde0b
+  zh: c1bf59635fc0ff5d
 /novaflow-desktop/package/local-official-bundles-from-a-loopback-registry:
   en: 253122e77e5712a1
   zh: d35d043b3f13535f
 /novaflow-desktop/package/runtime-file-selection:
-  en: 46998e85afa6a0ae
-  zh: 2bf9d6f24e11a943
+  en: 8cb7b1711f0ecf41
+  zh: ac4305f34ff02870
 /novaflow-desktop/package/release-workflow:
-  en: 20cc449039c5673a
-  zh: 321414ef6c8d4617
+  en: d462d91528c34949
+  zh: 3d874b30df6c33b2
 /novaflow-desktop/package/unsigned-installers:
-  en: b8251a8be4d6dce3
-  zh: aa8da8f00817d5ae
+  en: ceae9f7d5beda36d
+  zh: 086eefe48a8ccae8
 /novaflow-desktop/package/enabling-signing:
-  en: dc1bd86f7273bd98
-  zh: c9848873c64da463
+  en: f35d896bdf7b42c3
+  zh: 5f5b77f13785fe18
 /novaflow-desktop/package/macos-signing-and-notarization:
   en: aee8197ffe24933d
   zh: 2a7072dc65a1629a
 /novaflow-desktop/package/windows-installer-interface:
-  en: 748755113fed1a76
-  zh: 0bae8f63c97d6ff8
+  en: 7bef7ecdd014ddee
+  zh: 826f6f917ea47070
 /novaflow-desktop/package/windows-ev-signing:
   en: 255df8d556f8f04f
   zh: 41c31176a9d2c2eb
 /novaflow-desktop/package/desktop-runtime-preparation:
-  en: baea65ff45cd3dc4
-  zh: 9595fc52ce13aed3
+  en: 51ece8ec288e51d6
+  zh: e2ab911d9e78d95f
 /novaflow-desktop/updates:
-  en: c8c465c3e8b48b85
-  zh: c9827920a72cf0bc
+  en: 9f60a07e2db20301
+  zh: 68168de74d93e39c
 /novaflow-desktop/updates/local-updater-qualification:
   en: 175659592f726b94
   zh: eb838c58b855b21d
@@ -75,11 +75,11 @@
   en: 0b225f914142ef0b
   zh: 9ffd07768d37824e
 /novaflow-desktop/known-limitations:
-  en: d4125c05c571858e
-  zh: 9413ce7fcd41739b
+  en: 144db018fb9223ee
+  zh: 0701251c3cb33f7f
 /novaflow-desktop/dev-note:
   en: bb7feac673841834
   zh: 1be909404d2814ee
 /novaflow-desktop/linux-packages:
-  en: 6ab7a5014b3a97a6
-  zh: adfbfa2f5cbc78b5
+  en: 7ceed5dac8aa1ded
+  zh: 4d58b6a3cfb81bf0

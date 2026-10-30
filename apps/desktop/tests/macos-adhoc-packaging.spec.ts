@@ -29,7 +29,7 @@ const appPath = (): string => join(root, 'NovaFlow.app')
 function context() {
   return {
     electronPlatformName: 'darwin', appOutDir: root,
-    packager: { getResourcesDir: () => resources, appInfo: { productFilename: 'NovaFlow', updaterCacheDirName: 'hallucodex-updater' } },
+    packager: { getResourcesDir: () => resources, appInfo: { productFilename: 'NovaFlow', updaterCacheDirName: 'novaflow-updater' } },
   }
 }
 
@@ -58,7 +58,7 @@ describe('macOS afterPack', () => {
   })
 
   it('keeps the configuration electron-builder already wrote for DMG and ZIP targets', async () => {
-    const written = 'owner: Prokint\nrepo: NavaFlow\nprovider: github\nreleaseType: release\nupdaterCacheDirName: hallucodex-updater\n'
+    const written = 'owner: Prokint\nrepo: NavaFlow\nprovider: github\nreleaseType: release\nupdaterCacheDirName: novaflow-updater\n'
     await writeFile(join(resources, 'app-update.yml'), written)
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     await createElectronBuilderConfig(UNSIGNED, 'darwin', 'arm64').afterPack(context() as never)

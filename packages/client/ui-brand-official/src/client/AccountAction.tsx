@@ -16,7 +16,7 @@ export interface AccountActionFace {
 }
 
 /** Props of the sidebar account action occupant. */
-export type AccountActionProps = PropsRuntime<'sidebar.footer.action'> & InjectFace<AccountActionFace> & PropsLocale<'hallucodex'>
+export type AccountActionProps = PropsRuntime<'sidebar.footer.action'> & InjectFace<AccountActionFace> & PropsLocale<'novaflow'>
 
 /** Props of the account entry's presentation, independent of the slot runtime. */
 export interface AccountActionViewProps {

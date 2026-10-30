@@ -1,16 +1,17 @@
-import { NovaFlowDesktopRuntime, type NovaFlowDesktopSnapshot } from './hallucodex/runtime.ts'
-import { NewApiSessionTransport, newApiSessionEndpoint, parseNewApiRefreshRecord, readNewApiCatalog, readNewApiWallet } from './hallucodex/new-api.ts'
-import { openNewApiLoginWindow } from './hallucodex/new-api-login.ts'
-import { SafeStorageRefreshStore } from './hallucodex/secure-storage.ts'
-import { startNovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
-import type { NovaFlowLoopbackRelay } from './hallucodex/loopback-relay.ts'
-import { halluCodexAccountCopy } from './hallucodex/locale.ts'
-import { NOVAFLOW_ACCESS_MODE } from './hallucodex/server-default.ts'
-import { ServerOriginSetting } from './hallucodex/server-origin.ts'
-import { ModelCapacitySettings, type ModelCapacityOverride } from './hallucodex/model-capacity.ts'
-import { desktopDeviceName } from './hallucodex/device-name.ts'
-import { checkNovaFlowRelease, fetchNovaFlowReleaseNotes, ReleaseNoticeState } from './hallucodex/release-check.ts'
-import type { NovaFlowHostConfiguration } from '@deepseek-ai/dsh-desktop-host/hallucodex'
+import { NovaFlowDesktopRuntime, type NovaFlowDesktopSnapshot } from './novaflow/runtime.ts'
+import { NewApiSessionTransport, newApiSessionEndpoint, parseNewApiRefreshRecord, readNewApiCatalog, readNewApiWallet } from './novaflow/new-api.ts'
+import { openNewApiLoginWindow } from './novaflow/new-api-login.ts'
+import { SafeStorageRefreshStore } from './novaflow/secure-storage.ts'
+import { startNovaFlowLoopbackRelay } from './novaflow/loopback-relay.ts'
+import type { NovaFlowLoopbackRelay } from './novaflow/loopback-relay.ts'
+import { novaFlowAccountCopy } from './novaflow/locale.ts'
+import { NOVAFLOW_ACCESS_MODE } from './novaflow/server-default.ts'
+import { novaFlowDataFile, resolveNovaFlowDataDirectories } from './brand-compat.ts'
+import { ServerOriginSetting } from './novaflow/server-origin.ts'
+import { ModelCapacitySettings, type ModelCapacityOverride } from './novaflow/model-capacity.ts'
+import { desktopDeviceName } from './novaflow/device-name.ts'
+import { checkNovaFlowRelease, fetchNovaFlowReleaseNotes, ReleaseNoticeState } from './novaflow/release-check.ts'
+import type { NovaFlowHostConfiguration } from '@deepseek-ai/dsh-desktop-host/novaflow'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
@@ -104,7 +105,11 @@ let backendReady = false
 const rendererConsole = new RendererConsoleTail()
 
 // Packaged NovaFlow builds use a separate data home from the upstream CLI.
-if (app.isPackaged) process.env.DSH_HOME ??= join(app.getPath('home'), '.hallucodex')
+if (app.isPackaged) {
+  const data = resolveNovaFlowDataDirectories(app.getPath('home'), app.getPath('appData'))
+  process.env.DSH_HOME ??= data.home
+  if (existsSync(data.userData)) app.setPath('userData', data.userData)
+}
 
 // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
 // set before ready so the first fatal report already resolves under it.
@@ -431,7 +436,7 @@ async function main(): Promise<void> {
     finally { ordinaryDialogs.delete(controller) }
   }
   // Builds the platform cannot replace in place only announce the latest public release and open its page.
-  const releaseNotice = ReleaseNoticeState.load(join(app.getPath('userData'), 'hallucodex-release.json'))
+  const releaseNotice = ReleaseNoticeState.load(novaFlowDataFile(app.getPath('userData'), 'release.json'))
   let releaseCheck: Promise<void> | undefined
   let releaseCheckTimer: ReturnType<typeof setTimeout> | undefined
   const checkForRelease = (manual: boolean): Promise<void> => {
@@ -503,14 +508,14 @@ async function main(): Promise<void> {
     navigation = next
     return next.promise
   }
-  let hallucodexHost: DesktopHostProcess | undefined
+  let novaflowHost: DesktopHostProcess | undefined
   // The relay starts before the account restores, so every published configuration has it.
   const nativeConfiguration = (): NovaFlowHostConfiguration => {
-    const snapshot = hallucodex.getSnapshot()
+    const snapshot = novaflow.getSnapshot()
     const own = modelCapacity.get(snapshot.serverOrigin)
     const models = snapshot.catalogStatus === 'ready' ? snapshot.catalog?.models ?? [] : []
-    return { type: 'hallucodex-config', accessMode: NOVAFLOW_ACCESS_MODE, autoSelectModel: snapshot.accountMode === 'site-session', baseURL: hallucodexRelay.baseURL,
-      localCapability: hallucodexRelay.localCapability, revision: hallucodex.getRelayRevision(),
+    return { type: 'novaflow-config', accessMode: NOVAFLOW_ACCESS_MODE, autoSelectModel: snapshot.accountMode === 'site-session', baseURL: novaflowRelay.baseURL,
+      localCapability: novaflowRelay.localCapability, revision: novaflow.getRelayRevision(),
       models: models.map((model) => {
         const capacity = own.get(model.id)
         return capacity === undefined ? model : {
@@ -520,28 +525,28 @@ async function main(): Promise<void> {
         }
       }) }
   }
-  const server = ServerOriginSetting.load(join(app.getPath('userData'), 'hallucodex-server.json'))
-  const modelCapacity = ModelCapacitySettings.load(join(app.getPath('userData'), 'hallucodex-model-capacity.json'))
+  const server = ServerOriginSetting.load(novaFlowDataFile(app.getPath('userData'), 'server.json'))
+  const modelCapacity = ModelCapacitySettings.load(novaFlowDataFile(app.getPath('userData'), 'model-capacity.json'))
   // The composer's model selector changes a model's capacities through the Host; they apply on this server only.
   const saveModelCapacity = async (model: string, capacity: ModelCapacityOverride): Promise<void> => {
-    const snapshot = hallucodex.getSnapshot()
+    const snapshot = novaflow.getSnapshot()
     if (snapshot.catalogStatus !== 'ready' || snapshot.catalog?.models.some(entry => entry.id === model) !== true) {
-      throw new Error('hallucodex: unknown model')
+      throw new Error('novaflow: unknown model')
     }
     await modelCapacity.set(snapshot.serverOrigin, model, capacity)
-    hallucodexHost?.publishNovaFlow(nativeConfiguration())
+    novaflowHost?.publishNovaFlow(nativeConfiguration())
   }
   // The browser callback finishes sign-in; bring the window back so the user does not have to switch apps.
   let lastAccountStatus: NovaFlowDesktopSnapshot['account']['status'] | undefined
   const newApi = new NewApiSessionTransport(() => server.get())
-  const hallucodex = new NovaFlowDesktopRuntime({
+  const novaflow = new NovaFlowDesktopRuntime({
     server,
     transport: newApi,
     store: new SafeStorageRefreshStore(join(app.getPath('userData'), 'new-api-account'), safeStorage, () => server.get(), process.platform, parseNewApiRefreshRecord),
     accountMode: 'site-session',
     interactiveSignIn: async (origin, signal) => {
       const cookie = await openNewApiLoginWindow(origin, signal, { parent: mainWindow,
-        title: halluCodexAccountCopy(currentDesktopLocale().id).title, timeoutMs: 300_000 })
+        title: novaFlowAccountCopy(currentDesktopLocale().id).title, timeoutMs: 300_000 })
       return newApi.exchangeBrowserSession(cookie, signal, origin)
     },
     readCatalog: (origin, access, signal) => readNewApiCatalog(globalThis.fetch, origin, access, signal,
@@ -552,11 +557,11 @@ async function main(): Promise<void> {
     deviceName: desktopDeviceName(hostname(), process.platform, process.arch),
     openExternal: url => shell.openExternal(url),
     onChange(snapshot) {
-      hallucodexHost?.publishNovaFlow(nativeConfiguration())
+      novaflowHost?.publishNovaFlow(nativeConfiguration())
       const finishedBrowserStep = lastAccountStatus === 'signing-in' && snapshot.account.status !== 'signing-in'
       lastAccountStatus = snapshot.account.status
       if (!mainWindow || mainWindow.isDestroyed()) return
-      mainWindow.webContents.send('hallucodex:changed', snapshot)
+      mainWindow.webContents.send('novaflow:changed', snapshot)
       if (finishedBrowserStep) {
         unminimize(mainWindow)
         mainWindow.show()
@@ -565,63 +570,63 @@ async function main(): Promise<void> {
       }
     },
   })
-  const hallucodexRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: hallucodex,
+  const novaflowRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: novaflow,
     maxRequestBytes: 20 * 1024 * 1024, maxConcurrentRequests: 16, requestTimeoutMs: 30_000 })
-  await hallucodex.restore()
+  await novaflow.restore()
   const closeNovaFlow = async (): Promise<void> => {
-    await hallucodexRelay.close()
-    await hallucodex.dispose()
+    await novaflowRelay.close()
+    await novaflow.dispose()
   }
-  ipcMain.handle('hallucodex:state', (event) => { assertProductSender(event); return hallucodex.getSnapshot() })
-  ipcMain.handle('hallucodex:start', (event) => {
+  ipcMain.handle('novaflow:state', (event) => { assertProductSender(event); return novaflow.getSnapshot() })
+  ipcMain.handle('novaflow:start', (event) => {
     assertProductSender(event)
-    return hallucodex.startSignIn()
+    return novaflow.startSignIn()
   })
-  ipcMain.handle('hallucodex:cancel', (event) => {
+  ipcMain.handle('novaflow:cancel', (event) => {
     assertProductSender(event)
-    return hallucodex.cancelSignIn()
+    return novaflow.cancelSignIn()
   })
-  ipcMain.handle('hallucodex:sign-out', (event) => {
+  ipcMain.handle('novaflow:sign-out', (event) => {
     assertProductSender(event)
-    return hallucodex.signOut()
+    return novaflow.signOut()
   })
-  ipcMain.handle('hallucodex:set-server', (event, origin: unknown) => {
+  ipcMain.handle('novaflow:set-server', (event, origin: unknown) => {
     assertProductSender(event)
-    return hallucodex.setServerOrigin(origin)
+    return novaflow.setServerOrigin(origin)
   })
-  ipcMain.handle('hallucodex:open-page', (event, page: unknown) => {
+  ipcMain.handle('novaflow:open-page', (event, page: unknown) => {
     assertProductSender(event)
     const paths = { wallet: '/wallet', usage: '/usage-logs', devices: '/security' } as const
-    if (page !== 'wallet' && page !== 'usage' && page !== 'devices') throw new Error('hallucodex: invalid account page')
+    if (page !== 'wallet' && page !== 'usage' && page !== 'devices') throw new Error('novaflow: invalid account page')
     return shell.openExternal(`${server.get()}${paths[page]}`)
   })
-  ipcMain.handle('hallucodex:refresh', (event) => {
+  ipcMain.handle('novaflow:refresh', (event) => {
     assertProductSender(event)
-    return hallucodex.refreshAccount()
+    return novaflow.refreshAccount()
   })
-  ipcMain.handle('hallucodex:refresh-catalog', (event) => {
+  ipcMain.handle('novaflow:refresh-catalog', (event) => {
     assertProductSender(event)
-    return hallucodex.refreshCatalog()
+    return novaflow.refreshCatalog()
   })
-  ipcMain.handle('hallucodex:restore', (event) => {
+  ipcMain.handle('novaflow:restore', (event) => {
     assertProductSender(event)
-    return hallucodex.restore()
+    return novaflow.restore()
   })
-  ipcMain.handle('hallucodex:refresh-wallet', (event) => {
+  ipcMain.handle('novaflow:refresh-wallet', (event) => {
     assertProductSender(event)
-    return hallucodex.refreshWallet()
+    return novaflow.refreshWallet()
   })
-  ipcMain.handle('hallucodex:select-group', (event, selection: unknown) => {
+  ipcMain.handle('novaflow:select-group', (event, selection: unknown) => {
     assertProductSender(event)
-    return hallucodex.selectGroup(selection)
+    return novaflow.selectGroup(selection)
   })
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
-      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion(), DSH_HALLUCODEX_DESKTOP: '1', DSH_TELEMETRY_DISABLED: '1' }, onFailure,
+      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion(), DSH_NOVAFLOW_DESKTOP: '1', DSH_TELEMETRY_DISABLED: '1' }, onFailure,
       primaryRuntime,
       resources, nativeConfiguration(), saveModelCapacity)
-    hallucodexHost = host
+    novaflowHost = host
     return {
       start: async () => {
         const ready = await host.start()
@@ -718,7 +723,7 @@ async function main(): Promise<void> {
   }
 
   // The packaged manifest marks a Developer-ID-signed macOS build; Windows and AppImage install in-app regardless.
-  const updateDelivery = desktopUpdateDelivery(process.platform, process.env, packagedManifestField('hallucodexUpdateMode'))
+  const updateDelivery = desktopUpdateDelivery(process.platform, process.env, packagedManifestField('novaflowUpdateMode'))
   const inAppUpdates = updateDelivery === 'install' && app.isPackaged && existsSync(join(process.resourcesPath, 'app-update.yml'))
   // Every check, download and installation is offered to the user; nothing updates without their confirmation.
   const openUpdates = (manual: boolean): Promise<void> => inAppUpdates ? openUpdatePrompt(manual) : checkForRelease(manual)
@@ -994,11 +999,11 @@ async function main(): Promise<void> {
       : { label: currentDesktopLocale().messages.aboutMenu,
         click: () => { void showAbout().catch((error: unknown) => { console.error(error) }) } },
     { type: 'separator' },
-    { label: halluCodexAccountCopy(currentDesktopLocale().id).title, click: () => {
-      mainWindow?.webContents.send('hallucodex:open')
+    { label: novaFlowAccountCopy(currentDesktopLocale().id).title, click: () => {
+      mainWindow?.webContents.send('novaflow:open')
       mainWindow?.show()
     } },
-    { label: halluCodexAccountCopy(currentDesktopLocale().id).modelSettings, click: () => {
+    { label: novaFlowAccountCopy(currentDesktopLocale().id).modelSettings, click: () => {
       mainWindow?.webContents.send('novaflow:open-models')
       mainWindow?.show()
     } },
@@ -1197,8 +1202,8 @@ async function main(): Promise<void> {
     await enterWorkspace()
     // The preload keeps the request until model settings are ready on first use.
     const credentials = await settingsBackend?.read()
-    if (credentials?.hasApiKey === false && hallucodex.getSnapshot().account.status !== 'signed-in') {
-      mainWindow?.webContents.send('hallucodex:open')
+    if (credentials?.hasApiKey === false && novaflow.getSnapshot().account.status !== 'signed-in') {
+      mainWindow?.webContents.send('novaflow:open')
     }
   }
   focusPrimaryWindow = () => {

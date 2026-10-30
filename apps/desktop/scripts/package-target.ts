@@ -200,7 +200,7 @@ export function desktopPackagedApplication(target: DesktopPackageTarget, artifac
   }
   if (target.platform === 'linux') {
     const application = join(artifactsRoot, target.arch === 'arm64' ? 'linux-arm64-unpacked' : 'linux-unpacked')
-    return { application, resources: join(application, 'resources'), executable: join(application, 'hallucodex') }
+    return { application, resources: join(application, 'resources'), executable: join(application, 'novaflow') }
   }
   const application = join(artifactsRoot, target.arch === 'arm64' ? 'mac-arm64' : 'mac', 'NovaFlow.app', 'Contents')
   return { application, resources: join(application, 'Resources'), executable: join(application, 'MacOS', 'NovaFlow') }
@@ -425,7 +425,7 @@ async function main(): Promise<void> {
   }
   if (success && target.platform === 'darwin' && !invocation.directory && !invocation.prepareOnly) {
     const paths = desktopTargetBuildPaths(target.name)
-    const filename = `hallucodex-${buildVersion}-mac-${target.arch}${invocation.unsigned ? '-unsigned' : ''}.dmg`
+    const filename = `novaflow-${buildVersion}-mac-${target.arch}${invocation.unsigned ? '-unsigned' : ''}.dmg`
     console.log(`DMG: ${join(invocation.unsigned ? paths.unsignedArtifacts : paths.artifacts, filename)}`)
   }
 }

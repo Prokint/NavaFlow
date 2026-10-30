@@ -22,10 +22,10 @@ describe('desktop build version', () => {
     })
 
   it('validates a build version passed through the environment', () => {
-    expect(() => resolveDesktopBuildVersion({ [DESKTOP_BUILD_VERSION_ENV]: 'hallucodex-v0.1.0' }, STABLE)).toThrow(/is not a version/u)
+    expect(() => resolveDesktopBuildVersion({ [DESKTOP_BUILD_VERSION_ENV]: 'novaflow-v0.1.0' }, STABLE)).toThrow(/is not a version/u)
   })
 
-  it.each(['', 'nightly', '0.1.6-alpha.2.', '0.1', '01.2.3', 'hallucodex-v0.1.0'])(
+  it.each(['', 'nightly', '0.1.6-alpha.2.', '0.1', '01.2.3', 'novaflow-v0.1.0'])(
     'rejects %j as a version', (buildVersion) => {
       expect(() => validateDesktopBuildVersion(buildVersion)).toThrow(/is not a version/u)
     })

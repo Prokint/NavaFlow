@@ -1,7 +1,7 @@
 /**
  * Render the Linux application icon set from `resources/icon-windows.svg`, the same rounded logo tile as Windows.
  *
- * Desktop environments resolve the desktop entry's `Icon=hallucodex` through
+ * Desktop environments resolve the desktop entry's `Icon=novaflow` through
  * the hicolor theme, which searches only the sizes its index lists; a single
  * oversized bitmap lands in an unlisted directory and menus show a generic icon.
  * electron-builder installs each `<edge>x<edge>.png` of the output directory

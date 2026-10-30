@@ -102,18 +102,18 @@ export function createElectronBuilderConfig(
     extraMetadata: {
       dshDesktopAppId: appId,
       // The package name selects Electron's userData directory, separate from DeepSeek Harness.
-      name: 'hallucodex',
-      ...(packagesLinux ? { desktopName: 'hallucodex.desktop',
+      name: 'novaflow',
+      ...(packagesLinux ? { desktopName: 'novaflow.desktop',
         ...(developmentAppImage ? { dshDevelopmentArtifact: true } : { homepage: linuxSettings.homepage }) } : {}),
       ...buildVersion === productVersion ? {} : { version: buildVersion },
       ...packaged === undefined ? {} : { dshBuildCommit: packaged.commit, dshBuildDirty: packaged.dirty },
       // Only a Developer ID signed and notarized macOS application can install an update in place;
       // without this field the application shows the release notes and opens the release page.
-      ...signsMacOS ? { hallucodexUpdateMode: 'install' } : {},
+      ...signsMacOS ? { novaflowUpdateMode: 'install' } : {},
     },
     productName: 'NovaFlow',
     // Unsigned builds carry their own suffix so a shared file can never pass for a release artifact.
-    artifactName: `hallucodex-\${version}-\${os}-\${arch}${developmentAppImage ? '-dev-unsigned' : unsigned ? '-unsigned' : ''}.\${ext}`,
+    artifactName: `novaflow-\${version}-\${os}-\${arch}${developmentAppImage ? '-dev-unsigned' : unsigned ? '-unsigned' : ''}.\${ext}`,
     directories: { output: unsigned || developmentAppImage ? buildPaths.unsignedArtifacts : buildPaths.artifacts },
     asar: true,
     electronDist: buildPaths.electron,
@@ -240,7 +240,7 @@ export function createElectronBuilderConfig(
       target: ['nsis'],
     },
     linux: {
-      executableName: 'hallucodex',
+      executableName: 'novaflow',
       syncDesktopName: true,
       // One bitmap per hicolor size; a lone oversized PNG lands in a directory desktop environments never search.
       icon: fileURLToPath(new URL('../resources/linux-icons', import.meta.url)),
@@ -249,11 +249,11 @@ export function createElectronBuilderConfig(
       maintainer: linuxSettings?.maintainer,
       target: developmentAppImage ? ['AppImage'] : ['AppImage', 'deb'],
       executableArgs: [],
-      desktop: { entry: { Name: 'NovaFlow', StartupWMClass: 'hallucodex' } },
+      desktop: { entry: { Name: 'NovaFlow', StartupWMClass: 'novaflow' } },
     },
     // The pinned builder otherwise inserts a sandbox-disabling AppImage argument.
     appImage: { executableArgs: [] },
-    deb: { packageName: 'hallucodex', executableArgs: [] },
+    deb: { packageName: 'novaflow', executableArgs: [] },
     nsis: {
       installerSidebar: join(buildPaths.root, 'installer-ui', 'uninstaller-sidebar.bmp'),
       uninstallerSidebar: join(buildPaths.root, 'installer-ui', 'uninstaller-sidebar.bmp'),

@@ -8,7 +8,7 @@ import { AccountAction, AccountActionView, type AccountActionProps } from '../sr
 import { ACCOUNT_PANEL_ID, AccountPage, AccountPageView, type AccountPageProps } from '../src/client/AccountPage.tsx'
 import { readDesktopAccountBridge, type DesktopAccountState } from '../src/client/bridge.ts'
 import { NovaFlowMark, NovaFlowName } from '../src/client/Brand.tsx'
-import { HALLUCODEX_MARK_IMAGE } from '../src/client/mark-image.ts'
+import { NOVAFLOW_MARK_IMAGE } from '../src/client/mark-image.ts'
 import { en, NS, zh } from '../src/client/locales.ts'
 import { apply as hostApply } from '../src/index.ts'
 
@@ -196,7 +196,7 @@ describe('NovaFlow browser-brand plugin', () => {
     expect(head.isConnected && content.isConnected).toBe(true)
     expect(head.closest('header')?.hasAttribute('data-window-drag')).toBe(true)
     expect(content.closest('header')).toBeNull()
-    expect(view.container.querySelector('header img')?.getAttribute('src')).toBe(HALLUCODEX_MARK_IMAGE)
+    expect(view.container.querySelector('header img')?.getAttribute('src')).toBe(NOVAFLOW_MARK_IMAGE)
     view.unmount()
     expect(account.unmount).toHaveBeenCalledOnce()
 
@@ -227,7 +227,7 @@ describe('NovaFlow browser-brand plugin', () => {
     const svg = mark.container.querySelector('svg')
     expect(svg?.getAttribute('width')).toBe('34')
     expect(svg?.getAttribute('class')).toBe('hero')
-    expect(svg?.querySelector('image')?.getAttribute('href')).toBe(HALLUCODEX_MARK_IMAGE)
+    expect(svg?.querySelector('image')?.getAttribute('href')).toBe(NOVAFLOW_MARK_IMAGE)
     mark.rerender(<NovaFlowMark size={24} />)
     expect(mark.container.querySelector('svg')?.getAttribute('width')).toBe('24')
   })

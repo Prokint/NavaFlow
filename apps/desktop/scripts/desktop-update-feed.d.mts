@@ -1,8 +1,8 @@
 /** electron-builder publish entry for this repository's GitHub Releases. */
 export const DESKTOP_UPDATE_PUBLISH: {
   readonly provider: 'github'
-  readonly owner: 'AkumaRealLabs'
-  readonly repo: 'hallucodex-desktop'
+  readonly owner: 'Prokint'
+  readonly repo: 'NavaFlow'
   readonly releaseType: 'release'
 }
 

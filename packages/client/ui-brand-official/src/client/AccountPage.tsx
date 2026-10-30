@@ -2,11 +2,11 @@ import { useEffect, useRef } from 'react'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { DesktopAccountBridge } from './bridge.ts'
-import { HALLUCODEX_MARK_IMAGE } from './mark-image.ts'
+import { NOVAFLOW_MARK_IMAGE } from './mark-image.ts'
 import css from './AccountPage.module.css'
 
 /** Main panel key of the desktop account page; the sidebar account entry and the shell's open requests select it. */
-export const ACCOUNT_PANEL_ID = 'hallucodex-account' as MainPanelId
+export const ACCOUNT_PANEL_ID = 'novaflow-account' as MainPanelId
 
 /** Injected face of the account page. */
 export interface AccountPageFace {
@@ -38,7 +38,7 @@ export function AccountPageView({ bridge }: { bridge: DesktopAccountBridge }) {
   return (
     <div className={css.page}>
       <header className={css.pageHead} data-window-drag>
-        <img className={css.mark} src={HALLUCODEX_MARK_IMAGE} width={24} height={24} alt="" />
+        <img className={css.mark} src={NOVAFLOW_MARK_IMAGE} width={24} height={24} alt="" />
         <div ref={head} className={css.headHost} />
       </header>
       <div ref={content} className={css.content} />

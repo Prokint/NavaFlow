@@ -154,7 +154,7 @@ describe('CI workflow', () => {
   })
 
   it('does not cancel a desktop release once it starts publishing', () => {
-    expect(loadWorkflow('.github/workflows/hallucodex-desktop-release.yml').concurrency).toMatchObject({ 'cancel-in-progress': false })
+    expect(loadWorkflow('.github/workflows/novaflow-desktop-release.yml').concurrency).toMatchObject({ 'cancel-in-progress': false })
   })
 
   it('skips coverage-history uploads on cancellation but retains Wine cleanup', () => {
@@ -953,7 +953,7 @@ describe('DeepSeek e2e workflow', () => {
     const workflow = loadWorkflow('.github/workflows/ci-master.yml')
     for (const name of ['serial-linux-selfhosted', 'serial-windows']) {
       const job = workflowJob(workflow, name)
-      for (const repository of ['AkumaRealLabs/hallucodex-desktop', 'deepseek-harness/deepseek-harness']) {
+      for (const repository of ['Prokint/NavaFlow', 'deepseek-harness/deepseek-harness']) {
         const enabled: unknown = runInNewContext(String(job.if), {
           github: { repository, event_name: 'push', ref: 'refs/heads/master' },
         }, { timeout: 1000 })
@@ -1174,7 +1174,7 @@ describe('npm release workflows', () => {
 })
 
 describe('NovaFlow desktop release workflow', () => {
-  const workflow = loadWorkflow('.github/workflows/hallucodex-desktop-release.yml')
+  const workflow = loadWorkflow('.github/workflows/novaflow-desktop-release.yml')
   const steps = (name: string): Record<string, unknown>[] => {
     const job = workflowJob(workflow, name)
     if (!Array.isArray(job.steps)) throw new TypeError(`${name} must define steps`)
@@ -1182,10 +1182,10 @@ describe('NovaFlow desktop release workflow', () => {
   }
   const runs = (name: string): string => steps(name).map(step => typeof step.run === 'string' ? step.run : '').join('\n')
 
-  it('runs only for hallucodex-v tags or a manual tag, never for upstream dsh-v tags', () => {
+  it('runs only for novaflow-v tags or a manual tag, never for upstream dsh-v tags', () => {
     expect(Object.keys(workflow.on as Record<string, unknown>)).toEqual(['push', 'workflow_dispatch'])
     expect(workflow.on).toMatchObject({
-      push: { tags: ['hallucodex-v*'] },
+      push: { tags: ['novaflow-v*'] },
       workflow_dispatch: { inputs: { tag: { required: true, type: 'string' } } },
     })
     expect(JSON.stringify(workflow.on)).not.toContain('dsh-v')
@@ -1213,8 +1213,8 @@ describe('NovaFlow desktop release workflow', () => {
     expect(job.env).toMatchObject({
       VERSION: '${{ needs.prepare.outputs.version }}',
       DSH_DESKTOP_PACKAGE_SETTINGS: 'environment',
-      DSH_DESKTOP_APP_ID: 'com.hallucodex.desktop',
-      DSH_DESKTOP_LINUX_HOMEPAGE: 'https://github.com/AkumaRealLabs/hallucodex-desktop',
+      DSH_DESKTOP_APP_ID: 'com.novaflow.desktop',
+      DSH_DESKTOP_LINUX_HOMEPAGE: 'https://github.com/Prokint/NavaFlow',
     })
     expect(runs('package')).toContain('pnpm --dir apps/desktop run "${{ matrix.command }}" --build-version "$VERSION"')
     expect(runs('package')).toContain('pnpm install --frozen-lockfile')

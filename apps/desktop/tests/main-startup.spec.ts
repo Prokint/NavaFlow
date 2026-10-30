@@ -14,23 +14,23 @@ import { writeCrashReport } from '../src/crash-report.ts'
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } }
 type InvokeHandler = (event: InvokeEvent, ...args: unknown[]) => unknown
 
-const hallucodexTest = vi.hoisted(() => ({
+const novaflowTest = vi.hoisted(() => ({
   snapshot: { account: { status: 'signed-out' as const }, catalogStatus: 'unavailable' as const },
   restore: vi.fn(async () => {}), dispose: vi.fn(async () => {}), closeRelay: vi.fn(async () => {}),
   refreshAccount: vi.fn(async () => {}), refreshCatalog: vi.fn(async () => {}), refreshWallet: vi.fn(async () => {}),
 }))
-vi.mock('../src/hallucodex/runtime.ts', () => ({ NovaFlowDesktopRuntime: class {
-  getSnapshot() { return hallucodexTest.snapshot }
+vi.mock('../src/novaflow/runtime.ts', () => ({ NovaFlowDesktopRuntime: class {
+  getSnapshot() { return novaflowTest.snapshot }
   getRelayRevision() { return 1 }
-  readonly restore = hallucodexTest.restore
-  readonly dispose = hallucodexTest.dispose
-  readonly refreshAccount = hallucodexTest.refreshAccount
-  readonly refreshCatalog = hallucodexTest.refreshCatalog
-  readonly refreshWallet = hallucodexTest.refreshWallet
+  readonly restore = novaflowTest.restore
+  readonly dispose = novaflowTest.dispose
+  readonly refreshAccount = novaflowTest.refreshAccount
+  readonly refreshCatalog = novaflowTest.refreshCatalog
+  readonly refreshWallet = novaflowTest.refreshWallet
 } }))
-vi.mock('../src/hallucodex/secure-storage.ts', () => ({ SafeStorageRefreshStore: vi.fn() }))
-vi.mock('../src/hallucodex/loopback-relay.ts', () => ({ startNovaFlowLoopbackRelay: async () => ({
-  baseURL: 'http://127.0.0.1:43210', localCapability: 't'.repeat(43), close: hallucodexTest.closeRelay,
+vi.mock('../src/novaflow/secure-storage.ts', () => ({ SafeStorageRefreshStore: vi.fn() }))
+vi.mock('../src/novaflow/loopback-relay.ts', () => ({ startNovaFlowLoopbackRelay: async () => ({
+  baseURL: 'http://127.0.0.1:43210', localCapability: 't'.repeat(43), close: novaflowTest.closeRelay,
 }) }))
 
 vi.mock('../src/web-document.ts', () => ({ authenticateWebHost: async () => 'test-cookie', serveWebDocument: vi.fn(), forwardWebRequest: vi.fn() }))
@@ -168,6 +168,7 @@ const harness = await vi.hoisted(async () => {
     getVersion: () => '1.0.0',
     getAppPath: (): string => 'desktop-test-app',
     setAppLogsPath: vi.fn(),
+    setPath: vi.fn(),
     getPath: vi.fn<(name: string) => string>(),
     setAboutPanelOptions: vi.fn<(options: Electron.AboutPanelOptionsOptions) => void>(),
     requestSingleInstanceLock: () => true,
@@ -719,7 +720,8 @@ describe('desktop main startup', () => {
     const application = handler(event, 'application', 48, 34)
     // Linux installs no dsh command, so it offers no command management.
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 NovaFlow', 'separator', 'NovaFlow 账号', '检查更新…', ...platform === 'win32' ? ['管理 dsh 命令…'] : [], 'separator', '退出',
+      '关于 NovaFlow', 'separator', 'NovaFlow 账号', '模型与 API Key', '检查更新…',
+      ...platform === 'win32' ? ['管理 dsh 命令…'] : [], 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -754,7 +756,8 @@ describe('desktop main startup', () => {
     expect(template.map(describeItem)).toEqual(['Desktop test', en.fileMenu, 'editMenu', 'windowMenu'])
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(
-      ['about', 'separator', 'NovaFlow account', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit'])
+      ['about', 'separator', 'NovaFlow account', 'Models & API Key', en.checkUpdatesMenu, en.cliCommandMenu,
+        'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
 
@@ -908,7 +911,7 @@ describe('desktop main startup', () => {
 
   /** Give the packaged build an in-app update source, as a Windows or AppImage release carries. */
   function withInAppUpdateSource(): void {
-    const resources = mkdtempSync(join(tmpdir(), 'hallucodex-update-source-'))
+    const resources = mkdtempSync(join(tmpdir(), 'novaflow-update-source-'))
     writeFileSync(join(resources, 'app-update.yml'), 'provider: github\nowner: Prokint\nrepo: NavaFlow\n')
     onTestFinished(() => { rmSync(resources, { recursive: true, force: true }) })
     vi.stubGlobal('process', { ...process, resourcesPath: resources })
@@ -934,7 +937,7 @@ describe('desktop main startup', () => {
     harness.hosts[0]!.ready.resolve()
     await harness.navigated.promise
     await Promise.resolve(invoke(DESKTOP_IPC.boot))
-    await vi.waitFor(() => { expect(window.webContents.send).toHaveBeenCalledWith('hallucodex:open') })
+    await vi.waitFor(() => { expect(window.webContents.send).toHaveBeenCalledWith('novaflow:open') })
   })
 
   it('keeps Linux data separate and starts the NovaFlow runtime', async () => {
@@ -943,23 +946,23 @@ describe('desktop main startup', () => {
     const request = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', request)
     await readyForUpdate()
-    expect(process.env.DSH_HOME).toBe(join(harness.app.getPath('home'), '.hallucodex'))
+    expect(process.env.DSH_HOME).toBe(join(harness.app.getPath('home'), '.novaflow'))
     expect(request).not.toHaveBeenCalled()
     expect(harness.app.setAsDefaultProtocolClient).not.toHaveBeenCalled()
-    expect(hallucodexTest.restore).toHaveBeenCalledOnce()
+    expect(novaflowTest.restore).toHaveBeenCalledOnce()
     const locale = await Promise.resolve(invoke(DESKTOP_IPC.localeBootstrap, 'app'))
     expect(locale).toMatchObject({ languages: ['en-US'] })
-    expect(await Promise.resolve(invoke('hallucodex:state', 'app'))).toEqual(hallucodexTest.snapshot)
+    expect(await Promise.resolve(invoke('novaflow:state', 'app'))).toEqual(novaflowTest.snapshot)
     const window = harness.windows[0]!
-    expect(() => harness.handlers.get('hallucodex:state')!({ sender: {}, senderFrame: window.webContents.mainFrame })).toThrow()
-    for (const channel of ['hallucodex:refresh', 'hallucodex:refresh-catalog', 'hallucodex:refresh-wallet', 'hallucodex:restore']) {
+    expect(() => harness.handlers.get('novaflow:state')!({ sender: {}, senderFrame: window.webContents.mainFrame })).toThrow()
+    for (const channel of ['novaflow:refresh', 'novaflow:refresh-catalog', 'novaflow:refresh-wallet', 'novaflow:restore']) {
       expect(() => harness.handlers.get(channel)!({ sender: {}, senderFrame: window.webContents.mainFrame })).toThrow()
       await Promise.resolve(invoke(channel, 'app'))
     }
-    expect(hallucodexTest.refreshAccount).toHaveBeenCalledOnce()
-    expect(hallucodexTest.refreshCatalog).toHaveBeenCalledOnce()
-    expect(hallucodexTest.refreshWallet).toHaveBeenCalledOnce()
-    expect(hallucodexTest.restore).toHaveBeenCalledTimes(2)
+    expect(novaflowTest.refreshAccount).toHaveBeenCalledOnce()
+    expect(novaflowTest.refreshCatalog).toHaveBeenCalledOnce()
+    expect(novaflowTest.refreshWallet).toHaveBeenCalledOnce()
+    expect(novaflowTest.restore).toHaveBeenCalledTimes(2)
   })
 
   it.each([
@@ -1212,7 +1215,7 @@ describe('desktop main startup', () => {
     await vi.waitFor(() => { expect(harness.windows[2]?.show).toHaveBeenCalledOnce() })
     expect(harness.dialog.showMessageBox).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ detail: en.quitScheduledTasks }))
     expect(harness.windows[2]!.urls).toEqual(['dsh-app://app/'])
-    expect(harness.windows[2]!.webContents.send).toHaveBeenCalledWith('hallucodex:open')
+    expect(harness.windows[2]!.webContents.send).toHaveBeenCalledWith('novaflow:open')
     expect(host.stop).not.toHaveBeenCalled()
     host.inspectQuit.mockResolvedValue({ activeTasks: false, scheduledTasks: false })
   })
@@ -1356,9 +1359,9 @@ describe('desktop main startup', () => {
     const fetchRelease = harness.netFetch
     await readyForUpdate()
     const check = applicationMenuItems().find(item => item.label === en.checkUpdatesMenu)?.click as () => void
-    const page = 'https://github.com/Prokint/NavaFlow/releases/tag/hallucodex-v99.0.0'
-    fetchRelease.mockResolvedValueOnce(Response.json({ tag_name: 'hallucodex-v99.0.0', html_url: page,
-      body: '## 99.0.0\n- 新功能\n<!-- hallucodex:install-notes -->\n安装说明' }))
+    const page = 'https://github.com/Prokint/NavaFlow/releases/tag/novaflow-v99.0.0'
+    fetchRelease.mockResolvedValueOnce(Response.json({ tag_name: 'novaflow-v99.0.0', html_url: page,
+      body: '## 99.0.0\n- 新功能\n<!-- novaflow:install-notes -->\n安装说明' }))
     harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 0 })
     check()
     await vi.waitFor(() => { expect(harness.openExternal).toHaveBeenCalledWith(page) })
@@ -1434,11 +1437,11 @@ describe('desktop main startup', () => {
     await readyForUpdate()
     harness.updateState = { phase: 'available', version: '1.0.1' }
     harness.netFetch.mockResolvedValueOnce(Response.json({
-      tag_name: 'hallucodex-v1.0.1', html_url: 'https://github.com/Prokint/NavaFlow/releases/tag/hallucodex-v1.0.1',
-      body: '## 1.0.1\n- **修复**登录问题\n<!-- hallucodex:install-notes -->\n安装说明' }))
+      tag_name: 'novaflow-v1.0.1', html_url: 'https://github.com/Prokint/NavaFlow/releases/tag/novaflow-v1.0.1',
+      body: '## 1.0.1\n- **修复**登录问题\n<!-- novaflow:install-notes -->\n安装说明' }))
     harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 1 })
     await invoke(DESKTOP_IPC.updatesOpen, 'app')
-    expect(harness.netFetch).toHaveBeenCalledWith('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/hallucodex-v1.0.1', expect.anything())
+    expect(harness.netFetch).toHaveBeenCalledWith('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/novaflow-v1.0.1', expect.anything())
     expect(harness.dialog.showMessageBox.mock.calls.at(-1)?.at(-1)).toMatchObject({ releaseNotes: '1.0.1\n• 修复登录问题' })
     expect(harness.updateDownload).not.toHaveBeenCalled()
   })

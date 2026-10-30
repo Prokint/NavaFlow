@@ -83,11 +83,11 @@ describe('desktop build version discovery', () => {
 
 it('numbers NovaFlow artifacts from every platform in the local output directory', async () => {
   const artifactsRoot = await artifactsWith([
-    `hallucodex-${PRERELEASE}.${DATE}.2-linux-x64.AppImage`,
-    `hallucodex-${PRERELEASE}.${DATE}.3-linux-amd64.deb`,
-    `hallucodex-${PRERELEASE}.${DATE}.4-linux-x86_64-dev-unsigned.AppImage`,
-    `hallucodex-${PRERELEASE}.${DATE}.5-mac-arm64.dmg`,
-    `hallucodex-${PRERELEASE}.${DATE}.6-win-x64.exe`,
+    `novaflow-${PRERELEASE}.${DATE}.2-linux-x64.AppImage`,
+    `novaflow-${PRERELEASE}.${DATE}.3-linux-amd64.deb`,
+    `novaflow-${PRERELEASE}.${DATE}.4-linux-x86_64-dev-unsigned.AppImage`,
+    `novaflow-${PRERELEASE}.${DATE}.5-mac-arm64.dmg`,
+    `novaflow-${PRERELEASE}.${DATE}.6-win-x64.exe`,
   ])
   await expect(suggestDesktopBuildVersion({ productVersion: PRERELEASE, date: DATE, artifactsRoot }))
     .resolves.toBe(`${PRERELEASE}.${DATE}.7`)

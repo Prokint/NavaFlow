@@ -37,7 +37,7 @@ for (const platform of ['windows', 'macos']) {
 }
 const client = await sharp(Buffer.from(platformSvg('windows'))).resize(128, 128).webp({ lossless: true }).toBuffer()
 await writeFile(new URL('packages/client/ui-brand-official/src/client/mark-image.ts', root),
-  `/** NovaFlow black-and-gray symbol on a white backplate, encoded as a lossless 128-pixel WebP. */\nexport const HALLUCODEX_MARK_IMAGE = 'data:image/webp;base64,${client.toString('base64')}'\n`)
+  `/** NovaFlow black-and-gray symbol on a white backplate, encoded as a lossless 128-pixel WebP. */\nexport const NOVAFLOW_MARK_IMAGE = 'data:image/webp;base64,${client.toString('base64')}'\n`)
 await writeFile(new URL('apps/web/public/favicon.svg', root), platformSvg('windows'))
 for (const dark of [false, true]) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="196"><rect width="600" height="196" fill="${dark ? '#17191d' : '#ffffff'}"/><rect x="32" y="34" width="128" height="128" rx="28" fill="white"/><image x="44" y="46" width="104" height="104" href="${embedded}"/><text x="188" y="116" font-family="Arial, sans-serif" font-size="49" font-weight="600" letter-spacing="-1.2" fill="${dark ? 'white' : '#141517'}">NovaFlow</text></svg>`

@@ -36,7 +36,7 @@ async function sha256(path) {
  * @returns {Promise<string[]>} Collected asset names, sorted, ending with `SHA256SUMS`.
  */
 export async function collectDesktopReleaseAssets({ version, inputs, output }) {
-  const installer = new RegExp(`^hallucodex-${escape(version)}-(?:win|mac|linux)-[^/\\\\]+\\.(?:exe|dmg|zip|AppImage|deb)(?:\\.blockmap)?$`, 'u')
+  const installer = new RegExp(`^novaflow-${escape(version)}-(?:win|mac|linux)-[^/\\\\]+\\.(?:exe|dmg|zip|AppImage|deb)(?:\\.blockmap)?$`, 'u')
   await mkdir(output, { recursive: true })
   if ((await readdir(output)).length > 0) throw new Error(`desktop release: output directory ${output} is not empty`)
   const metadata = new Map()

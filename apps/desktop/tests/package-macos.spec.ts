@@ -31,10 +31,10 @@ async function fixture(arch: 'arm64' | 'x64' = 'arm64') {
   const artifactsRoot = join(root, 'artifacts')
   const appPath = join(artifactsRoot, arch === 'arm64' ? 'mac-arm64' : 'mac', 'NovaFlow.app')
   await mkdir(join(appPath, 'Contents', 'Resources'), { recursive: true })
-  await writeDesktopAppUpdateConfig(join(appPath, 'Contents', 'Resources'), 'hallucodex-updater')
+  await writeDesktopAppUpdateConfig(join(appPath, 'Contents', 'Resources'), 'novaflow-updater')
   await writeFile(join(appPath, 'payload'), 'signed content')
   const version = '1.2.3-alpha.1'
-  const base = `hallucodex-${version}-mac-${arch}`
+  const base = `novaflow-${version}-mac-${arch}`
   const request = { arch, artifactsRoot, version, environment }
   const apple: MacOSArtifactOperations = {
     copyApp: async (source, destination) => {
@@ -163,7 +163,7 @@ describe('parallel macOS artifacts', () => {
     try {
       await packageMacOSArtifacts(f.request, f.build, f.apple)
       expect((await readdir(f.request.artifactsRoot)).sort())
-        .toEqual([`${f.base}.dmg`, `${f.base}.zip`, `${f.base}.zip.blockmap`, 'latest-mac.yml', 'mac-arm64'])
+        .toEqual(['latest-mac.yml', 'mac-arm64', `${f.base}.dmg`, `${f.base}.zip`, `${f.base}.zip.blockmap`])
       expect(await readFile(join(f.appPath, 'Contents', 'Resources', 'app-update.yml'), 'utf8')).toContain('provider: github')
       expect(f.apple.verifySignature).toHaveBeenCalledTimes(4)
       expect(f.apple.verifyNotarization).toHaveBeenCalledOnce()

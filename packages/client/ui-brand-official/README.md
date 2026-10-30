@@ -29,7 +29,7 @@ Mount this plugin in the browser roster. The brand occupants register in every b
 
 ### The desktop account entry
 
-The NovaFlow preload exposes `window.dshNovaFlow` with exactly three operations: `subscribe`, which delivers a credential-free summary (`signed-out`, `signing-in`, or `signed-in` with a display name); `onOpen`, which delivers the shell's requests to show the account page from the application menu or a workspace that opens signed out; and `mount`, which renders the native account page into the page frame's head and content hosts and returns its unmount. The page is the `hallucodex-account` main panel: a fixed-height frame whose head row drags the macOS window and shows the NovaFlow mark beside the shell-rendered title, with the shell content filling the rest. The entry renders in the `sidebar.footer.action` slot, mirrors the Settings trigger, selects the page, stays marked while it is shown, and collapses to an avatar or icon in the rail. The Web client has no bridge, so it shows neither.
+The NovaFlow preload exposes `window.dshNovaFlow` with exactly three operations: `subscribe`, which delivers a credential-free summary (`signed-out`, `signing-in`, or `signed-in` with a display name); `onOpen`, which delivers the shell's requests to show the account page from the application menu or a workspace that opens signed out; and `mount`, which renders the native account page into the page frame's head and content hosts and returns its unmount. The page is the `novaflow-account` main panel: a fixed-height frame whose head row drags the macOS window and shows the NovaFlow mark beside the shell-rendered title, with the shell content filling the rest. The entry renders in the `sidebar.footer.action` slot, mirrors the Settings trigger, selects the page, stays marked while it is shown, and collapses to an avatar or icon in the rail. The Web client has no bridge, so it shows neither.
 
 ### Replacing the brand
 
@@ -56,7 +56,7 @@ Read these pages when the brand surface is not enough. They move from the slots 
 
 - [ui-sidebar](../ui-sidebar/README.md) — declares `sidebar.brand.mark`, `sidebar.brand.name` and `sidebar.footer.action` and renders the brand fallbacks.
 - [ui-conversation](../ui-conversation/README.md) — declares `conversation.hero.brand.mark` in the hero.
-- [Desktop app](../../../apps/desktop/hallucodex/README.md) — the account page and the preload bridge behind the account entry.
+- [Desktop app](../../../apps/desktop/novaflow/README.md) — the account page and the preload bridge behind the account entry.
 - [Web client architecture](../../../docs/subsystems/web-client.md) — how browser plugin rows load and register slots.
 
 -----
@@ -78,7 +78,7 @@ None; this package neither assembles nor sends a provider request.
 These limits define how brand presentation is supplied. They are current package constraints, not a brand-design comparison or a task backlog.
 
 - **One occupant set** — alternative presentation belongs in another Cordis package occupying the same slots.
-- **The mark ignores the theme** — the sidebar and hero show the black-and-gray logo artwork on a white backplate (`HALLUCODEX_MARK_IMAGE`) in light and dark themes alike.
+- **The mark ignores the theme** — the sidebar and hero show the black-and-gray logo artwork on a white backplate (`NOVAFLOW_MARK_IMAGE`) in light and dark themes alike.
 - **The browser title is independent** — `DSH_CLIENT_TITLE` selects title text at build time rather than through a UI slot.
 
 <a id="dev-note"></a>

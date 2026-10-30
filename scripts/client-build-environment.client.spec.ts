@@ -30,7 +30,7 @@ const dshBuildWorkflows = [
   'build-exe-for-python-sdk.yml',
   'ci.yml',
   'e2e.yml',
-  'hallucodex-desktop-release.yml',
+  'novaflow-desktop-release.yml',
   'release.yml',
   'sandbox.yml',
 ]

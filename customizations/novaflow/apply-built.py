@@ -34,7 +34,7 @@ changes = {}
 for filename in ['main.js', 'preload-app.cjs']:
     changes['lib/' + filename] = (repo / 'apps/desktop/lib' / filename).read_bytes()
 for package, source, filenames in [
-    ('dsh-desktop-host', 'apps/desktop-host', ['index.js', 'hallucodex.js', 'hallucodex.patch.yml']),
+    ('dsh-desktop-host', 'apps/desktop-host', ['index.js', 'novaflow.js', 'novaflow.patch.yml']),
     ('dsh-client-ui-brand-official', 'packages/client/ui-brand-official', ['client.js']),
     ('dsh-client-ui-settings-general', 'packages/client/ui-settings-general', ['client.js']),
     ('dsh-client-ui-settings-models', 'packages/client/ui-settings-models', ['client.js']),

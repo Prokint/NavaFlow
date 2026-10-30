@@ -24,7 +24,7 @@ export PATH="$APPDIR:$APPDIR/usr/sbin\${PATH:+:$PATH}"
 export XDG_DATA_DIRS="$APPDIR/usr/share:\${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 export LD_LIBRARY_PATH="$APPDIR/usr/lib\${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export GSETTINGS_SCHEMA_DIR="$APPDIR/usr/share/glib-2.0/schemas"
-exec "$APPDIR/hallucodex" "$@"
+exec "$APPDIR/novaflow" "$@"
 `
 }
 
@@ -43,7 +43,7 @@ export async function writeDesktopLinuxAppRun(appOutDir) {
  * @returns {Promise<void>} Rejects if the image does not contain the application-owned launcher.
  */
 export async function verifyDesktopLinuxAppRun(artifact) {
-  const directory = await mkdtemp(join(tmpdir(), 'hallucodex-AppRun-check-'))
+  const directory = await mkdtemp(join(tmpdir(), 'novaflow-AppRun-check-'))
   try {
     await promisify(execFile)(resolve(artifact), ['--appimage-extract', 'AppRun'], {
       cwd: directory, timeout: 30_000, env: { PATH: '/usr/bin:/bin', HOME: directory, TMPDIR: directory },

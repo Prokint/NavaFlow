@@ -252,7 +252,7 @@ When extraction fails, the installer writes a report with the 7-Zip result and i
 
 ### Release workflow
 
-Pushing a `v<version>` tag (or a legacy `novaflow-v<version>` tag), or running [the release workflow](../../.github/workflows/novaflow-desktop-release.yml) manually with an existing tag, publishes one GitHub Release of this repository:
+Pushing a `v<version>` tag (or a legacy `novaflow-v<version>` tag), or running [the release workflow](../../.github/workflows/novaflow-desktop-release.yml) manually, publishes one GitHub Release of this repository. A manual run builds the selected branch or tag's commit; an existing release tag must point to that commit, and a missing tag is created only after packaging succeeds:
 
 1. Add a `## <version>` section to the root [CHANGELOG.md](../../CHANGELOG.md) and merge it before tagging. The workflow stops before building when the tag is not `v<SemVer>` or the section is missing.
 2. Push the tag, for example `git tag v0.1.0 && git push origin v0.1.0`.

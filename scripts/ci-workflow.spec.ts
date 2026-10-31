@@ -1196,6 +1196,13 @@ describe('NovaFlow desktop release workflow', () => {
     expect(runs('prepare')).toContain('desktop-release-notes.mjs version "$TAG"')
     expect(runs('prepare')).toContain('--changelog CHANGELOG.md')
     expect(workflowJob(workflow, 'package').needs).toBe('prepare')
+    expect(runs('prepare')).toContain('git show-ref --verify --quiet "refs/tags/$TAG"')
+    expect(runs('prepare')).toContain('The existing release tag differs from the selected source commit.')
+    for (const job of ['package', 'release']) {
+      expect(steps(job).find(step => step.uses === 'actions/checkout@v6')?.with).toMatchObject({
+        ref: '${{ needs.prepare.outputs.commit }}',
+      })
+    }
   })
 
   it('packages unsigned installers on hosted runners for every desktop target with the tag version', () => {
@@ -1241,7 +1248,7 @@ describe('NovaFlow desktop release workflow', () => {
     expect(release).toContain('desktop-release-notes.mjs notes --version "$VERSION"')
     expect(release).toContain('if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi')
     expect(release).toContain('gh release create "$TAG" dist/release/*')
-    expect(release).toContain('--verify-tag --draft')
+    expect(release).toContain('--target "$RELEASE_COMMIT" --draft')
     expect(release).toContain('--title "$TAG"')
     expect(release).toContain('gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false')
     expect(release).toContain('git archive --format=zip')

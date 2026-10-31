@@ -254,7 +254,7 @@ Windows 安装器在启动时和选定目标目录后检查应用是否正在运
 
 ### 发布工作流
 
-推送 `v<版本>` 标签（或旧的 `novaflow-v<版本>` 标签），或以已有标签手动运行[发布工作流](../../.github/workflows/novaflow-desktop-release.yml)，会为本仓库发布一个 GitHub Release：
+推送 `v<版本>` 标签（或旧的 `novaflow-v<版本>` 标签），或手动运行[发布工作流](../../.github/workflows/novaflow-desktop-release.yml)，会为本仓库发布一个 GitHub Release。手动运行构建所选分支或标签的提交；已有发布标签必须指向该提交，尚不存在的标签只在打包成功后创建：
 
 1. 在仓库根目录的 [CHANGELOG.md](../../CHANGELOG.md) 中添加 `## <版本>` 小节并在打标签前合并。标签不是 `v<SemVer>` 或缺少该小节时，工作流在构建前停止。
 2. 推送标签，例如 `git tag v0.1.0 && git push origin v0.1.0`。

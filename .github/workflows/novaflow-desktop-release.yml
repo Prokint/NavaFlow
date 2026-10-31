@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing v<semver> tag to build and release, such as v0.0.1 (legacy novaflow-v tags also work).
+        description: v<semver> tag to release from the selected branch or tag. A missing tag is created after packaging succeeds.
         required: true
         type: string
 
@@ -39,6 +39,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
       prerelease: ${{ steps.release.outputs.prerelease }}
+      commit: ${{ steps.release.outputs.commit }}
     steps:
       - name: Select the release tag
         id: tag
@@ -55,7 +56,8 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          ref: refs/tags/${{ steps.tag.outputs.tag }}
+          ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - uses: actions/setup-node@v6
@@ -73,6 +75,13 @@ jobs:
         run: |
           set -euo pipefail
           release="$(node apps/desktop/scripts/desktop-release-notes.mjs version "$TAG")"
+          commit="$(git rev-parse HEAD)"
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            if [ "$(git rev-parse "refs/tags/$TAG^{commit}")" != "$commit" ]; then
+              echo "::error::The existing release tag differs from the selected source commit."; exit 1
+            fi
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
           printf 'tag=%s\n%s\n' "$TAG" "$release" >> "$GITHUB_OUTPUT"
           version="$(printf '%s\n' "$release" | sed -n 's/^version=//p')"
           node apps/desktop/scripts/desktop-release-notes.mjs notes --version "$version" \
@@ -130,7 +139,7 @@ jobs:
       # Complete history: the release packing scripts read tags.
       - uses: actions/checkout@v6
         with:
-          ref: refs/tags/${{ needs.prepare.outputs.tag }}
+          ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -229,10 +238,11 @@ jobs:
       TAG: ${{ needs.prepare.outputs.tag }}
       VERSION: ${{ needs.prepare.outputs.version }}
       PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+      RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: refs/tags/${{ needs.prepare.outputs.tag }}
+          ref: ${{ needs.prepare.outputs.commit }}
           persist-credentials: false
 
       - uses: pnpm/action-setup@v4
@@ -288,7 +298,7 @@ jobs:
           set -euo pipefail
           flags=()
           if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi
-          gh release create "$TAG" dist/release/* --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+          gh release create "$TAG" dist/release/* --repo "$GITHUB_REPOSITORY" --target "$RELEASE_COMMIT" --draft \
             --title "$TAG" --notes-file dist/release-notes.md "${flags[@]}"
           latest=()
           if [ "$PRERELEASE" = false ]; then latest+=(--latest); fi

@@ -1,6 +1,6 @@
 /** Launch the Desktop profile through the Web application and report its URL to Electron. */
 
-import { delimiter, join } from 'node:path'
+import { delimiter, isAbsolute, join } from 'node:path'
 import { inspect } from 'node:util'
 import { loadLayeredEnv, loadProfileDirectory, reportSkippedBundles } from '@deepseek-ai/dsh-app-boot'
 import { runProfile } from '@deepseek-ai/dsh/profile-boot'
@@ -61,11 +61,14 @@ async function main(): Promise<void> {
   const installAnchor = join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh', 'package.json')
   const profile = loadProfileDirectory('dsh', projectDir, installAnchor)
   reportSkippedBundles('dsh', profile)
+  const scopePatch = branded ? process.env.DSH_NOVAFLOW_SCOPE_PATCH : undefined
+  if (scopePatch !== undefined && !isAbsolute(scopePatch)) throw new Error('NovaFlow account patch must be absolute')
   const application = runProfile({
     environment: loadLayeredEnv('dsh'),
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
-    patchFiles: branded ? [join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh-desktop-host', 'lib', 'novaflow.patch.yml')] : [],
+    patchFiles: branded ? [join(runtimeDir, 'node_modules', '@deepseek-ai', 'dsh-desktop-host', 'lib', 'novaflow.patch.yml'),
+      ...scopePatch === undefined ? [] : [scopePatch]] : [],
     args: ['--no-open', '--host', '127.0.0.1', '--port', '0'],
     ...(process.argv[5] === undefined ? {} : {
       packageManager: {

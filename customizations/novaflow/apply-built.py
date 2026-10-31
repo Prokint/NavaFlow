@@ -11,6 +11,7 @@ import struct
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--app', type=Path, required=True)
 parser.add_argument('--backup', type=Path, required=True)
+parser.add_argument('--previous-module-name', help='Rename this prior Host module name to novaflow in an older local package')
 args = parser.parse_args()
 repo = Path(__file__).resolve().parents[2]
 archive = args.app / 'Contents/Resources/app.asar'
@@ -46,12 +47,30 @@ with archive.open('rb') as src:
     fields = struct.unpack('<4I', src.read(16))
     tree = json.loads(src.read(fields[3]))
     base = 8 + fields[1]
+    previous = args.previous_module_name
+    if previous is not None:
+        assert previous.replace('-', '').isalnum(), 'Invalid prior module name'
+        modules = tree['files']['dsh']['files']['node_modules']['files']['@deepseek-ai']['files']['dsh-desktop-host']['files']['lib']['files']
+        for suffix in ['.js', '.patch.yml']:
+            assert previous + suffix in modules and 'novaflow' + suffix not in modules, 'Unexpected Host module migration'
+            modules['novaflow' + suffix] = modules.pop(previous + suffix)
     packed = [(name, node, copy.deepcopy(node)) for name, node in walk(tree) if 'offset' in node]
     assert set(changes) <= {name for name, _, _ in packed}, 'A built module is absent from the package'
     manifest_name = 'dsh/desktop-runtime.json'
     old = next(old for name, _, old in packed if name == manifest_name)
     src.seek(base + int(old['offset']))
     manifest = json.loads(src.read(old['size']))
+    if previous is not None:
+        manifest = json.loads(json.dumps(manifest).replace('/lib/' + previous + '.', '/lib/novaflow.'))
+        package_name = 'dsh/node_modules/@deepseek-ai/dsh-desktop-host/package.json'
+        old_package = next(old for name, _, old in packed if name == package_name)
+        src.seek(base + int(old_package['offset']))
+        package = json.loads(src.read(old_package['size']))
+        source_package = json.loads((repo / 'apps/desktop-host/package.json').read_text())
+        for field in ['exports', 'files']:
+            if field in source_package:
+                package[field] = source_package[field]
+        changes[package_name] = (json.dumps(package, indent=2) + '\n').encode()
 
     def refresh(value):
         if isinstance(value, dict):

@@ -35,6 +35,8 @@ export interface NovaFlowAuthBrokerOptions {
   deviceName: string
   /** Optional native site-session sign-in; its credentials never pass through renderer IPC. */
   interactiveSignIn?(origin: string, signal: AbortSignal): Promise<AccessGrant>
+  /** Receive a loaded record's safe identity, or null for no record, before refresh; absent means no migration. */
+  onStoredIdentity?(profile: NovaFlowProfile | null): Promise<void>
   now?: () => number
   /**
    * Receives only renderer-safe state; observer failures cannot disrupt the account lifecycle.
@@ -361,7 +363,11 @@ export class NovaFlowAuthBroker {
     try {
       const saved = await this.storage(() => this.#options.store.load())
       this.assertCurrent(generation)
-      if (saved) await this.rotate(saved, generation, signal)
+      await this.#options.onStoredIdentity?.(saved === null ? null : { ...saved.profile })
+      this.assertCurrent(generation)
+      if (saved) {
+        await this.rotate(saved, generation, signal)
+      }
     } catch (error) {
       if (generation === this.#generation) this.publish({ status: 'signed-out', errorCode: safeError(error).code })
     }

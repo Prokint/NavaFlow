@@ -70,6 +70,18 @@ function exchange(relay: NovaFlowLoopbackRelay, options: {
 }
 
 describe('NovaFlow authenticated loopback relay', () => {
+  it('revokes account admission immediately and checks it again after receiving the body', async () => {
+    const admit = vi.fn().mockReturnValue(false)
+    const f = await fixture({ admit })
+    expect((await exchange(f.relay)).status).toBe(503)
+    expect(f.invoke).not.toHaveBeenCalled()
+    admit.mockReset().mockReturnValueOnce(true).mockReturnValue(false)
+    expect((await exchange(f.relay)).status).toBe(503)
+    expect(f.invoke).not.toHaveBeenCalled()
+    admit.mockReturnValue(true)
+    expect((await exchange(f.relay)).status).toBe(200)
+    expect(f.invoke).toHaveBeenCalledOnce()
+  })
   it('binds only IPv4 loopback with an independently random capability per listener', async () => {
     const first = await fixture()
     const second = await fixture()

@@ -10,16 +10,26 @@ import { DesktopHostFatalError, DesktopHostUncleanExitError } from '../src/host-
 import { en, zh } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
+import type { NovaFlowDesktopSnapshot } from '../src/novaflow/runtime.ts'
+import type { DesktopAccountIdentity } from '../src/account-scopes.ts'
 
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } }
 type InvokeHandler = (event: InvokeEvent, ...args: unknown[]) => unknown
 
 const novaflowTest = vi.hoisted(() => ({
-  snapshot: { account: { status: 'signed-out' as const }, catalogStatus: 'unavailable' as const },
+  snapshot: { account: { status: 'signed-out' }, catalogStatus: 'unavailable', serverOrigin: 'https://site.example', accountMode: 'site-session' } as NovaFlowDesktopSnapshot,
+  changed: undefined as ((snapshot: NovaFlowDesktopSnapshot) => void) | undefined,
+  relaySerial: 0,
+  signOut: vi.fn(async () => ({ remoteRevoked: true })),
+  startSignIn: vi.fn(async () => {}),
   restore: vi.fn(async () => {}), dispose: vi.fn(async () => {}), closeRelay: vi.fn(async () => {}),
   refreshAccount: vi.fn(async () => {}), refreshCatalog: vi.fn(async () => {}), refreshWallet: vi.fn(async () => {}),
 }))
 vi.mock('../src/novaflow/runtime.ts', () => ({ NovaFlowDesktopRuntime: class {
+  constructor(options: { onChange(snapshot: NovaFlowDesktopSnapshot): void; onStoredIdentity(profile: null): Promise<void> }) {
+    novaflowTest.changed = options.onChange
+    novaflowTest.restore.mockImplementation(async () => { await options.onStoredIdentity(null) })
+  }
   getSnapshot() { return novaflowTest.snapshot }
   getRelayRevision() { return 1 }
   readonly restore = novaflowTest.restore
@@ -27,10 +37,27 @@ vi.mock('../src/novaflow/runtime.ts', () => ({ NovaFlowDesktopRuntime: class {
   readonly refreshAccount = novaflowTest.refreshAccount
   readonly refreshCatalog = novaflowTest.refreshCatalog
   readonly refreshWallet = novaflowTest.refreshWallet
+  readonly signOut = novaflowTest.signOut
+  readonly startSignIn = novaflowTest.startSignIn
 } }))
+vi.mock('../src/account-scopes.ts', async (original) => {
+  const actual = await original<typeof import('../src/account-scopes.ts')>()
+  return { ...actual, DesktopAccountScopes: class {
+    readonly legacyOwner = 'signed-out'
+    readonly claimLegacy = vi.fn(async () => {})
+    readonly sealLegacy = vi.fn(async () => {})
+    readonly prepare = vi.fn(async () => {})
+    resolve(identity: DesktopAccountIdentity | null) {
+      const key = actual.desktopAccountKey(identity)
+      const home = identity === null ? '.' : join(harness.app.getPath('userData'), 'accounts', key)
+      return { key, home, profile: join(home, 'profiles', 'desktop'), legacy: identity === null,
+        authenticated: identity !== null, partition: identity === null ? undefined : `persist:test-${key}`, patchFile: undefined }
+    }
+  } }
+})
 vi.mock('../src/novaflow/secure-storage.ts', () => ({ SafeStorageRefreshStore: vi.fn() }))
 vi.mock('../src/novaflow/loopback-relay.ts', () => ({ startNovaFlowLoopbackRelay: async () => ({
-  baseURL: 'http://127.0.0.1:43210', localCapability: 't'.repeat(43), close: novaflowTest.closeRelay,
+  baseURL: 'http://127.0.0.1:43210', localCapability: String(++novaflowTest.relaySerial).padStart(43, 't'), close: novaflowTest.closeRelay,
 }) }))
 
 vi.mock('../src/web-document.ts', () => ({ authenticateWebHost: async () => 'test-cookie', serveWebDocument: vi.fn(), forwardWebRequest: vi.fn() }))
@@ -109,7 +136,7 @@ const harness = await vi.hoisted(async () => {
     readonly contentView = { addChildView: vi.fn(), removeChildView: vi.fn() }
     readonly setVibrancy = vi.fn()
     readonly setBackgroundColor = vi.fn()
-    constructor(readonly options: { show: boolean; modal?: boolean }) {
+    constructor(readonly options: { show: boolean; modal?: boolean; webPreferences?: { partition?: string } }) {
       super(); if (windowFailure !== undefined) throw windowFailure; windows.push(this)
     }
     isDestroyed() { return this.destroyed }
@@ -140,6 +167,7 @@ const harness = await vi.hoisted(async () => {
     }
   }
   class FakeHost {
+    readonly publishNovaFlow = vi.fn()
     readonly updateTasks = vi.fn(async (_action: 'inspect' | 'lock' | 'unlock') => false)
     readonly inspectQuit = vi.fn(async () => ({ activeTasks: false, scheduledTasks: false }))
     url = 'http://127.0.0.1:3080/?token=test'
@@ -157,6 +185,7 @@ const harness = await vi.hoisted(async () => {
       readonly inspectPort?: number, readonly environment?: NodeJS.ProcessEnv, readonly onFailure?: (error: Error) => void,
       readonly primaryRuntime?: string,
       readonly packageManager?: { pnpm: string; nodeBin: string },
+      readonly nativeConfiguration?: { localCapability: string },
     ) { hosts.push(this) }
   }
   const app = Object.assign(new EventEmitter(), {
@@ -280,7 +309,9 @@ vi.mock('electron', () => ({
   Menu: { setApplicationMenu: harness.menu.setApplicationMenu, buildFromTemplate: harness.menu },
   session: { defaultSession: {
     setPermissionCheckHandler: vi.fn(), setPermissionRequestHandler: vi.fn(), webRequest: { onBeforeSendHeaders: harness.socketHeaders },
-  } },
+  }, fromPartition: vi.fn(() => ({ protocol: { handle: harness.protocolHandle },
+    setPermissionCheckHandler: vi.fn(), setPermissionRequestHandler: vi.fn(),
+    webRequest: { onBeforeSendHeaders: harness.socketHeaders } })) },
   protocol: { registerSchemesAsPrivileged: vi.fn(), handle: harness.protocolHandle },
   powerMonitor: harness.powerMonitor,
   Tray: harness.FakeTray,
@@ -300,7 +331,8 @@ vi.mock('../src/login-shell-environment.ts', async importOriginal => ({
   ...await importOriginal<typeof import('../src/login-shell-environment.ts')>(),
   readDesktopLoginShellEnvironment: harness.loginShell,
 }))
-vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: () => ({ profile: 'desktop-test-profile' }) }))
+vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: (home?: string) => ({ profile: home === undefined || home === '.'
+  ? 'desktop-test-profile' : join(home, 'profiles', 'desktop') }) }))
 vi.mock('../src/project-manager.ts', () => ({
   DesktopProjectManager: class {
     readonly applyRelease = harness.applyRelease
@@ -363,6 +395,9 @@ function applicationMenuItems(): MenuItemConstructorOptions[] {
 beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
+  novaflowTest.snapshot = { account: { status: 'signed-out' }, catalogStatus: 'unavailable', serverOrigin: 'https://site.example', accountMode: 'site-session' }
+  novaflowTest.changed = undefined
+  novaflowTest.relaySerial = 0
   harness.dialog.showMessageBox.mockReset()
   harness.dialog.showMessageBox.mockResolvedValue({ response: 1 })
   vi.useFakeTimers()
@@ -851,7 +886,7 @@ describe('desktop main startup', () => {
     const handler = harness.handlers.get(DESKTOP_IPC.boot)!
     await expect(handler({ senderFrame: { url: 'https://other.example/' } })).rejects.toThrow('unowned renderer')
     let settled = false
-    const boot = Promise.resolve(handler({ senderFrame: { url: 'dsh-app://app/' } })).then((value) => { settled = true; return value })
+    const boot = Promise.resolve(invoke(DESKTOP_IPC.boot)).then((value) => { settled = true; return value })
     await Promise.resolve()
     expect(settled).toBe(false)
     expect(harness.windows[0]!.urls).toEqual(['dsh-app://app/'])
@@ -926,6 +961,68 @@ describe('desktop main startup', () => {
     await harness.navigated.promise
     return harness.hosts[0]!
   }
+
+  it('replaces Host, renderer and browser partition across A → B → A while rejecting old transport and IPC', async () => {
+    const first = await readyForUpdate()
+    const oldWindow = harness.windows[0]!
+    const oldProtocol = harness.protocolHandle.mock.calls[0]![1]
+    const change = (id: string) => {
+      novaflowTest.snapshot = { serverOrigin: 'https://site.example', catalogStatus: 'unavailable', accountMode: 'site-session',
+        account: { status: 'signed-in', profile: { id, displayName: id }, group: 'default', allowedGroups: ['default'],
+          autoGroups: null, crossGroupRetry: false, canSelectGroup: false } }
+      novaflowTest.changed!(novaflowTest.snapshot)
+    }
+    const advanceAccount = async (id: string) => {
+      const previous = harness.hosts.at(-1)!
+      const count = harness.hosts.length
+      const windowCount = harness.windows.length
+      change(id)
+      expect(harness.windows.at(-1)!.destroyed).toBe(true)
+      await previous.stopping.promise
+      expect(harness.hosts).toHaveLength(count)
+      previous.exited.resolve()
+      await vi.waitFor(() => { expect(harness.hosts).toHaveLength(count + 1) })
+      const next = harness.hosts.at(-1)!
+      next.ready.resolve()
+      await vi.waitFor(() => { expect(harness.windows.length).toBeGreaterThan(windowCount) })
+      await harness.windows.at(-1)!.shown.promise
+      return next
+    }
+    const a = await advanceAccount('a')
+    const aWindow = harness.windows.at(-1)!
+    const aProtocol = harness.protocolHandle.mock.calls.at(-1)![1]
+    expect(a.environment?.DSH_HOME).not.toBe(first.environment?.DSH_HOME)
+    expect((await oldProtocol(new Request('dsh-app://app/api/config'))).status).toBe(503)
+    await expect(harness.handlers.get(DESKTOP_IPC.boot)!({ sender: oldWindow.webContents,
+      senderFrame: oldWindow.webContents.mainFrame })).rejects.toThrow('unowned renderer')
+    const b = await advanceAccount('b')
+    expect(a.stop).toHaveBeenCalledWith(true)
+    expect(b.profile).not.toBe(a.profile)
+    expect(b.nativeConfiguration?.localCapability).not.toBe(a.nativeConfiguration?.localCapability)
+    expect((await aProtocol(new Request('dsh-app://app/api/config'))).status).toBe(503)
+    const back = await advanceAccount('a')
+    expect(back.profile).toBe(a.profile)
+    expect(back.environment?.DSH_HOME).toBe(a.environment?.DSH_HOME)
+    expect(harness.windows.at(-1)!.options).toMatchObject({ webPreferences: aWindow.options.webPreferences })
+    const count = harness.hosts.length
+    change('a')
+    await Promise.resolve()
+    expect(harness.hosts).toHaveLength(count)
+    expect(harness.windows.at(-1)!.destroyed).toBe(false)
+    expect(novaflowTest.closeRelay).toHaveBeenCalledTimes(6)
+  })
+
+  it('keeps the account and workspace when task interruption is declined', async () => {
+    const host = await readyForUpdate()
+    await harness.windows[0]!.shown.promise
+    host.inspectQuit.mockResolvedValue({ activeTasks: true, scheduledTasks: true })
+    harness.dialog.showMessageBox.mockResolvedValue({ response: 0 })
+    const result = await invoke('novaflow:sign-out', 'app')
+    expect(result).toEqual({ cancelled: true, remoteRevoked: false })
+    expect(novaflowTest.signOut).not.toHaveBeenCalled()
+    expect(host.stop).not.toHaveBeenCalled()
+    expect(harness.windows[0]!.destroyed).toBe(false)
+  })
 
   it('asks the client to show the account page when the workspace opens signed out', async () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')

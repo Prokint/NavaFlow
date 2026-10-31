@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-31-novaflow-account-workspaces.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-10-31-novaflow-account-workspaces.md
+/agent-note-novaflow-isolates-desktop-workspaces-by-authenticated-identity:
+  en: 232180c3d0489fc6
+  zh: 4e0b3fdaa50f92ac
+/agent-note-novaflow-isolates-desktop-workspaces-by-authenticated-identity/problem:
+  en: 67da700ad1878c83
+  zh: 021bcdd13543e804
+/agent-note-novaflow-isolates-desktop-workspaces-by-authenticated-identity/decision:
+  en: 0a82a03a5ef7cf36
+  zh: ebededa0756f4719
+/agent-note-novaflow-isolates-desktop-workspaces-by-authenticated-identity/alternatives-considered:
+  en: 7f313a119c43324d
+  zh: 15032e447879352e
+/agent-note-novaflow-isolates-desktop-workspaces-by-authenticated-identity/consequences:
+  en: eaaac732d802cac9
+  zh: 370c9947ddd4174e

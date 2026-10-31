@@ -13,12 +13,14 @@ import { desktopDeviceName } from './novaflow/device-name.ts'
 import { checkNovaFlowRelease, fetchNovaFlowReleaseNotes, ReleaseNoticeState } from './novaflow/release-check.ts'
 import type { NovaFlowHostConfiguration } from '@deepseek-ai/dsh-desktop-host/novaflow'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
+import { DesktopAccountScopes, desktopAccountIdentity, desktopAccountKey } from './account-scopes.ts'
+import { DesktopAccountSwitch } from './account-switch.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
 import { existsSync, readFileSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { hostname } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   app,
@@ -254,7 +256,7 @@ function applicationIconPath(): string {
   return app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(app.getAppPath(), 'resources', 'icon-windows.png')
 }
 
-function createWindow(preload: string, show = false, primary = false): BrowserWindow {
+function createWindow(preload: string, show = false, primary = false, partition?: string): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -280,6 +282,7 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
       backgroundColor: '#00000000',
     } : {}),
     webPreferences: {
+      ...partition === undefined ? {} : { partition },
       preload,
       nodeIntegration: false,
       contextIsolation: true,
@@ -370,13 +373,19 @@ async function main(): Promise<void> {
   const journalDirectory = process.env.DSH_DESKTOP_UPDATE_JOURNAL_DIR
   const updateJournal = journalDirectory === undefined ? undefined : new DesktopUpdateJournal(journalDirectory, app.getVersion())
   const resources = runtimeResources()
-  const paths = resolveDesktopPaths()
+  let paths = resolveDesktopPaths()
+  const baseHome = dirname(dirname(paths.profile))
+  const scopes = new DesktopAccountScopes({ home: baseHome, userData: app.getPath('userData'), documents: app.getPath('documents') })
+  let accountScope = scopes.resolve(null)
+  let accountAdmission = false
+  let accountSwitching = false
+  const accountLifecycle: { select?: () => void; controller?: DesktopAccountSwitch } = {}
+  let lastAuthenticatedProfile: string | undefined
   const development = !app.isPackaged
   const primaryRuntime = development
     ? developmentPrimaryRuntime()
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
-  const activeProject = paths.profile
-  const manager = new DesktopProjectManager(paths, resources)
+  let manager = new DesktopProjectManager(paths, resources)
   // Dock and Finder launches inherit only launchd's environment; every Host shares one login-shell read.
   const loginShellRead = new AbortController()
   // The probe runs in its own process group, which outlives Desktop unless the read is aborted.
@@ -526,9 +535,10 @@ async function main(): Promise<void> {
       }) }
   }
   const server = ServerOriginSetting.load(novaFlowDataFile(app.getPath('userData'), 'server.json'))
-  const modelCapacity = ModelCapacitySettings.load(novaFlowDataFile(app.getPath('userData'), 'model-capacity.json'))
+  let modelCapacity = ModelCapacitySettings.load(novaFlowDataFile(app.getPath('userData'), 'model-capacity.json'))
   // The composer's model selector changes a model's capacities through the Host; they apply on this server only.
   const saveModelCapacity = async (model: string, capacity: ModelCapacityOverride): Promise<void> => {
+    if (!accountAdmission) throw new Error('NovaFlow account is unavailable')
     const snapshot = novaflow.getSnapshot()
     if (snapshot.catalogStatus !== 'ready' || snapshot.catalog?.models.some(entry => entry.id === model) !== true) {
       throw new Error('novaflow: unknown model')
@@ -538,12 +548,20 @@ async function main(): Promise<void> {
   }
   // The browser callback finishes sign-in; bring the window back so the user does not have to switch apps.
   let lastAccountStatus: NovaFlowDesktopSnapshot['account']['status'] | undefined
+  let ownershipRead = false
+  let ownershipFailure: unknown
   const newApi = new NewApiSessionTransport(() => server.get())
   const novaflow = new NovaFlowDesktopRuntime({
     server,
     transport: newApi,
     store: new SafeStorageRefreshStore(join(app.getPath('userData'), 'new-api-account'), safeStorage, () => server.get(), process.platform, parseNewApiRefreshRecord),
     accountMode: 'site-session',
+    onStoredIdentity: async (profile) => {
+      try {
+        if (profile !== null) await scopes.claimLegacy({ origin: server.get(), userId: profile.id })
+        ownershipRead = true
+      } catch (error) { ownershipFailure = error; throw error }
+    },
     interactiveSignIn: async (origin, signal) => {
       const cookie = await openNewApiLoginWindow(origin, signal, { parent: mainWindow,
         title: novaFlowAccountCopy(currentDesktopLocale().id).title, timeoutMs: 300_000 })
@@ -557,6 +575,12 @@ async function main(): Promise<void> {
     deviceName: desktopDeviceName(hostname(), process.platform, process.arch),
     openExternal: url => shell.openExternal(url),
     onChange(snapshot) {
+      if (accountLifecycle.select !== undefined
+        && (desktopAccountKey(desktopAccountIdentity(snapshot)) !== accountScope.key || accountSwitching)) {
+        accountLifecycle.select()
+        return
+      }
+      if (!accountAdmission) return
       novaflowHost?.publishNovaFlow(nativeConfiguration())
       const finishedBrowserStep = lastAccountStatus === 'signing-in' && snapshot.account.status !== 'signing-in'
       lastAccountStatus = snapshot.account.status
@@ -570,15 +594,43 @@ async function main(): Promise<void> {
       }
     },
   })
-  const novaflowRelay: NovaFlowLoopbackRelay = await startNovaFlowLoopbackRelay({ runtime: novaflow,
+  const createRelay = (): Promise<NovaFlowLoopbackRelay> => startNovaFlowLoopbackRelay({ runtime: novaflow,
+    admit: () => accountAdmission && desktopAccountKey(desktopAccountIdentity(novaflow.getSnapshot())) === accountScope.key,
     maxRequestBytes: 20 * 1024 * 1024, maxConcurrentRequests: 16, requestTimeoutMs: 30_000 })
-  await novaflow.restore()
+  let novaflowRelay = await createRelay()
+  try {
+    await novaflow.restore()
+    if (ownershipFailure !== undefined) throw ownershipFailure
+    if (!ownershipRead) throw new Error(novaFlowAccountCopy(locale.id).secureStorage)
+    await scopes.sealLegacy()
+    accountScope = scopes.resolve(desktopAccountIdentity(novaflow.getSnapshot()))
+    lastAuthenticatedProfile = scopes.legacyOwner === null ? undefined : resolveDesktopPaths(baseHome).profile
+    await scopes.prepare(accountScope, lastAuthenticatedProfile)
+    paths = resolveDesktopPaths(accountScope.home)
+    manager = new DesktopProjectManager(paths, resources)
+    modelCapacity = ModelCapacitySettings.load(accountScope.legacy
+      ? novaFlowDataFile(app.getPath('userData'), 'model-capacity.json') : join(accountScope.home, 'model-capacity.json'))
+    if (accountScope.authenticated) lastAuthenticatedProfile = paths.profile
+  } catch (error) { await novaflowRelay.close(); await novaflow.dispose(); throw error }
+  accountAdmission = true
   const closeNovaFlow = async (): Promise<void> => {
+    accountAdmission = false
+    await accountLifecycle.controller?.close()
     await novaflowRelay.close()
     await novaflow.dispose()
   }
   ipcMain.handle('novaflow:state', (event) => { assertProductSender(event); return novaflow.getSnapshot() })
-  ipcMain.handle('novaflow:start', (event) => {
+  const confirmAccountExit = async (): Promise<boolean> => {
+    const inspection = await backend.host?.inspectQuit().catch((_inspectionError: unknown) => undefined)
+    if (backend.host === undefined || (inspection !== undefined && !inspection.activeTasks && !inspection.scheduledTasks)) return true
+    const copy = novaFlowAccountCopy(locale.id)
+    const choice = await ordinaryMessageBox({ type: 'warning', title: copy.switchTitle, message: copy.switchMessage,
+      buttons: [copy.switchCancel, copy.switchContinue], cancelId: 0, defaultId: 0 })
+    return choice.response === 1
+  }
+  ipcMain.handle('novaflow:start', async (event) => {
+    assertProductSender(event)
+    if (!await confirmAccountExit()) return novaflow.getSnapshot()
     assertProductSender(event)
     return novaflow.startSignIn()
   })
@@ -586,11 +638,15 @@ async function main(): Promise<void> {
     assertProductSender(event)
     return novaflow.cancelSignIn()
   })
-  ipcMain.handle('novaflow:sign-out', (event) => {
+  ipcMain.handle('novaflow:sign-out', async (event) => {
+    assertProductSender(event)
+    if (!await confirmAccountExit()) return { cancelled: true, remoteRevoked: false }
     assertProductSender(event)
     return novaflow.signOut()
   })
-  ipcMain.handle('novaflow:set-server', (event, origin: unknown) => {
+  ipcMain.handle('novaflow:set-server', async (event, origin: unknown) => {
+    assertProductSender(event)
+    if (!await confirmAccountExit()) return novaflow.getSnapshot()
     assertProductSender(event)
     return novaflow.setServerOrigin(origin)
   })
@@ -622,8 +678,9 @@ async function main(): Promise<void> {
   })
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
-    const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
-      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion(), DSH_NOVAFLOW_DESKTOP: '1', DSH_TELEMETRY_DISABLED: '1' }, onFailure,
+    const host = new DesktopHostProcess(resources.node, resources.dsh, paths.profile,
+      hostInspectPort, { ...hostEnvironment, DSH_HOME: accountScope.home, DSH_NOVAFLOW_SCOPE_PATCH: accountScope.patchFile,
+        DSH_CLIENT_VERSION: desktopClientVersion(), DSH_NOVAFLOW_DESKTOP: '1', DSH_TELEMETRY_DISABLED: '1' }, onFailure,
       primaryRuntime,
       resources, nativeConfiguration(), saveModelCapacity)
     novaflowHost = host
@@ -638,9 +695,9 @@ async function main(): Promise<void> {
         settingsBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init))
       },
       stop: async () => {
-        try { await host.stop(requireCleanStop) }
+        try { await host.stop(requireCleanStop || accountSwitching) }
         catch (error) {
-          if (!requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
+          if (accountSwitching || !requireCleanStop || !(error instanceof DesktopHostUncleanExitError)) throw error
           // Backend cleanup succeeded; installation still rejects the unsuccessful task teardown.
           updateStopFailure = error
         }
@@ -700,12 +757,13 @@ async function main(): Promise<void> {
   stopForRecovery = async () => { await closeNovaFlow(); await backend.close() }
 
   const reconcileBackend = (): Promise<void> => {
-    startup ??= (async () => {
+    if (startup !== undefined) return startup
+    const operation = (async () => {
       await navigateMain(applicationUrl)
       await backend.start(async () => {
         await Promise.all([manager.applyRelease(), prepareHostEnvironment()])
       })
-      if (backend.host !== undefined) await openInitialWindow()
+      if (backend.host !== undefined && !accountSwitching) await openInitialWindow()
       if (backend.host !== undefined) updateJournal?.action('workspace-ready')
       // Builds without in-app installation announce a newer release once per launch; in-app builds rely on the
       // scheduled checks and the sidebar indicator. Development builds carry the upstream version.
@@ -718,8 +776,9 @@ async function main(): Promise<void> {
       updateJournal?.action('workspace-failed')
       reportFatal(error, 'main')
       throw error
-    }).finally(() => { startup = undefined })
-    return startup
+    }).finally(() => { if (startup === operation) startup = undefined })
+    startup = operation
+    return operation
   }
 
   // The packaged manifest marks a Developer-ID-signed macOS build; Windows and AppImage install in-app regardless.
@@ -793,11 +852,12 @@ async function main(): Promise<void> {
     window.once('closed', () => { resolve() })
   })
 
-  protocol.handle(SCHEME, (request) => {
+  const handleAccountRequest = (key: string | null) => (request: Request): Promise<Response> => {
     const url = new URL(request.url)
     // Shell-owned documents live in the application bundle and never pass through the Host.
     if (url.hostname === 'shell') return serveWebDocument(request, join(app.getAppPath(), 'renderer'))
     if (url.hostname === 'app') {
+      if (key !== accountScope.key || !accountAdmission) return Promise.resolve(new Response(null, { status: 503 }))
       if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/assets/')
         || ['/favicon.svg', '/manifest.webmanifest'].includes(url.pathname)) {
         return serveWebDocument(request, join(resources.dsh, 'node_modules', '@deepseek-ai', 'dsh-web-frontend', 'dist'))
@@ -808,17 +868,41 @@ async function main(): Promise<void> {
       return forwardWebRequest(request, hostUrl, hostCookie)
     }
     return Promise.resolve(new Response(null, { status: 404 }))
-  })
+  }
+  protocol.handle(SCHEME, handleAccountRequest(scopes.legacyOwner))
+  const configuredPartitions = new Set<string>()
+  const configureAccountSession = (): void => {
+    const partition = accountScope.partition
+    const key = accountScope.key
+    if (configuredPartitions.has(key)) return
+    const targetSession = partition === undefined ? session.defaultSession : session.fromPartition(partition)
+    if (partition !== undefined) targetSession.protocol.handle(SCHEME, handleAccountRequest(key))
+    installMicrophonePermissions(targetSession, () => key === accountScope.key && accountAdmission ? mainWindow?.webContents : undefined)
+    targetSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://127.0.0.1/*'] }, (details, callback) => {
+      if (key !== accountScope.key || !accountAdmission) { callback({ cancel: true }); return }
+      if (hostUrl === undefined || hostCookie === undefined || details.webContentsId !== mainWindow?.webContents.id) {
+        callback({}); return
+      }
+      const target = new URL(hostUrl)
+      const requested = new URL(details.url)
+      if (requested.host !== target.host || requested.protocol !== (target.protocol === 'https:' ? 'wss:' : 'ws:')) { callback({}); return }
+      const headers = Object.fromEntries(Object.entries(details.requestHeaders).map(([name, value]) => [name.toLowerCase(), value]))
+      if (headers.origin !== 'dsh-app://app') { callback({ cancel: true }); return }
+      callback({ requestHeaders: { ...headers, origin: target.origin, cookie: hostCookie,
+        'sec-fetch-site': 'same-origin' } })
+    })
+    configuredPartitions.add(key)
+  }
 
   installDesktopDirectoryPicker(() => mainWindow)
-  installMicrophonePermissions(session.defaultSession, () => mainWindow?.webContents)
   const shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath('userData'),
     process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux', () => { refreshApplicationMenu() }, window => updateOverlays.input(window))
   app.on('will-quit', () => { shortcuts.dispose() })
 
   ipcMain.handle(DESKTOP_IPC.boot, async (event) => {
-    assertDesktopSender(event, ['app'])
+    assertProductSender(event)
     await startup
+    assertProductSender(event)
     if (backend.host === undefined || hostUrl === undefined) throw new Error('Desktop Host is unavailable')
     return { injections, streamBaseUrl: new URL(hostUrl).origin }
   })
@@ -839,19 +923,6 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.browserRelease, (event, lease: unknown) => {
     assertProductSender(event)
     return browserGuests.release(event.sender, lease)
-  })
-
-  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://127.0.0.1/*'] }, (details, callback) => {
-    if (hostUrl === undefined || hostCookie === undefined || details.webContentsId !== mainWindow?.webContents.id) {
-      callback({})
-      return
-    }
-    const target = new URL(hostUrl)
-    const requested = new URL(details.url)
-    if (requested.host !== target.host || requested.protocol !== (target.protocol === 'https:' ? 'wss:' : 'ws:')) { callback({}); return }
-    const headers = Object.fromEntries(Object.entries(details.requestHeaders).map(([name, value]) => [name.toLowerCase(), value]))
-    if (headers.origin !== 'dsh-app://app') { callback({ cancel: true }); return }
-    callback({ requestHeaders: { ...headers, origin: target.origin, cookie: hostCookie, 'sec-fetch-site': 'same-origin' } })
   })
 
   // Only the main window may synchronize its palette with the native material.
@@ -1133,7 +1204,8 @@ async function main(): Promise<void> {
     }
   }
   const createMainWindow = (): BrowserWindow => {
-    const window = createWindow(appPreload, false, true)
+    configureAccountSession()
+    const window = createWindow(appPreload, false, true, accountScope.partition)
     mainWindow = window
     browserGuests.bind(window, (guest, name) => shortcuts.attachGuest(window, guest, name))
     shortcuts.attach(window)
@@ -1207,7 +1279,7 @@ async function main(): Promise<void> {
     }
   }
   focusPrimaryWindow = () => {
-    if (quitting) return
+    if (quitting || accountSwitching) return
     const window = mainWindow
     if (window === undefined || window.isDestroyed()) {
       try { createMainWindow() } catch (error) { reportFatal(error, 'main'); return }
@@ -1226,7 +1298,7 @@ async function main(): Promise<void> {
     if (!hasVisibleWindows) focusPrimaryWindow()
   })
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    if (process.platform !== 'darwin' && !accountSwitching) app.quit()
   })
   if (process.platform !== 'win32') powerMonitor.on('shutdown', () => { sessionEnding = true })
   const finishQuit = (): void => {
@@ -1264,6 +1336,53 @@ async function main(): Promise<void> {
     }).catch((error: unknown) => { console.error(error); if (!quitting && !shellInstallerOwnsQuit) finishQuit() })
   })
 
+  accountLifecycle.controller = new DesktopAccountSwitch(accountScope, {
+    block() {
+      accountSwitching = true
+      accountAdmission = false
+      void novaflowRelay.close().catch((error: unknown) => { reportFatal(error, 'main') })
+      hostUrl = undefined
+      hostCookie = undefined
+      settingsBackend = undefined
+      injections = []
+      navigation = undefined
+      enteredWorkspace = false
+      for (const controller of ordinaryDialogs) controller.abort()
+      mainWindow?.destroy()
+      mainWindow = undefined
+    },
+    stop: async () => { await backend.stop(); novaflowHost = undefined },
+    prepare: async (scope) => {
+      await scopes.prepare(scope, lastAuthenticatedProfile)
+      await novaflowRelay.close()
+      novaflowRelay = await createRelay()
+      accountScope = scope
+      paths = resolveDesktopPaths(scope.home)
+      manager = new DesktopProjectManager(paths, resources)
+      modelCapacity = ModelCapacitySettings.load(scope.legacy
+        ? novaFlowDataFile(app.getPath('userData'), 'model-capacity.json') : join(scope.home, 'model-capacity.json'))
+      if (scope.authenticated) lastAuthenticatedProfile = paths.profile
+    },
+    start: async () => {
+      await backend.start(async () => { await Promise.all([manager.applyRelease(), prepareHostEnvironment()]) })
+    },
+    reveal: async (scope) => {
+      if (quitting || desktopAccountKey(desktopAccountIdentity(novaflow.getSnapshot())) !== scope.key) return
+      accountAdmission = true
+      accountSwitching = false
+      createMainWindow()
+      await openInitialWindow()
+    },
+    failed: (error) => { reportFatal(error, 'main') },
+  })
+  accountLifecycle.select = () => {
+    if (quitting || shuttingDown || accountLifecycle.controller === undefined) return
+    const operation = accountLifecycle.controller.select(scopes.resolve(desktopAccountIdentity(novaflow.getSnapshot())))
+    startup = operation
+    void operation.catch((_reportedFailure: unknown) => {
+      // The switch reports its failure and retains the blocked state.
+    }).finally(() => { if (startup === operation) startup = undefined })
+  }
   mainWindow = createMainWindow()
   automaticCheck()
   await reconcileBackend().catch(() => undefined)

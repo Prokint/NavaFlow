@@ -15,6 +15,8 @@ export interface NovaFlowLoopbackRelayOptions {
   readonly maxConcurrentRequests: number
   /** Bounds receipt of local headers/body, without timing out upstream inference streams. */
   readonly requestTimeoutMs: number
+  /** When present, deny account-transition requests before and after body receipt; absence admits normally. */
+  readonly admit?: () => boolean
 }
 
 /** Transfer only through trusted subprocess IPC; neither field belongs in renderer state or logs. */
@@ -205,6 +207,7 @@ export async function startNovaFlowLoopbackRelay(options: NovaFlowLoopbackRelayO
     let admitted = false
     try {
       if (closing) throw new LocalRequestError(503, 'relay_closed')
+      if (options.admit?.() === false) throw new LocalRequestError(503, 'account_unavailable')
       const endpoint = authorize(request, host, authorization)
       const revision = revisionFor(request)
       if (revision !== options.runtime.getRelayRevision()) throw new LocalRequestError(409, 'stale_relay_revision')
@@ -213,6 +216,7 @@ export async function startNovaFlowLoopbackRelay(options: NovaFlowLoopbackRelayO
       admitted = true
       const payload = await readJSON(request, options.maxRequestBytes, options.requestTimeoutMs, controller.signal)
       controller.signal.throwIfAborted()
+      if (options.admit?.() === false) throw new LocalRequestError(503, 'account_unavailable')
       if (revision !== options.runtime.getRelayRevision()) throw new LocalRequestError(409, 'stale_relay_revision')
       const result = await options.runtime.invoke(endpoint, payload, controller.signal, revision)
       await streamResponse(result.response, response, controller.signal)

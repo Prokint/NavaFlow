@@ -14,6 +14,8 @@ Requires macOS, Python 3, and Node.js. The output directory must not exist. The 
 
 The output application and its helpers still require local signing with `codesign`. Distribution separately requires signing, notarization, and installed-application verification. Do not commit the output application or its `changes.json` build report to this source repository.
 
+`apply-built.py --app /path/to/NovaFlow.app --backup /path/to/new-backup` replaces built first-party modules in a fully stopped local package, records a backup and refreshes runtime and ASAR integrity. For a package that still uses a previous Host module basename, pass `--previous-module-name <basename>`; the tool renames its two archive entries and updates the runtime manifest and package exports. The backup directory must not exist. Re-sign the application before launching it.
+
 ## Current logo assets
 
 The selected black-and-gray mark is stored at `design/brand/novaflow-symbol-transparent.png`, alongside the selected reference and extraction prompt. Run `node customizations/novaflow/prepare-logo.mjs` to generate desktop icons, the sidebar mark, favicon, and installer artwork; then run the Linux and tray render commands in the desktop guide. A white rounded backplate keeps the same artwork legible in light and dark themes.

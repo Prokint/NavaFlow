@@ -10,7 +10,7 @@ export interface NovaFlowAccountUiOperations {
   state(): Promise<NovaFlowDesktopSnapshot | null>
   start(): Promise<NovaFlowDesktopSnapshot>
   cancel(): Promise<NovaFlowDesktopSnapshot>
-  signOut(): Promise<{ remoteRevoked: boolean }>
+  signOut(): Promise<{ remoteRevoked: boolean; cancelled?: boolean }>
   refresh(): Promise<void>
   refreshCatalog(): Promise<void>
   restore(): Promise<NovaFlowDesktopSnapshot>
@@ -710,6 +710,7 @@ export function createNovaFlowAccountUi(
         if (operation === generation && version === revision) snapshot = next
       } else if (action === 'sign-out') {
         const result = await operations.signOut()
+        if (result.cancelled === true) return
         await readState(operation)
         if (operation === generation && !result.remoteRevoked) operationMessage = copy.remoteRevokeFailed
       } else if (action === 'server') {

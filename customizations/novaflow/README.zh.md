@@ -14,6 +14,8 @@ python3 customizations/novaflow/rebrand-installed.py \
 
 输出应用及其辅助应用仍需由维护者使用 `codesign` 进行本地签名；正式分发另需完成签名、公证与实际安装验收。不要将输出应用或 `changes.json` 构建报告提交到源码仓库。
 
+`apply-built.py --app /path/to/NovaFlow.app --backup /path/to/new-backup` 可替换已完全退出的本地安装包中的第一方构建模块，记录备份，并更新运行时与 ASAR 完整性。安装包仍使用旧 Host 模块文件名时，传入 `--previous-module-name <basename>`，工具会重命名对应的两个归档条目，并更新运行时清单和包导出。备份目录必须不存在。启动前需重新签名应用。
+
 ## 当前 Logo 资源
 
 所选黑灰交扣图形位于 `design/brand/novaflow-symbol-transparent.png`，原始选择图和抠图提示词一并保存。运行 `node customizations/novaflow/prepare-logo.mjs` 可生成桌面图标、侧栏标志、favicon 和安装器图片；再运行桌面文档中的 Linux 和托盘渲染命令。图形使用白色圆角底板，浅色和深色主题共用同一份资源。

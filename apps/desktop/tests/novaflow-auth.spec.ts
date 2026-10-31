@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { NovaFlowAuthBroker } from '../src/novaflow/auth-broker.ts'
+import type { NovaFlowAuthBrokerOptions } from '../src/novaflow/auth-broker.ts'
 import { authorizationUrl, NovaFlowAuthError, NovaFlowHttpAuthTransport, parseAccessGrant, parseRefreshRecord, type AccessGrant, type AuthorizationRequest, type CodeExchange, type RefreshGrant } from '../src/novaflow/auth-protocol.ts'
 import { createLoopbackLogin } from '../src/novaflow/loopback-login.ts'
 import type { GroupSelection } from '../src/novaflow/group-policy.ts'
@@ -27,7 +28,7 @@ function wire(overrides: Record<string, unknown> = {}): Record<string, unknown> 
   }
 }
 
-function fixture(scope = scopes) {
+function fixture(scope = scopes, onStoredIdentity?: NovaFlowAuthBrokerOptions['onStoredIdentity']) {
   let now = start
   let saved: RefreshGrant | null = null
   const store = {
@@ -52,7 +53,8 @@ function fixture(scope = scopes) {
   }
   const openExternal = vi.fn(async (_url: string) => {})
   const onChange = vi.fn()
-  const broker = new NovaFlowAuthBroker({ store, transport, openExternal, origin: () => NOVAFLOW_ORIGIN, deviceName: 'Test desktop', now: () => now, onChange })
+  const broker = new NovaFlowAuthBroker({ store, transport, openExternal, origin: () => NOVAFLOW_ORIGIN, deviceName: 'Test desktop', now: () => now, onChange,
+    ...onStoredIdentity === undefined ? {} : { onStoredIdentity } })
   onTestFinished(() => broker.dispose())
   const registration = () => {
     const value = transport.authorize.mock.calls.at(-1)?.[0]
@@ -608,6 +610,25 @@ describe('main-process account generations', () => {
     expect(f.saved()?.refreshToken).toBe('dsr.rotated-refresh')
     expect(f.broker.getSnapshot()).toEqual({ status: 'signed-out' })
     await expect(f.broker.startSignIn()).rejects.toThrow('cancelled')
+  })
+
+  it.each(['offline', 'expired'])('binds legacy ownership from the saved safe identity before an %s restore fails', async (mode) => {
+    const adopt = vi.fn(async () => {})
+    const f = fixture(scopes, adopt)
+    f.setSaved(parseAccessGrant(wire(), start))
+    if (mode === 'expired') f.advance(31 * 86400_000)
+    else f.transport.refresh.mockRejectedValue(new NovaFlowAuthError('network_error'))
+    await f.broker.restore()
+    expect(adopt).toHaveBeenCalledExactlyOnceWith({ id: 'user-1', displayName: 'Example' })
+    if (mode === 'offline') expect(adopt.mock.invocationCallOrder[0]).toBeLessThan(f.transport.refresh.mock.invocationCallOrder[0]!)
+    expect(f.broker.getSnapshot().status).toBe('signed-out')
+  })
+
+  it('reports an absent saved identity explicitly without inventing an owner', async () => {
+    const adopt = vi.fn(async () => {})
+    const f = fixture(scopes, adopt)
+    await f.broker.restore()
+    expect(adopt).toHaveBeenCalledExactlyOnceWith(null)
   })
 
   it('does not launch the browser without OS-backed storage, and sanitizes observer exceptions', async () => {

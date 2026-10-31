@@ -50,7 +50,7 @@ Access 凭证只保留在内存。仅包含 refresh 的记录以原子替换方�
 
 ## 更新与更新日志
 
-更新来自本仓库公开的 GitHub Releases，标签格式为 `novaflow-v<semver>`，只提供已发布的正式版。未经用户确认不会下载或安装任何内容：每次提示都会显示更新日志，内容取自 Release 说明中 `<!-- novaflow:install-notes -->` 标记之前的部分，按纯文本显示。Windows 与 AppImage 构建在用户确认后于应用内下载，安装重启前会再次确认。没有 Developer ID 签名的 macOS 构建和 deb 安装无法原地替换，弹窗改为打开 Release 页面；这类构建在启动后检查一次，并跳过用户已选择稍后的版本，从菜单手动检查则总会给出结果。安装包不包含强制更新策略，因此不会强制更新。
+更新来自本仓库公开的 GitHub Releases，标签格式为 `v<semver>`（仍兼容 `novaflow-v<semver>`），只提供已发布的正式版。未经用户确认不会下载或安装任何内容：每次提示都会显示更新日志，内容取自 Release 说明中 `<!-- novaflow:install-notes -->` 标记之前的部分，按纯文本显示。Windows 与 AppImage 构建在用户确认后于应用内下载，安装重启前会再次确认。没有 Developer ID 签名的 macOS 构建和 deb 安装无法原地替换，弹窗改为打开 Release 页面；这类构建在启动后检查一次，并跳过用户已选择稍后的版本，从菜单手动检查则总会给出结果。安装包不包含强制更新策略，因此不会强制更新。
 
 ## 验证与启用条件
 

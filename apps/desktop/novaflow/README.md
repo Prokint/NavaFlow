@@ -50,7 +50,7 @@ This separates application data for accounts using the same OS login; it is not 
 
 ## Updates and release notes
 
-Updates come from this repository's public GitHub Releases on tags `novaflow-v<semver>`; only published stable releases are offered. Nothing downloads or installs without the user's confirmation: every offer shows the release notes, taken from the release body up to the `<!-- novaflow:install-notes -->` marker and shown as plain text. Windows and AppImage builds download in-app after that confirmation and ask again before restarting to install. macOS builds without a Developer ID signature, and deb installations, cannot be replaced in place, so the dialog opens the release page instead; such builds check once after launch and skip a release the user postponed, while the menu check always reports. No mandatory-update policy is packaged, so no update is ever forced.
+Updates come from this repository's public GitHub Releases on tags `v<semver>` (legacy `novaflow-v<semver>` tags remain supported); only published stable releases are offered. Nothing downloads or installs without the user's confirmation: every offer shows the release notes, taken from the release body up to the `<!-- novaflow:install-notes -->` marker and shown as plain text. Windows and AppImage builds download in-app after that confirmation and ask again before restarting to install. macOS builds without a Developer ID signature, and deb installations, cannot be replaced in place, so the dialog opens the release page instead; such builds check once after launch and skip a release the user postponed, while the menu check always reports. No mandatory-update policy is packaged, so no update is ever forced.
 
 ## Verification and activation requirements
 

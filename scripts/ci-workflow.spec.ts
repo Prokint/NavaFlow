@@ -1182,10 +1182,10 @@ describe('NovaFlow desktop release workflow', () => {
   }
   const runs = (name: string): string => steps(name).map(step => typeof step.run === 'string' ? step.run : '').join('\n')
 
-  it('runs only for novaflow-v tags or a manual tag, never for upstream dsh-v tags', () => {
+  it('runs for v tags, legacy novaflow-v tags or a manual tag, never for upstream dsh-v tags', () => {
     expect(Object.keys(workflow.on as Record<string, unknown>)).toEqual(['push', 'workflow_dispatch'])
     expect(workflow.on).toMatchObject({
-      push: { tags: ['novaflow-v*'] },
+      push: { tags: ['novaflow-v*', 'v*'] },
       workflow_dispatch: { inputs: { tag: { required: true, type: 'string' } } },
     })
     expect(JSON.stringify(workflow.on)).not.toContain('dsh-v')
@@ -1208,7 +1208,6 @@ describe('NovaFlow desktop release workflow', () => {
       ['win-x64', 'windows-2025', 'package:win:x64:unsigned'],
       ['mac-arm64', 'macos-15', 'package:mac:arm64:unsigned'],
       ['mac-x64', 'macos-15-intel', 'package:mac:x64:unsigned'],
-      ['linux-x64', 'ubuntu-24.04', 'package:linux:x64'],
     ])
     expect(job.env).toMatchObject({
       VERSION: '${{ needs.prepare.outputs.version }}',
@@ -1228,12 +1227,27 @@ describe('NovaFlow desktop release workflow', () => {
     expect(JSON.stringify(workflow)).not.toContain('secrets.')
   })
 
+  it('runs Windows packaging commands under native PowerShell', () => {
+    for (const step of steps('package')) {
+      if (step.shell === 'bash') expect(step.if).toBe("runner.os != 'Windows'")
+    }
+    expect(runs('package')).toContain('--build-version "$env:VERSION"')
+    expect(runs('package')).toContain('"TMPDIR=$env:RUNNER_TEMP" >> $env:GITHUB_ENV')
+  })
+
   it('publishes collected installers, update metadata, and checksums with the changelog notes', () => {
     const release = runs('release')
     expect(release).toContain('collect-release-assets.mjs --version "$VERSION"')
     expect(release).toContain('desktop-release-notes.mjs notes --version "$VERSION"')
     expect(release).toContain('if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi')
     expect(release).toContain('gh release create "$TAG" dist/release/*')
+    expect(release).toContain('--verify-tag --draft')
+    expect(release).toContain('--title "$TAG"')
+    expect(release).toContain('gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false')
+    expect(release).toContain('git archive --format=zip')
+    for (const suffix of ['source.zip', 'win-x64-unsigned.exe', 'mac-arm64-unsigned.dmg', 'mac-x64-unsigned.dmg']) {
+      expect(release).toContain(`novaflow-$VERSION-${suffix}`)
+    }
     expect(release).toContain('--notes-file dist/release-notes.md')
     expect(workflowJob(workflow, 'release').needs).toEqual(['prepare', 'package'])
   })

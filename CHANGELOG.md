@@ -1,6 +1,18 @@
 # 更新日志
 
-本文件记录 NovaFlow 桌面端各版本的变化，格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。每次发布 `novaflow-v<版本>` 标签前，先在这里添加标题为 `## <版本>` 的小节；发布流程把该小节作为 GitHub Release 说明，应用内的更新提示也显示这部分内容。
+本文件记录 NovaFlow 桌面端各版本的变化，格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。每次发布 `v<版本>` 标签前，先在这里添加标题为 `## <版本>` 的小节；发布流程把该小节作为 GitHub Release 说明，应用内的更新提示也显示这部分内容。
+
+## 0.0.1
+
+NovaFlow 首个独立发布版本，基于当前维护分支。
+
+### 新增
+
+- 使用 NovaFlow 名称与黑灰产品图标，保留上游开源许可。
+- 默认接入 `https://api.lanjiaotrade.com`，登录站点账号后自动加载可用模型，保留 API Key 接入方式。
+- 按服务器和用户 ID 隔离工作区、会话、设置与插件状态；切回原账号恢复其原有数据。
+- 新账号首次使用时默认关闭第三方插件，不继承旧账号的插件配置和密钥。
+- 提供版本对应的源码 ZIP、Windows x64 EXE，以及 macOS Apple Silicon / Intel DMG；附件完成上传后才公开发布。
 
 ## 0.1.10
 

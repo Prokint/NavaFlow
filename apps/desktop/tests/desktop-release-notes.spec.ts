@@ -34,6 +34,8 @@ const CHANGELOG = `# 更新日志
 
 describe('NovaFlow release tags', () => {
   it.each([
+    ['v0.0.1', '0.0.1', false],
+    ['v0.0.2-beta.1', '0.0.2-beta.1', true],
     ['novaflow-v0.1.0', '0.1.0', false],
     ['novaflow-v0.1.0-beta.1', '0.1.0-beta.1', true],
     ['novaflow-v1.12.3-rc.0.1', '1.12.3-rc.0.1', true],
@@ -41,7 +43,7 @@ describe('NovaFlow release tags', () => {
     expect(desktopReleaseVersion(tag)).toEqual({ version, prerelease })
   })
 
-  it.each(['dsh-v0.2.1-alpha.1', 'v0.1.0', 'novaflow-0.1.0', 'novaflow-v0.1', 'novaflow-v01.0.0',
+  it.each(['dsh-v0.2.1-alpha.1', 'v0.1', 'v01.0.0', 'novaflow-0.1.0', 'novaflow-v0.1', 'novaflow-v01.0.0',
     'novaflow-v0.1.0+build.1', 'novaflow-v0.1.0-beta..1', 'novaflow-v0.1.0-01'])('rejects %s', (tag) => {
     expect(() => desktopReleaseVersion(tag)).toThrow(/desktop release/u)
   })

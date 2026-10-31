@@ -3,7 +3,7 @@
  * repository declares.
  *
  * NovaFlow releases follow their own version line: the release workflow
- * passes the version from a `novaflow-v<version>` tag, and local test builds
+ * passes the version from a `v<version>` tag, and local test builds
  * may number themselves after the product version as
  * `<product version>.<date>.<sequence>` (or `-test.<date>.<sequence>` on a
  * stable product version). Passing that version here keeps it out of the

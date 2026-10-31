@@ -13,7 +13,8 @@ import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
 /** Tag prefix of NovaFlow desktop releases; upstream `dsh-v*` tags are not releases of this application. */
-export const DESKTOP_RELEASE_TAG_PREFIX = 'novaflow-v'
+export const DESKTOP_RELEASE_TAG_PREFIX = 'v'
+const LEGACY_RELEASE_TAG_PREFIX = 'novaflow-v'
 
 /** Line separating the release notes the application shows from the installation instructions. */
 export const DESKTOP_INSTALL_NOTES_MARKER = '<!-- novaflow:install-notes -->'
@@ -39,14 +40,15 @@ const INSTALL_NOTES = `## 安装说明
 
 /**
  * Read the application version a release tag names.
- * @param {string} tag - Pushed or requested tag, such as `novaflow-v0.1.0-beta.1`.
+ * @param {string} tag - Pushed or requested `v<version>` tag; legacy `novaflow-v<version>` tags remain accepted.
  * @returns {{ version: string, prerelease: boolean }} Version without the prefix, and whether it has a prerelease part.
  */
 export function desktopReleaseVersion(tag) {
-  if (!tag.startsWith(DESKTOP_RELEASE_TAG_PREFIX)) {
-    throw new Error(`desktop release: tag ${tag} must start with ${DESKTOP_RELEASE_TAG_PREFIX}`)
+  const prefix = tag.startsWith(LEGACY_RELEASE_TAG_PREFIX) ? LEGACY_RELEASE_TAG_PREFIX : DESKTOP_RELEASE_TAG_PREFIX
+  if (!tag.startsWith(prefix)) {
+    throw new Error(`desktop release: tag ${tag} must start with ${DESKTOP_RELEASE_TAG_PREFIX} or ${LEGACY_RELEASE_TAG_PREFIX}`)
   }
-  const version = tag.slice(DESKTOP_RELEASE_TAG_PREFIX.length)
+  const version = tag.slice(prefix.length)
   if (!SEMVER.test(version)) throw new Error(`desktop release: ${version} from tag ${tag} is not a SemVer version without build metadata`)
   return { version, prerelease: version.includes('-') }
 }

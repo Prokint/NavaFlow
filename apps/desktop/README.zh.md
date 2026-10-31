@@ -172,7 +172,7 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 ### 发布版本
 
-NovaFlow 发布使用独立的版本线。每次发布对应标签 `novaflow-v<版本>`，其中 `<版本>` 是不含构建元数据的 SemVer 版本，例如 `novaflow-v0.1.0` 或预发布版本 `novaflow-v0.1.0-beta.1`。[发布工作流](#upload-updates)把 `<版本>` 作为 `--build-version` 传给打包，该值同时决定产物文件名、更新元数据与已安装应用的版本。清单保留内置 dsh 运行时的产品版本，因此发布不改写任何受版本控制的文件。上游的 `dsh-v*` 标签不会启动桌面端发布。
+NovaFlow 发布使用独立的版本线。每次发布对应标签 `v<版本>`，其中 `<版本>` 是不含构建元数据的 SemVer 版本，例如 `v0.1.0` 或预发布版本 `v0.1.0-beta.1`。[发布工作流](#upload-updates)把 `<版本>` 作为 `--build-version` 传给打包，该值同时决定产物文件名、更新元数据与已安装应用的版本。清单保留内置 dsh 运行时的产品版本，因此发布不改写任何受版本控制的文件。上游的 `dsh-v*` 标签不会启动桌面端发布。
 
 本地测试构建可以传入任意这类版本，也可以使用 `--build-version auto`：它根据本目标本地输出目录中的 NovaFlow 及更早 DeepSeek Harness 产物，按 `<产品版本>.<日期>.<序号>`（稳定产品版本使用 `-test.<日期>.<序号>`）给出下一个版本。run script 会自行透传 `--`，打包入口两种写法都接受：
 
@@ -254,12 +254,12 @@ Windows 安装器在启动时和选定目标目录后检查应用是否正在运
 
 ### 发布工作流
 
-推送 `novaflow-v<版本>` 标签，或以已有标签手动运行[发布工作流](../../.github/workflows/novaflow-desktop-release.yml)，会为本仓库发布一个 GitHub Release：
+推送 `v<版本>` 标签（或旧的 `novaflow-v<版本>` 标签），或以已有标签手动运行[发布工作流](../../.github/workflows/novaflow-desktop-release.yml)，会为本仓库发布一个 GitHub Release：
 
-1. 在仓库根目录的 [CHANGELOG.md](../../CHANGELOG.md) 中添加 `## <版本>` 小节并在打标签前合并。标签不是 `novaflow-v<SemVer>` 或缺少该小节时，工作流在构建前停止。
-2. 推送标签，例如 `git tag novaflow-v0.1.0 && git push origin novaflow-v0.1.0`。
-3. 每个目标由一个任务在 GitHub 托管运行器上以标签版本打包未签名安装包：`windows-2025`（NSIS）、`macos-15`（Apple Silicon 的 DMG 与 ZIP）、`macos-15-intel`（Intel 的 DMG 与 ZIP）和 `ubuntu-24.04`（AppImage 与 deb）。每个任务在上传前用安装包校验自己的更新元数据。
-4. 发布任务合并两个架构的 `latest-mac.yml`，再次校验每个元数据文件，写入 `SHA256SUMS`，并以全部安装包、`latest.yml`、`latest-mac.yml`、`latest-linux.yml`、blockmap 与 `SHA256SUMS` 运行 `gh release create`。版本号含 `-` 时发布为预发布版本。
+1. 在仓库根目录的 [CHANGELOG.md](../../CHANGELOG.md) 中添加 `## <版本>` 小节并在打标签前合并。标签不是 `v<SemVer>` 或缺少该小节时，工作流在构建前停止。
+2. 推送标签，例如 `git tag v0.1.0 && git push origin v0.1.0`。
+3. 每个目标由一个任务在 GitHub 托管运行器上以标签版本打包未签名安装包：`windows-2025`（NSIS）、`macos-15`（Apple Silicon 的 DMG 与 ZIP）、`macos-15-intel`（Intel 的 DMG 与 ZIP）。每个任务在上传前用安装包校验自己的更新元数据。
+4. 发布任务合并两个架构的 `latest-mac.yml`，再次校验每个元数据文件，写入 `SHA256SUMS`，并以全部安装包、`latest.yml`、`latest-mac.yml`、blockmap、带标签版本的源码 ZIP 与 `SHA256SUMS` 运行 `gh release create`。所有附件上传成功前保持草稿，公开发布前必须具备源码、Windows EXE 与两个架构的 DMG。发布标题与标签一致。版本号含 `-` 时发布为预发布版本。
 
 Release 正文依次为对应的 CHANGELOG 小节、一行 `<!-- novaflow:install-notes -->`，以及未签名构建的安装说明。应用把该标记之前的文字作为更新日志显示，因此小节内容不得包含该标记。打包从不发布：electron-builder 始终以 `--publish never` 运行，只有发布任务拥有 `contents: write`。安装包通过 electron-builder 为 `github` provider（`Prokint/NavaFlow`，发布类型 `release`）嵌入的 `app-update.yml` 读取更新，使用固定的 `latest` 通道文件；GitHub 不会把预发布版本报告为最新发布。
 
@@ -269,7 +269,7 @@ Release 正文依次为对应的 CHANGELOG 小节、一行 `<!-- novaflow:instal
 
 - Windows：`novaflow-<版本>-win-x64-unsigned.exe` 不带 Authenticode 签名。首次运行时 SmartScreen 会提示，点击“更多信息”再点击“仍要运行”。
 - macOS：`--unsigned` 跳过 Developer ID 签名、使用身份的运行时签名和公证，随后对完成的 App 施加 ad-hoc 签名（`codesign --force --deep --sign -`），使其能在 Apple Silicon 上启动。Gatekeeper 会拦截下载 App 的首次启动：按住 Control 点按 App 并选择“打开”（macOS 15 及以上在“系统设置 → 隐私与安全性”中点按“仍要打开”），或执行 `xattr -dr com.apple.quarantine /Applications/NovaFlow.app`。这类 App 无法替换自身，因此更新弹窗会打开 Release 页面。
-- Linux：AppImage 和 deb 不带签名；`latest-linux.yml` 记录它们的 SHA-512。
+- Linux 仍可手动打包：AppImage 和 deb 不带签名；`latest-linux.yml` 记录它们的 SHA-512。
 
 未签名命令写入 `.desktop-build/targets/<目标>/unsigned-artifacts/`，产物名带有更新元数据所引用的 `-unsigned` 后缀，从子进程中清除签名凭据，运行已打包运行时冒烟检查，且不创建发布完成记录。它们要求设置 `DSH_DESKTOP_APP_ID` 并具备常规构建依赖，包括 Python，以及 Windows 上编译原生模块所需的 Visual C++ 构建工具；Python 不在 `PATH` 中时设置 `PYTHON`。
 
@@ -446,7 +446,7 @@ node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run test:upd
 
 ## Linux 安装包
 
-Linux x64 安装包为 AppImage 和 deb。`package:linux:x64`、`package:linux:x64:dir` 和 `check:package:linux:x64` 选择原生 x64 主机及按目标隔离的资源；发布工作流在 `ubuntu-24.04` 上构建它们。Linux arm64 选择器和载荷路径已经提供，但没有记录 arm64 桌面运行时验收。
+Linux x64 安装包为 AppImage 和 deb。`package:linux:x64`、`package:linux:x64:dir` 和 `check:package:linux:x64` 选择原生 x64 主机及按目标隔离的资源；它们通过手动打包提供，桌面发布工作流只构建 Windows 和 macOS。Linux arm64 选择器和载荷路径已经提供，但没有记录 arm64 桌面运行时验收。
 
 Linux 通道读取 `.env.linux`（复制[模板](.env.linux.example)），或在设置 `DSH_DESKTOP_PACKAGE_SETTINGS=environment` 时从自身环境读取同一组字段：应用标识、`Name <email>` 形式的公开维护者联系方式和 HTTPS 项目页面。发布工作流使用 `com.novaflow.desktop`、`Prokint <Prokint@users.noreply.github.com>` 和本仓库页面。NovaFlow 是产品名称，`novaflow` 是其包名和可执行文件名。Linux 使用独立的可执行文件、包名和桌面条目；与其他打包平台一样，默认数据目录为 `~/.novaflow`，显式设置 `DSH_HOME` 仍是操作者覆盖项。与其他平台相同，它不注册 URL scheme。
 

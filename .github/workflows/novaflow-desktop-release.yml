@@ -1,6 +1,6 @@
 name: NovaFlow desktop release
 
-# Builds the NovaFlow desktop installers for one novaflow-v<semver> tag and
+# Builds the NovaFlow desktop installers for one v<semver> tag and
 # publishes them, with their update metadata and SHA256SUMS, as that tag's
 # GitHub Release. The version without the prefix becomes the installer and
 # application version; a version containing "-" is published as a prerelease.
@@ -11,10 +11,11 @@ on:
   push:
     tags:
       - 'novaflow-v*'
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing novaflow-v<semver> tag to build and release, such as novaflow-v0.1.0.
+        description: Existing v<semver> tag to build and release, such as v0.0.1 (legacy novaflow-v tags also work).
         required: true
         type: string
 
@@ -48,7 +49,7 @@ jobs:
           set -euo pipefail
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then tag="$INPUT_TAG"; else tag="$GITHUB_REF_NAME"; fi
           if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_TYPE" != tag ]; then
-            echo "::error::Releases run only from a pushed novaflow-v* tag."; exit 1
+            echo "::error::Releases run only from a pushed desktop version tag."; exit 1
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
@@ -62,7 +63,7 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           package-manager-cache: false
 
-      # Fails before any installer is built when the tag is not novaflow-v<semver>
+      # Fails before any installer is built when the tag is not a supported desktop version
       # or CHANGELOG.md has no "## <version>" section.
       - name: Read the version and check its changelog section
         id: release
@@ -100,10 +101,6 @@ jobs:
             runner: macos-15-intel
             command: package:mac:x64:unsigned
             output: apps/desktop/.desktop-build/targets/mac-x64/unsigned-artifacts
-          - target: linux-x64
-            runner: ubuntu-24.04
-            command: package:linux:x64
-            output: apps/desktop/.desktop-build/targets/linux-x64/artifacts
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
       # Packaging reads its release settings from these variables instead of
@@ -138,13 +135,11 @@ jobs:
           persist-credentials: false
 
       - name: Use runner-owned temporary storage
-        shell: bash
+        shell: pwsh
         run: |
-          {
-            echo "TMPDIR=$RUNNER_TEMP"
-            echo "NODE_COMPILE_CACHE=$RUNNER_TEMP/node-compile-cache"
-            echo "npm_config_devdir=$RUNNER_TEMP/node-gyp"
-          } >> "$GITHUB_ENV"
+          "TMPDIR=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
+          "NODE_COMPILE_CACHE=$env:RUNNER_TEMP/node-compile-cache" >> $env:GITHUB_ENV
+          "npm_config_devdir=$env:RUNNER_TEMP/node-gyp" >> $env:GITHUB_ENV
 
       - uses: pnpm/action-setup@v4
         with:
@@ -161,6 +156,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install (immutable)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           for attempt in 1 2 3; do
@@ -169,15 +165,40 @@ jobs:
           done
           exit 1
 
+      - name: Install on Windows (immutable)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            if ($attempt -lt 3) { Start-Sleep -Seconds 10 }
+          }
+          exit 1
+
       - name: Package ${{ matrix.target }} ${{ env.VERSION }}
+        if: runner.os != 'Windows'
         shell: bash
         run: pnpm --dir apps/desktop run "${{ matrix.command }}" --build-version "$VERSION"
 
+      - name: Package Windows ${{ env.VERSION }}
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pnpm --dir apps/desktop run "${{ matrix.command }}" --build-version "$env:VERSION"
+
       # Verifies latest*.yml against the installers on this runner before upload.
       - name: Collect release files
+        if: runner.os != 'Windows'
         shell: bash
         run: >-
           node apps/desktop/scripts/collect-release-assets.mjs --version "$VERSION"
+          --output "dist/release-${{ matrix.target }}" "${{ matrix.output }}"
+
+      - name: Collect Windows release files
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          node apps/desktop/scripts/collect-release-assets.mjs --version "$env:VERSION"
           --output "dist/release-${{ matrix.target }}" "${{ matrix.output }}"
 
       - uses: actions/upload-artifact@v7
@@ -232,13 +253,28 @@ jobs:
           pattern: novaflow-desktop-*
           path: dist/inputs
 
+      - name: Package the tagged source
+        shell: bash
+        run: |
+          mkdir -p dist/source
+          git archive --format=zip --prefix="NovaFlow-$TAG/" --output="dist/source/novaflow-$VERSION-source.zip" HEAD
+
       # Merges the two architectures' latest-mac.yml, verifies every update file
       # against the installers it names, and writes SHA256SUMS.
       - name: Collect release assets
         run: >-
           node apps/desktop/scripts/collect-release-assets.mjs --version "$VERSION"
           --output dist/release dist/inputs/novaflow-desktop-win-x64 dist/inputs/novaflow-desktop-mac-arm64
-          dist/inputs/novaflow-desktop-mac-x64 dist/inputs/novaflow-desktop-linux-x64
+          dist/inputs/novaflow-desktop-mac-x64 dist/source
+
+      - name: Require source, EXE and both DMG installers
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in "novaflow-$VERSION-source.zip" "novaflow-$VERSION-win-x64-unsigned.exe" \
+            "novaflow-$VERSION-mac-arm64-unsigned.dmg" "novaflow-$VERSION-mac-x64-unsigned.dmg"; do
+            test -s "dist/release/$file"
+          done
 
       - name: Write release notes
         run: >-
@@ -252,5 +288,8 @@ jobs:
           set -euo pipefail
           flags=()
           if [ "$PRERELEASE" = true ]; then flags+=(--prerelease); fi
-          gh release create "$TAG" dist/release/* --repo "$GITHUB_REPOSITORY" --verify-tag \
-            --title "NovaFlow $VERSION" --notes-file dist/release-notes.md "${flags[@]}"
+          gh release create "$TAG" dist/release/* --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+            --title "$TAG" --notes-file dist/release-notes.md "${flags[@]}"
+          latest=()
+          if [ "$PRERELEASE" = false ]; then latest+=(--latest); fi
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false "${latest[@]}"

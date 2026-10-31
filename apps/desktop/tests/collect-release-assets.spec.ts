@@ -43,6 +43,16 @@ async function releaseInputs(version = '0.1.0') {
 }
 
 describe('release asset collection', () => {
+  it('includes the matching tagged source archive in SHA256SUMS and omits another version', async () => {
+    const source = await runner('source', { 'novaflow-0.0.1-source.zip': 'tagged source', 'novaflow-0.1.0-source.zip': 'old source' }, {})
+    const output = join(root, 'release')
+    const assets = await collectDesktopReleaseAssets({ version: '0.0.1', inputs: [...await releaseInputs('0.0.1'), source], output })
+    expect(assets).toContain('novaflow-0.0.1-source.zip')
+    expect(assets).not.toContain('novaflow-0.1.0-source.zip')
+    expect(await readFile(join(output, 'novaflow-0.0.1-source.zip'), 'utf8')).toBe('tagged source')
+    expect(await readFile(join(output, 'SHA256SUMS'), 'utf8'))
+      .toContain(`${createHash('sha256').update('tagged source').digest('hex')}  novaflow-0.0.1-source.zip`)
+  })
   it('collects installers and update files, merges macOS metadata, and writes checksums', async () => {
     const output = join(root, 'release')
     const assets = await collectDesktopReleaseAssets({ version: '0.1.0', inputs: await releaseInputs(), output })

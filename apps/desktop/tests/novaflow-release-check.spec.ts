@@ -19,7 +19,8 @@ describe('NovaFlow release check', () => {
     expect(() => compareVersions('1.0', '1.0.0')).toThrow('invalid version')
   })
 
-  it('accepts only this repository and the novaflow-v tag line', () => {
+  it('accepts this repository with v tags and legacy novaflow-v tags', () => {
+    expect(parseRelease(release('v0.0.1', '- one'))).toEqual({ version: '0.0.1', url: `${NOVAFLOW_RELEASES_URL}/tag/v0.0.1`, notes: '• one' })
     expect(parseRelease(release('novaflow-v0.2.0', '- one'))).toEqual({ version: '0.2.0', url: `${NOVAFLOW_RELEASES_URL}/tag/novaflow-v0.2.0`, notes: '• one' })
     expect(() => parseRelease(release('dsh-v0.2.1-alpha.1'))).toThrow('unexpected release tag')
     expect(() => parseRelease({ ...release('novaflow-v0.2.0'), html_url: 'https://evil.example/releases/x' })).toThrow('unexpected release page')
@@ -56,9 +57,21 @@ describe('NovaFlow release check', () => {
       .mockResolvedValueOnce(Response.json(release('novaflow-v0.3.0', '- 其他')))
     const signal = new AbortController().signal
     await expect(fetchNovaFlowReleaseNotes('0.2.0', fetcher, signal)).resolves.toBe('• 修复')
-    expect(fetcher.mock.calls[0]?.[0]).toBe('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/novaflow-v0.2.0')
+    expect(fetcher.mock.calls[0]?.[0]).toBe('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/v0.2.0')
     await expect(fetchNovaFlowReleaseNotes('0.2.0', fetcher, signal)).rejects.toThrow('another release')
     await expect(fetchNovaFlowReleaseNotes('../x', fetcher, signal)).rejects.toThrow('invalid version')
+  })
+
+  it('falls back to a legacy tag only when the v tag is absent', async () => {
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(Response.json(release('novaflow-v0.2.0', '- legacy')))
+      .mockResolvedValueOnce(new Response(null, { status: 403 }))
+    const signal = new AbortController().signal
+    await expect(fetchNovaFlowReleaseNotes('0.2.0', fetcher, signal)).resolves.toBe('• legacy')
+    expect(fetcher.mock.calls[1]?.[0]).toBe('https://api.github.com/repos/Prokint/NavaFlow/releases/tags/novaflow-v0.2.0')
+    await expect(fetchNovaFlowReleaseNotes('0.2.0', fetcher, signal)).rejects.toThrow('GitHub answered 403')
+    expect(fetcher).toHaveBeenCalledTimes(3)
   })
 
   it('remembers only the release postponed from an automatic prompt', async () => {

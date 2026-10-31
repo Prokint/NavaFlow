@@ -36,8 +36,8 @@
   en: 4cd8a8da6977928d
   zh: 9f624855a2edac37
 /novaflow-desktop/package/release-versions:
-  en: fad834a16dbbde0b
-  zh: c1bf59635fc0ff5d
+  en: d4840b59c8ceb00c
+  zh: f769b56a835232fe
 /novaflow-desktop/package/local-official-bundles-from-a-loopback-registry:
   en: 253122e77e5712a1
   zh: d35d043b3f13535f
@@ -45,11 +45,11 @@
   en: 8cb7b1711f0ecf41
   zh: ac4305f34ff02870
 /novaflow-desktop/package/release-workflow:
-  en: d462d91528c34949
-  zh: 3d874b30df6c33b2
+  en: 7fc68886186cd0c6
+  zh: de8136532cb83dd1
 /novaflow-desktop/package/unsigned-installers:
-  en: ceae9f7d5beda36d
-  zh: 086eefe48a8ccae8
+  en: 5a41023694093aaf
+  zh: 477a8090bd93fe28
 /novaflow-desktop/package/enabling-signing:
   en: f35d896bdf7b42c3
   zh: 5f5b77f13785fe18
@@ -81,5 +81,5 @@
   en: bb7feac673841834
   zh: 1be909404d2814ee
 /novaflow-desktop/linux-packages:
-  en: 7ceed5dac8aa1ded
-  zh: 4d58b6a3cfb81bf0
+  en: b2da89fd27ff0bf2
+  zh: d617883dc7db8b60

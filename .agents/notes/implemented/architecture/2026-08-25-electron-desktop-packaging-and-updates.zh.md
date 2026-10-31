@@ -73,9 +73,9 @@ Electron 更新只使用一个 `electron-updater` 发布流和签名 `electron-b
 
 [立即显示窗口参考](../../../../apps/desktop/README.zh.md)负责本地加载页、直接启动 Host 和主窗口恢复。profile 协调遵循[内置运行时决策](2026-09-08-desktop-bundled-runtime-and-external-plugins.zh.md)。
 
-NovaFlow 安装包从本仓库的 GitHub Releases 读取更新：electron-builder 嵌入指向 `Prokint/NavaFlow`、发布类型为 `release` 的 `github` provider，每个版本（包括预发布版本）都写入固定的 `latest` 元数据文件。打包始终以 `--publish never` 运行 electron-builder，要求每个元数据文件列出的安装包大小与 SHA-512 一致并附带其 blockmap；签名构建只有在 electron-builder 以及每个签名或公证 hook 成功后才写入完成记录。只有[发布工作流](../../../../.github/workflows/novaflow-desktop-release.yml)负责发布：它从 `novaflow-v<版本>` 标签构建所有目标，合并各架构的 macOS 元数据，再次校验全部元数据，并用安装包、元数据、blockmap 与 `SHA256SUMS` 创建 GitHub Release。NSIS 安装包和 macOS ZIP 使用独立 blockmap，AppImage 则内嵌自己的 blockmap；它们让 electron-updater 在平台支持时只下载变化的数据块，而应用替换与本地 pnpm 包操作仍是两个独立操作。
+NovaFlow 安装包从本仓库的 GitHub Releases 读取更新：electron-builder 嵌入指向 `Prokint/NavaFlow`、发布类型为 `release` 的 `github` provider，每个版本（包括预发布版本）都写入固定的 `latest` 元数据文件。打包始终以 `--publish never` 运行 electron-builder，要求每个元数据文件列出的安装包大小与 SHA-512 一致并附带其 blockmap；签名构建只有在 electron-builder 以及每个签名或公证 hook 成功后才写入完成记录。只有[发布工作流](../../../../.github/workflows/novaflow-desktop-release.yml)负责发布：它从 `v<版本>` 标签构建 Windows 和 macOS（仍接受旧的 `novaflow-v<版本>` 标签），合并各架构的 macOS 元数据，再次校验全部元数据，并将安装包、元数据、blockmap、带标签版本的源码 ZIP 与 `SHA256SUMS` 上传到草稿，全部上传成功后再公开发布。NSIS 安装包和 macOS ZIP 使用独立 blockmap，AppImage 则内嵌自己的 blockmap；它们让 electron-updater 在平台支持时只下载变化的数据块，而应用替换与本地 pnpm 包操作仍是两个独立操作。
 
-在具备签名证书前，发布提供未签名的 Windows 安装包、ad-hoc 签名的 macOS App 和未签名的 Linux 包；公布的 SHA-512 能发现损坏的下载，但不能验证发布者身份。[发布工作流参考](../../../../apps/desktop/README.zh.md#upload-updates)定义标签、发布说明以及启用签名的方式。
+在具备签名证书前，发布提供未签名的 Windows 安装包与 ad-hoc 签名的 macOS App，未签名的 Linux 包仍可手动打包；公布的 SHA-512 能发现损坏的下载，但不能验证发布者身份。[发布工作流参考](../../../../apps/desktop/README.zh.md#upload-updates)定义标签、发布说明以及启用签名的方式。
 
 ## 安全与发布策略
 

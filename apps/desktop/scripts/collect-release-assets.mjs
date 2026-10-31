@@ -37,6 +37,7 @@ async function sha256(path) {
  */
 export async function collectDesktopReleaseAssets({ version, inputs, output }) {
   const installer = new RegExp(`^novaflow-${escape(version)}-(?:win|mac|linux)-[^/\\\\]+\\.(?:exe|dmg|zip|AppImage|deb)(?:\\.blockmap)?$`, 'u')
+  const sourceArchive = new RegExp(`^novaflow-${escape(version)}-source\\.(?:zip|tar\\.gz)$`, 'u')
   await mkdir(output, { recursive: true })
   if ((await readdir(output)).length > 0) throw new Error(`desktop release: output directory ${output} is not empty`)
   const metadata = new Map()
@@ -49,7 +50,7 @@ export async function collectDesktopReleaseAssets({ version, inputs, output }) {
         metadata.set(entry.name, [...metadata.get(entry.name) ?? [], await readFile(source, 'utf8')])
         continue
       }
-      if (!installer.test(entry.name)) continue
+      if (!installer.test(entry.name) && !sourceArchive.test(entry.name)) continue
       const digest = await sha256(source)
       const previous = copied.get(entry.name)
       if (previous !== undefined && previous !== digest) throw new Error(`desktop release: ${entry.name} differs between inputs`)

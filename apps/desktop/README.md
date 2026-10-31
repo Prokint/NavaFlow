@@ -170,7 +170,7 @@ Dependency installation does not run the locked Electron package's separate bina
 
 ### Release versions
 
-NovaFlow releases follow their own version line. A release is the tag `novaflow-v<version>`, where `<version>` is a SemVer version without build metadata, such as `novaflow-v0.1.0` or the prerelease `novaflow-v0.1.0-beta.1`. The [release workflow](#upload-updates) passes `<version>` to packaging as `--build-version`, which reaches the artifact names, the update metadata, and the installed application's version. The manifests keep the product version of the bundled dsh runtime, so a release rewrites no tracked file. Upstream `dsh-v*` tags never start a desktop release.
+NovaFlow releases follow their own version line. A release is the tag `v<version>`, where `<version>` is a SemVer version without build metadata, such as `v0.1.0` or the prerelease `v0.1.0-beta.1`. The [release workflow](#upload-updates) passes `<version>` to packaging as `--build-version`, which reaches the artifact names, the update metadata, and the installed application's version. The manifests keep the product version of the bundled dsh runtime, so a release rewrites no tracked file. Upstream `dsh-v*` tags never start a desktop release.
 
 A local test build takes any such version, or `--build-version auto`, which numbers `<product version>.<date>.<index>` (`-test.<date>.<index>` on a stable product version) after the NovaFlow and earlier DeepSeek Harness artifacts in this target's local output directory. A run script forwards `--` on its own, and the packaging entry accepts it either way:
 
@@ -252,12 +252,12 @@ When extraction fails, the installer writes a report with the 7-Zip result and i
 
 ### Release workflow
 
-Pushing a `novaflow-v<version>` tag, or running [the release workflow](../../.github/workflows/novaflow-desktop-release.yml) manually with an existing tag, publishes one GitHub Release of this repository:
+Pushing a `v<version>` tag (or a legacy `novaflow-v<version>` tag), or running [the release workflow](../../.github/workflows/novaflow-desktop-release.yml) manually with an existing tag, publishes one GitHub Release of this repository:
 
-1. Add a `## <version>` section to the root [CHANGELOG.md](../../CHANGELOG.md) and merge it before tagging. The workflow stops before building when the tag is not `novaflow-v<SemVer>` or the section is missing.
-2. Push the tag, for example `git tag novaflow-v0.1.0 && git push origin novaflow-v0.1.0`.
-3. One job per target packages unsigned installers with the tag version on GitHub-hosted runners: `windows-2025` (NSIS), `macos-15` (Apple Silicon DMG and ZIP), `macos-15-intel` (Intel DMG and ZIP), and `ubuntu-24.04` (AppImage and deb). Each job verifies its update metadata against its installers before uploading them.
-4. The release job merges the two architectures' `latest-mac.yml`, verifies every metadata file again, writes `SHA256SUMS`, and runs `gh release create` with all installers, `latest.yml`, `latest-mac.yml`, `latest-linux.yml`, the blockmaps, and `SHA256SUMS`. A version containing `-` becomes a prerelease.
+1. Add a `## <version>` section to the root [CHANGELOG.md](../../CHANGELOG.md) and merge it before tagging. The workflow stops before building when the tag is not `v<SemVer>` or the section is missing.
+2. Push the tag, for example `git tag v0.1.0 && git push origin v0.1.0`.
+3. One job per target packages unsigned installers with the tag version on GitHub-hosted runners: `windows-2025` (NSIS), `macos-15` (Apple Silicon DMG and ZIP), `macos-15-intel` (Intel DMG and ZIP). Each job verifies its update metadata against its installers before uploading them.
+4. The release job merges the two architectures' `latest-mac.yml`, verifies every metadata file again, writes `SHA256SUMS`, and runs `gh release create` with all installers, `latest.yml`, `latest-mac.yml`, the blockmaps, a tagged source ZIP and `SHA256SUMS`. The release stays a draft until all uploads succeed; source, Windows EXE and both DMG files are required before publication. Its title matches the tag. A version containing `-` becomes a prerelease.
 
 The release body is the matching CHANGELOG section, then the line `<!-- novaflow:install-notes -->`, then installation instructions for unsigned builds. The application shows the text before that marker as the release notes, so the section must not contain the marker. Packaging never publishes: electron-builder always runs with `--publish never`, and only the release job holds `contents: write`. Installers read updates through the `app-update.yml` that electron-builder embeds for the `github` provider (`Prokint/NavaFlow`, release type `release`), using the fixed `latest` channel files; GitHub never reports a prerelease as the latest release.
 
@@ -267,7 +267,7 @@ Until signing certificates exist, releases ship these unsigned installers:
 
 - Windows: `novaflow-<version>-win-x64-unsigned.exe` carries no Authenticode signature. SmartScreen warns on first launch; choose More info, then Run anyway.
 - macOS: `--unsigned` skips Developer ID signing, runtime signing with an identity, and notarization, then applies an ad-hoc signature (`codesign --force --deep --sign -`) to the finished App so it launches on Apple Silicon. Gatekeeper blocks the first launch of a downloaded App: Control-click it and choose Open (on macOS 15 or later, System Settings → Privacy & Security → Open Anyway), or run `xattr -dr com.apple.quarantine /Applications/NovaFlow.app`. Such an App cannot replace itself, so its update dialog opens the release page.
-- Linux: the AppImage and the deb carry no signature; `latest-linux.yml` records their SHA-512 values.
+- Linux packages remain available through manual packaging; the AppImage and the deb carry no signature; `latest-linux.yml` records their SHA-512 values.
 
 Unsigned commands write to `.desktop-build/targets/<target>/unsigned-artifacts/`, name artifacts with an `-unsigned` suffix that the update metadata references, strip signing credentials from child processes, run the packaged-runtime smoke, and create no release completion record. They require `DSH_DESKTOP_APP_ID` and the normal build dependencies, including Python and, on Windows, Visual C++ build tools for native modules; set `PYTHON` when Python is absent from `PATH`.
 
@@ -444,7 +444,7 @@ Pre-launch CDN and capacity decisions are tracked in the [Desktop update proposa
 
 ## Linux packages
 
-Linux x64 packages are an AppImage and a deb. `package:linux:x64`, `package:linux:x64:dir`, and `check:package:linux:x64` select the native x64 host and target-specific resources; the release workflow builds them on `ubuntu-24.04`. Linux arm64 selectors and payload paths are present, but no arm64 desktop runtime qualification is recorded.
+Linux x64 packages are an AppImage and a deb. `package:linux:x64`, `package:linux:x64:dir`, and `check:package:linux:x64` select the native x64 host and target-specific resources; they remain available through manual packaging; the desktop release workflow builds Windows and macOS only. Linux arm64 selectors and payload paths are present, but no arm64 desktop runtime qualification is recorded.
 
 The Linux lane reads `.env.linux` (copy [the template](.env.linux.example)) or, with `DSH_DESKTOP_PACKAGE_SETTINGS=environment`, the same fields from its environment: the application identifier, the public maintainer contact as `Name <email>`, and an HTTPS project page. The release workflow uses `com.novaflow.desktop`, `Prokint <Prokint@users.noreply.github.com>`, and this repository's page. NovaFlow is the product name, and `novaflow` is its package and executable name. Linux uses its own executable, package name, and desktop entry; like the other packaged platforms, it defaults to the `~/.novaflow` data home, and an explicit `DSH_HOME` remains an operator override. Like the other platforms, it registers no URL scheme.
 

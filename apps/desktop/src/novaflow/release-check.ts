@@ -14,7 +14,8 @@ export const RELEASE_INSTALL_NOTES_MARKER = '<!-- novaflow:install-notes -->'
 /** Longest changelog excerpt shown in a native dialog; the release page carries the rest. */
 const MAX_NOTES_CHARS = 4000
 
-const TAG_PREFIX = 'novaflow-v'
+const TAG_PREFIX = 'v'
+const LEGACY_TAG_PREFIX = 'novaflow-v'
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z.-]+)?$/u
 
 /** Outcome of comparing the running version with the latest public release. */
@@ -92,7 +93,7 @@ export function releaseNotesText(body: string): string {
 }
 
 /**
- * Validate one GitHub release payload; only this repository's `novaflow-v<semver>` tags count.
+ * Validate one GitHub release payload; accept this repository's `v<semver>` and legacy `novaflow-v<semver>` tags.
  * @param value - Parsed JSON body.
  * @returns The release version, its page, and its notes as plain text.
  * @throws for any other shape, tag, or page origin.
@@ -102,11 +103,12 @@ export function parseRelease(value: unknown): { version: string; url: string; no
   const tag: unknown = Reflect.get(value, 'tag_name')
   const page: unknown = Reflect.get(value, 'html_url')
   const body: unknown = Reflect.get(value, 'body')
-  if (typeof tag !== 'string' || !tag.startsWith(TAG_PREFIX) || parseVersion(tag.slice(TAG_PREFIX.length)) === undefined) {
+  const prefix = typeof tag === 'string' && tag.startsWith(LEGACY_TAG_PREFIX) ? LEGACY_TAG_PREFIX : TAG_PREFIX
+  if (typeof tag !== 'string' || !tag.startsWith(prefix) || parseVersion(tag.slice(prefix.length)) === undefined) {
     throw new Error('novaflow release: unexpected release tag')
   }
   if (typeof page !== 'string' || !page.startsWith(`${NOVAFLOW_RELEASES_URL}/`)) throw new Error('novaflow release: unexpected release page')
-  return { version: tag.slice(TAG_PREFIX.length), url: page, notes: typeof body === 'string' ? releaseNotesText(body) : '' }
+  return { version: tag.slice(prefix.length), url: page, notes: typeof body === 'string' ? releaseNotesText(body) : '' }
 }
 
 const GITHUB_HEADERS = { accept: 'application/vnd.github+json', 'user-agent': 'NovaFlow-Desktop', 'x-github-api-version': '2022-11-28' }
@@ -148,7 +150,11 @@ export async function fetchNovaFlowReleaseNotes(
 ): Promise<string> {
   if (parseVersion(version) === undefined) throw new Error(`novaflow release: invalid version ${JSON.stringify(version)}`)
   const url = `https://api.github.com/repos/Prokint/NavaFlow/releases/tags/${TAG_PREFIX}${version}`
-  const response = await fetcher(url, { headers: GITHUB_HEADERS, redirect: 'error', signal })
+  let response = await fetcher(url, { headers: GITHUB_HEADERS, redirect: 'error', signal })
+  if (response.status === 404) {
+    response = await fetcher(`https://api.github.com/repos/Prokint/NavaFlow/releases/tags/${LEGACY_TAG_PREFIX}${version}`,
+      { headers: GITHUB_HEADERS, redirect: 'error', signal })
+  }
   if (!response.ok) throw new Error(`novaflow release: GitHub answered ${String(response.status)}`)
   const release = parseRelease(await response.json())
   if (release.version !== version) throw new Error('novaflow release: notes belong to another release')
